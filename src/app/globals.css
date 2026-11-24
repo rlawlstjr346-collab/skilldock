@@ -1,14 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  --bg-canvas: #f5f6f8;
+  --bg-base: #fbfbfd;
+  --bg-canvas: #fbfbfd;
   --bg-surface: #ffffff;
-  --bg-inset: #f8fafc;
-  --border-card: #e5e7eb;
-  --border-inset: #eaeef4;
-  --ink-primary: #111827;
-  --ink-body: #374151;
-  --ink-muted: #6b7280;
+  --bg-elevated: #f2f2f7;
+  --bg-inset: #ffffff;
+  --border-subtle: #e5e5ea;
+  --border-strong: #d1d1d6;
+  --border-card: #e5e5ea;
+  --border-inset: rgba(0, 0, 0, 0.06);
+  --ink-primary: #1d1d1f;
+  --ink-body: #515154;
+  --ink-muted: #636366;
+  --ink-read: #86868b;
+  --live: #22c55e;
+  --scrim: rgba(12, 12, 16, 0.35);
+  --sheen: rgba(255, 255, 255, 0.24);
+  --ease-apple: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 * {
@@ -17,7 +27,7 @@
 
 html,
 body {
-  background-color: var(--bg-canvas);
+  background-color: var(--bg-base);
   color: var(--ink-primary);
   font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
     "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
@@ -33,23 +43,224 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* AI Radar 1:1 Apple Newsroom crisp white card */
+.newsroom-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.025);
+  transition:
+    transform 220ms var(--ease-apple),
+    box-shadow 220ms var(--ease-apple),
+    border-color 180ms ease-out;
+}
+
+.newsroom-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.09);
+  transform: translateY(-2px);
+}
+
+/* Heavyweight dark slate Preset Package card */
+.newsroom-card-preset {
+  background-color: #181d27;
+  border: 1px solid #2a3241;
+  border-radius: 20px;
+  color: #f9fafb;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.1);
+  transition:
+    transform 220ms var(--ease-apple),
+    box-shadow 220ms var(--ease-apple),
+    background-color 180ms ease-out,
+    border-color 180ms ease-out;
+}
+
+.newsroom-card-preset:hover {
+  background-color: #1d2330;
+  border-color: #364155;
+  box-shadow: 0 14px 34px -10px rgba(15, 23, 42, 0.22);
+  transform: translateY(-2px);
+}
+
+/* 1:1 AI Radar Read state visual dimming */
+.newsroom-card[data-read="true"] .card-headline {
+  color: #86868b;
+}
+
+.newsroom-card[data-read="true"] .card-summary {
+  opacity: 0.68;
+}
+
+.newsroom-card-preset[data-read="true"] .card-headline {
+  color: #94a3b8;
+}
+
+.newsroom-card-preset[data-read="true"] .card-summary {
+  opacity: 0.68;
+}
+
+/* Legacy editorial card compatibility */
 .editorial-card {
   background-color: var(--bg-surface);
-  border: 1px solid var(--border-card);
+  border: 1px solid var(--border-subtle);
   border-radius: 20px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-  transition: border-color 140ms ease-out, box-shadow 140ms ease-out;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.025);
+  transition: border-color 160ms ease-out, box-shadow 180ms ease-out;
 }
 
 .editorial-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 8px 24px -10px rgba(15, 23, 42, 0.09);
+  border-color: var(--border-strong);
+  box-shadow: 0 10px 26px -12px rgba(0, 0, 0, 0.08);
 }
 
+/* AI Radar 1:1 VisionOS Liquid Glass Modal */
+.liquid-backdrop {
+  background: var(--scrim);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.liquid-glass-modal {
+  position: relative;
+  width: min(920px, 92vw);
+  max-height: 88vh;
+  border-radius: 30px;
+  background: rgba(250, 250, 252, 0.95);
+  -webkit-backdrop-filter: blur(44px) saturate(190%);
+  backdrop-filter: blur(44px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.96),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.35),
+    0 32px 80px -12px rgba(0, 0, 0, 0.3);
+}
+
+/* iOS Health white inset card inside modal */
+.inset-health-card,
 .modal-section-box {
-  background-color: var(--bg-inset);
-  border: 1px solid var(--border-inset);
-  border-radius: 16px;
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.reading-sticky-bar {
+  transition:
+    background-color 220ms var(--ease-apple),
+    border-color 220ms var(--ease-apple);
+}
+
+.reading-sticky-bar[data-scrolled="true"] {
+  background-color: rgba(250, 250, 252, 0.88);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom-color: var(--border-subtle);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 180ms ease-out both;
+}
+
+@keyframes liquid-modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-liquid-modal {
+  animation: liquid-modal-in 380ms var(--ease-apple) both;
+}
+
+@keyframes article-lift-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reading-stagger {
+  animation: article-lift-in 380ms var(--ease-apple) both;
+  animation-delay: calc(var(--stagger, 0) * 45ms);
+}
+
+/* Artificial Analysis style animated horizontal bar fill */
+@keyframes gauge-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.animate-gauge-bar {
+  transform-origin: left center;
+  animation: gauge-fill 550ms var(--ease-apple) both;
+}
+
+/* Subtle sheen on single primary solid-black CTA (1:1 AI Radar BTN_PRIMARY) */
+@keyframes sheen-sweep {
+  0% {
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  18%,
+  100% {
+    transform: translateX(260%) skewX(-20deg);
+  }
+}
+
+.sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 45%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--sheen), transparent);
+  transform: translateX(-120%) skewX(-20deg);
+  animation: sheen-sweep 5.5s ease-in-out infinite;
+}
+
+/* Check completion pop on primary CTA */
+@keyframes cta-check-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-cta-check {
+  animation: cta-check-pop 280ms var(--ease-apple) both;
 }
 
 /* Purposeful 260ms elastic catch feedback when a flying skill lands in the floating cart */
@@ -73,26 +284,42 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cart-catch-pop {
+  .cart-catch-pop,
+  .animate-fade-in,
+  .animate-liquid-modal,
+  .reading-stagger,
+  .animate-gauge-bar,
+  .animate-cta-check,
+  .sheen::after {
     animation: none;
+  }
+  .newsroom-card,
+  .newsroom-card-preset,
+  .reading-sticky-bar {
+    transition: none;
   }
 }
 
 /* Crisp light scrollbars */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d1d6 transparent;
+}
+
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f5f6f8;
+  background: #fbfbfd;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #d1d1d6;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #a1a1aa;
 }

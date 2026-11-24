@@ -14,7 +14,10 @@ const LOCAL_TOOLS: ToolTargetId[] = [
   "codex",
 ];
 
-function targetPathsForTool(tool: ToolTargetId, scope: InstallScope): {
+function targetPathsForTool(
+  tool: ToolTargetId,
+  scope: InstallScope,
+): {
   label: string;
   skillDir: string;
   ruleFile: string;
@@ -35,8 +38,27 @@ function targetPathsForTool(tool: ToolTargetId, scope: InstallScope): {
 }
 
 /**
+ * Builds remote Gradio SSE MCP config JSON snippet for Hugging Face mcp-server Spaces.
+ */
+export function buildHfRemoteMcpConfig(skills: SkillItem[]): string | null {
+  const hfMcpSkills = skills.filter(
+    (s) => s.sourcePlatform === "huggingface" && Boolean(s.hfMcpEndpoint),
+  );
+  if (hfMcpSkills.length === 0) return null;
+
+  const mcpServers: Record<string, { url: string; transport: string }> = {};
+  for (const sk of hfMcpSkills) {
+    mcpServers[sk.slug] = {
+      url: sk.hfMcpEndpoint!,
+      transport: "sse",
+    };
+  }
+  return JSON.stringify({ mcpServers }, null, 2);
+}
+
+/**
  * Generates a complete, copy-paste-ready Korean auto-install prompt for beginners.
- * Zero terminal fear: paste directly into Claude Code, Gemini CLI/agy, Cursor, Windsurf, or Codex chat.
+ * Supports both GitHub SKILL.md/CLI repos AND Hugging Face remote Gradio SSE MCP Spaces (zero local GPU required).
  */
 export function buildBeginnerAutoInstallPrompt(
   skills: SkillItem[],
@@ -59,12 +81,23 @@ export function buildBeginnerAutoInstallPrompt(
     })
     .join("\n");
 
+  const hfMcpJson = buildHfRemoteMcpConfig(skills);
+
   const skillBlocks = skills
     .map((skill, idx) => {
       const cleanAnalogy = stripHighlightMarkers(skill.oneLineAnalogy);
+      const sourceLine =
+        skill.sourcePlatform === "huggingface" && skill.hfSpaceUrl
+          ? `- Hugging Face Space 원본: ${skill.hfSpaceUrl}`
+          : `- 공식 저장소: ${skill.repoUrl}`;
+      const mcpLine = skill.hfMcpEndpoint
+        ? `- 원격 Gradio MCP SSE 주소 (로컬 GPU 불필요): \`${skill.hfMcpEndpoint}\``
+        : null;
+
       return [
         `### ${idx + 1}. ${skill.koreanAlias} (\`${skill.slug}\`)`,
-        `- 공식 저장소: ${skill.repoUrl}`,
+        sourceLine,
+        ...(mcpLine ? [mcpLine] : []),
         `- 역할: ${cleanAnalogy}`,
         `- 저장할 본문 (\`SKILL.md\`):`,
         "```markdown",
@@ -74,9 +107,20 @@ export function buildBeginnerAutoInstallPrompt(
     })
     .join("\n\n");
 
+  const hfSection = hfMcpJson
+    ? [
+        ``,
+        `## 2-1. Hugging Face 원격 MCP 연결 설정 (로컬 GPU 0% 즉시 연결)`,
+        `아래 \`mcpServers\` 항목을 내 툴의 MCP 설정(\`.mcp.json\`, \`.cursor/mcp.json\`, 또는 \`~/.gemini/settings.json\`)에 안전하게 병합해 주세요:`,
+        "```json",
+        hfMcpJson,
+        "```",
+      ].join("\n")
+    : "";
+
   return [
     `[SKILLDOCK 원클릭 자동 장착 요청]`,
-    `아래 절차대로 안전하게 백업한 뒤, 내가 고른 검증 오픈소스 스킬 ${skills.length}종을 자동으로 설치해 주세요.`,
+    `아래 절차대로 안전하게 백업한 뒤, 내가 고른 검증 오픈소스 무기 ${skills.length}종을 자동으로 설치·연결해 주세요.`,
     ``,
     `## 1. 설치 범위 및 대상 경로`,
     `- 적용 범위: ${scopeDesc}`,
@@ -85,15 +129,16 @@ export function buildBeginnerAutoInstallPrompt(
     `## 2. 안전 수칙 (반드시 준수)`,
     `1) 기존 설정 파일(${effectiveTools.map((t) => targetPathsForTool(t, scope).ruleFile).join(", ")})이 이미 있으면 수정 전에 반드시 \`.bak\` 백업 파일을 먼저 생성하세요.`,
     `2) 각 스킬 폴더에 \`SKILL.md\` 파일을 생성하고, 규칙 인덱스 파일 하단에는 \`<!-- SKILLDOCK:START -->\` ~ \`<!-- SKILLDOCK:END -->\` 블록으로 장착 목록만 안전하게 추가하세요.`,
-    `3) 작업이 끝나면 생성·수정한 파일 경로, 백업 경로, 바로 테스트해 볼 1줄 명령어를 한글로 요약해 보고하세요.`,
+    `3) 작업이 끝나면 생성·수정한 파일 경로, 백업 경로, 바로 테스트해 볼 1줄 첫마디를 한글로 요약해 보고하세요.`,
+    hfSection,
     ``,
-    `## 3. 장착할 스킬 명세 (${skills.length}종)`,
+    `## 3. 장착할 무기 명세 (${skills.length}종)`,
     skillBlocks,
   ].join("\n");
 }
 
 /**
- * Generates pro-level terminal commands (npx skills / claude plugin / CLI) for power users.
+ * Generates pro-level terminal commands (npx skills / claude mcp add --transport sse / CLI) for power users.
  */
 export function buildProCliCommands(
   skills: SkillItem[],
@@ -102,11 +147,19 @@ export function buildProCliCommands(
 ): string {
   const globalFlag = scope === "global" ? " -g" : "";
   const lines: string[] = [
-    `# SKILLDOCK Pro CLI Installer (${skills.length}개 스킬 · 범위: ${scope === "global" ? "전역" : "프로젝트 격리"})`,
+    `# SKILLDOCK Pro CLI Installer (${skills.length}개 무기 · 범위: ${scope === "global" ? "전역" : "프로젝트 격리"})`,
   ];
 
   for (const skill of skills) {
     lines.push(`\n# ${skill.koreanAlias} (${skill.repo})`);
+    if (skill.sourcePlatform === "huggingface" && skill.hfMcpEndpoint) {
+      lines.push(
+        `claude mcp add --transport sse ${skill.slug} ${skill.hfMcpEndpoint}`,
+      );
+      lines.push(
+        `# 범용 MCP 클라이언트(Cursor·Windsurf·Gemini): npx -y mcp-remote ${skill.hfMcpEndpoint}`,
+      );
+    }
     if (skill.installCommands.npxSkills) {
       lines.push(`${skill.installCommands.npxSkills}${globalFlag}`);
     }
@@ -126,7 +179,7 @@ export function buildProCliCommands(
 
 /**
  * Generates a compact, character-budget-aware unified prompt pack for Lovable, Bolt, and v0.
- * Fits comfortably inside web builders' Knowledge / Custom Instructions input limits.
+ * Automatically includes Gradio API / SSE integration instructions for Hugging Face Spaces.
  */
 export function buildWebBuilderPromptPack(
   skills: SkillItem[],
@@ -134,14 +187,14 @@ export function buildWebBuilderPromptPack(
 ): string {
   const header = [
     `# SKILLDOCK Web Builder Pack (Lovable · Bolt · v0 전용)`,
-    `아래 지침은 선택된 ${skills.length}개 검증 오픈소스 스킬의 핵심 품질 규칙만 압축한 통합 시스템 수칙입니다.`,
+    `아래 지침은 선택된 ${skills.length}개 검증 오픈소스 무기의 핵심 품질 규칙과 원격 API 연동법만 압축한 통합 수칙입니다.`,
     `Knowledge / Custom Instructions 입력란에 그대로 붙여넣고 작업을 시작하세요.`,
     ``,
   ].join("\n");
 
   const perSkillBudget = Math.max(
-    450,
-    Math.floor((maxChars - header.length - 200) / Math.max(1, skills.length)),
+    420,
+    Math.floor((maxChars - header.length - 220) / Math.max(1, skills.length)),
   );
 
   const sections = skills.map((skill, idx) => {
@@ -154,9 +207,14 @@ export function buildWebBuilderPromptPack(
         ? `${rulesOnly.slice(0, perSkillBudget - 24).trimEnd()}\n... (핵심 규칙 요약)`
         : rulesOnly;
 
+    const hfIntegration =
+      skill.sourcePlatform === "huggingface" && skill.hfSpaceUrl
+        ? `\n원격 Hugging Face API 연동: \`@gradio/client\`로 \`${skill.repo}\` (${skill.hfSpaceUrl})${skill.hfMcpEndpoint ? ` 또는 MCP SSE \`${skill.hfMcpEndpoint}\`` : ""} 호출`
+        : "";
+
     return [
       `## [${idx + 1}] ${skill.name} — ${skill.roleLabelKo}`,
-      `요약: ${cleanAnalogy}`,
+      `요약: ${cleanAnalogy}${hfIntegration}`,
       trimmedRules,
     ].join("\n");
   });
@@ -167,7 +225,7 @@ export function buildWebBuilderPromptPack(
 }
 
 /**
- * Generates exact tool-specific file artifact previews (for Editor preview tabs & Live Bridge payloads).
+ * Generates exact tool-specific file artifact previews (for Live Bridge payloads & editors).
  */
 export function buildToolFilePreview(
   skill: SkillItem,
@@ -175,6 +233,13 @@ export function buildToolFilePreview(
   scope: InstallScope,
 ): { filePath: string; content: string } {
   const target = targetPathsForTool(tool, scope);
+  const sourceUrl =
+    skill.sourcePlatform === "huggingface" && skill.hfSpaceUrl
+      ? skill.hfSpaceUrl
+      : skill.repoUrl;
+  const mcpHeader = skill.hfMcpEndpoint
+    ? `> 원격 MCP SSE: ${skill.hfMcpEndpoint}\n`
+    : "";
 
   if (tool === "cursor") {
     const body = skill.skillMdTemplate.replace(/^---[\s\S]*?---\s*/m, "").trim();
@@ -188,10 +253,13 @@ export function buildToolFilePreview(
         `---`,
         ``,
         `# ${skill.koreanAlias}`,
-        `> 출처: ${skill.repoUrl}`,
+        `> 출처: ${sourceUrl}`,
+        mcpHeader.trimEnd(),
         ``,
         body,
-      ].join("\n"),
+      ]
+        .filter((line, i, arr) => !(line === "" && arr[i - 1] === ""))
+        .join("\n"),
     };
   }
 
@@ -202,10 +270,13 @@ export function buildToolFilePreview(
       content: [
         `<!-- trigger: model_decision -->`,
         `# ${skill.koreanAlias}`,
-        `> 출처: ${skill.repoUrl}`,
+        `> 출처: ${sourceUrl}`,
+        mcpHeader.trimEnd(),
         ``,
         body,
-      ].join("\n"),
+      ]
+        .filter((line, i, arr) => !(line === "" && arr[i - 1] === ""))
+        .join("\n"),
     };
   }
 

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-24T14:18:46.317Z",
+  "updatedAt": "2026-11-24T15:16:15.822Z",
   "decks": [
     {
       "slug": "quota-invincible-token-diet",
@@ -123,13 +123,13 @@
     {
       "slug": "non-dev-web-builder-oneshot",
       "title": "비개발자 웹 빌더(Lovable · Bolt · v0) 원샷 품질 고정 덱",
-      "subtitle": "Taste-Skill + Ponytail + Task Master AI",
+      "subtitle": "Taste-Skill + Ponytail + Superpowers",
       "targetAudience": "터미널 없이 Lovable·Bolt·v0에서 첫 프롬프트부터 프로급 품질의 웹 앱을 뽑고 싶은 기획자·창업자",
-      "synergyNarrative": "웹 빌더의 고질병인 '뻔한 디자인·지저분한 코드·중반부 기능 붕괴'를 3가지 규칙으로 한 번에 잡습니다. ==Task Master==가 아이디어를 단계별 체크리스트로 정리하고, ==Taste-Skill==이 깔끔한 디자인 시스템을 고정하며, ==Ponytail==이 불필요한 코드 폭증을 막아 크레딧 소모를 확 줄입니다. 하단 독의 **[Lovable · Bolt · v0 프롬프트 팩 복사]** 버튼으로 1초 만에 붙여넣을 수 있습니다.",
+      "synergyNarrative": "웹 빌더의 고질병인 '뻔한 디자인·지저분한 코드·중반부 기능 붕괴'를 3가지 규칙으로 한 번에 잡습니다. ==Superpowers==가 아이디어를 단계별 설계·검증 체크리스트로 정리하고, ==Taste-Skill==이 깔끔한 디자인 시스템을 고정하며, ==Ponytail==이 불필요한 코드 폭증을 막아 크레딧 소모를 확 줄입니다. 단일 검은 버튼 클릭 한 번으로 통합 프롬프트 팩을 바로 복사할 수 있습니다.",
       "skillSlugs": [
         "taste-skill",
         "ponytail",
-        "claude-task-master"
+        "superpowers"
       ],
       "recommendedTools": [
         "web-builder",
@@ -139,9 +139,9 @@
       "highlightMetrics": [
         "웹 빌더 Knowledge / Custom Instructions 글자 수 예산에 자동 압축",
         "터미널 명령 0줄 · 1클릭 복붙으로 즉시 적용",
-        "기획 분해 + 안티-슬롭 디자인 + 크레딧 절약 최소 코드 3박자"
+        "단계별 설계 + 안티-슬롭 디자인 + 크레딧 절약 최소 코드 3박자"
       ],
-      "installTipKo": "상단 툴 스위치에서 'Lovable / Bolt / v0'를 켜고 하단 독의 [Lovable · Bolt · v0 프롬프트 팩 복사]를 누르세요."
+      "installTipKo": "상단 툴 스위치에서 'Lovable · Bolt'를 선택하고 모달 최하단 검은 버튼을 누르면 프롬프트 팩이 즉시 복사됩니다."
     }
   ]
 }

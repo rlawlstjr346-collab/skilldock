@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   buildBeginnerAutoInstallPrompt,
   buildProCliCommands,
@@ -12,11 +12,11 @@ import {
   getCleanKoreanRadarMatches,
   getDomainForCategory,
   getDomainForDeck,
-  getEverydayProblemGuide,
   getFriendlyDeckTitle,
   getFriendlySkillTitle,
   getFriendlyWeightLabel,
   getLifecycleBadgeMeta,
+  getTryPromptExample,
 } from "@/lib/editorial";
 import {
   TOOL_TARGETS,
@@ -29,20 +29,19 @@ import {
 } from "@/lib/types";
 import { HighlightText } from "./HighlightText";
 import {
-  AlertIcon,
   ArrowLeftIcon,
   ArrowRightIcon,
   BarChartIcon,
   BoltIcon,
-  BridgeIcon,
   CheckIcon,
   CloseIcon,
   CopyIcon,
   ExternalLinkIcon,
+  GitHubIcon,
+  HuggingFaceIcon,
   LightbulbIcon,
   PlusIcon,
   RadarIcon,
-  StarIcon,
   ToolIcon,
 } from "./Icons";
 
@@ -90,102 +89,80 @@ interface SkillDetailModalProps {
 
 const BRIDGE_BASE = "http://127.0.0.1:4789";
 
-function LightBenchmarkChart({ metric }: { metric: BenchmarkMetric }) {
+function staggerStyle(index: number): CSSProperties {
+  return { "--stagger": index } as CSSProperties;
+}
+
+/** Artificial Analysis style animated horizontal before/after bar chart */
+function AnimatedBenchmarkChart({ metric }: { metric: BenchmarkMetric }) {
   const maxVal = Math.max(metric.beforeValue, metric.afterValue, 0.0001);
-  const beforePct = Math.max(8, Math.round((metric.beforeValue / maxVal) * 100));
+  const beforePct = Math.max(10, Math.round((metric.beforeValue / maxVal) * 100));
   const afterPct = Math.max(8, Math.round((metric.afterValue / maxVal) * 100));
   const fmt = (v: number) =>
     Number.isInteger(v) ? v.toLocaleString("en-US") : String(v);
+  const directionHint = metric.lowerIsBetter
+    ? "낮을수록 토큰·시간 절약"
+    : "높을수록 성능·정확도 향상";
 
   return (
-    <div className="rounded-xl bg-white border border-[#E5E7EB] p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <span className="text-[14px] font-bold text-[#111827]">
-          {metric.label}
-        </span>
-        <span className="rounded-full bg-[#ECFDF5] border border-[#A7F3D0] px-2.5 py-0.5 text-[12.5px] font-bold text-[#047857] tnum">
+    <div className="rounded-2xl bg-[#FBFBFD] border border-[#E5E5EA] p-4 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[14px] font-bold text-[#1D1D1F]">
+            {metric.label}
+          </span>
+          <span className="rounded-full bg-[#F2F2F7] px-2 py-0.5 text-[11px] font-semibold text-[#636366]">
+            {directionHint}
+          </span>
+        </div>
+        <span className="tnum text-[17px] font-extrabold tracking-[-0.02em] text-[#059669]">
           {metric.deltaText}
         </span>
       </div>
 
-      <svg
-        viewBox="0 0 520 68"
-        className="w-full h-auto block"
-        role="img"
-        aria-label={`${metric.label}: 설치 전 ${metric.beforeValue}${metric.unit} 대비 장착 후 ${metric.afterValue}${metric.unit}`}
-      >
-        <text
-          x="0"
-          y="13"
-          fill="#6B7280"
-          fontSize="12"
-          fontWeight="500"
-          fontFamily="Pretendard Variable, sans-serif"
-        >
-          설치 전 순정 AI ({metric.beforeLabel})
-        </text>
-        <text
-          x="520"
-          y="13"
-          textAnchor="end"
-          fill="#4B5563"
-          fontSize="12"
-          fontWeight="600"
-          fontFamily="JetBrains Mono, monospace"
-        >
-          {fmt(metric.beforeValue)} {metric.unit}
-        </text>
-        <rect x="0" y="20" width="520" height="10" rx="5" fill="#F1F5F9" />
-        <rect
-          x="0"
-          y="20"
-          width={(520 * beforePct) / 100}
-          height="10"
-          rx="5"
-          fill="#94A3B8"
-        />
+      <div className="space-y-2.5">
+        {/* Before bar */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-[12px] text-[#636366]">
+            <span>설치 전 ({metric.beforeLabel})</span>
+            <span className="tnum font-semibold">
+              {fmt(metric.beforeValue)} {metric.unit}
+            </span>
+          </div>
+          <div className="h-2.5 w-full rounded-full bg-[#ECEEF2] overflow-hidden">
+            <div
+              className="animate-gauge-bar h-full rounded-full bg-[#94A3B8]"
+              style={{ width: `${beforePct}%` }}
+            />
+          </div>
+        </div>
 
-        <text
-          x="0"
-          y="49"
-          fill="#111827"
-          fontSize="12"
-          fontWeight="700"
-          fontFamily="Pretendard Variable, sans-serif"
-        >
-          스킬 장착 후 ({metric.afterLabel})
-        </text>
-        <text
-          x="520"
-          y="49"
-          textAnchor="end"
-          fill="#059669"
-          fontSize="12.5"
-          fontWeight="700"
-          fontFamily="JetBrains Mono, monospace"
-        >
-          {fmt(metric.afterValue)} {metric.unit}
-        </text>
-        <rect x="0" y="56" width="520" height="10" rx="5" fill="#ECFDF5" />
-        <rect
-          x="0"
-          y="56"
-          width={(520 * afterPct) / 100}
-          height="10"
-          rx="5"
-          fill="#10B981"
-        />
-      </svg>
+        {/* After bar */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-[12.5px] font-bold text-[#1D1D1F]">
+            <span>장착 후 ({metric.afterLabel})</span>
+            <span className="tnum text-[#059669]">
+              {fmt(metric.afterValue)} {metric.unit}
+            </span>
+          </div>
+          <div className="h-2.5 w-full rounded-full bg-[#ECFDF5] overflow-hidden">
+            <div
+              className="animate-gauge-bar h-full rounded-full bg-[#10B981]"
+              style={{ width: `${afterPct}%` }}
+            />
+          </div>
+        </div>
+      </div>
 
-      <div className="mt-2.5 pt-2 border-t border-[#F1F5F9] flex flex-wrap items-center justify-between gap-2 text-[12px] text-[#6B7280]">
-        <span>{metric.methodology}</span>
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-[#ECEEF2] text-[11.5px] text-[#636366]">
+        <span className="truncate">{metric.methodology}</span>
         <a
           href={metric.sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 font-semibold text-[#0284C7] hover:underline shrink-0"
         >
-          원본 근거 보기
+          <span>원본 근거</span>
           <ExternalLinkIcon className="w-3 h-3" />
         </a>
       </div>
@@ -193,63 +170,59 @@ function LightBenchmarkChart({ metric }: { metric: BenchmarkMetric }) {
   );
 }
 
-function WorkflowStepCompressionCard({ skill }: { skill: SkillItem }) {
+function AnimatedStepGauge({ skill }: { skill: SkillItem }) {
   const wf = skill.workflowCompression;
   const afterPct = Math.max(
     18,
     Math.round((wf.stepCountAfter / Math.max(1, wf.stepCountBefore)) * 100),
   );
   return (
-    <div className="rounded-xl bg-white border border-[#E5E7EB] p-4 space-y-3">
+    <div className="rounded-2xl bg-[#FBFBFD] border border-[#E5E5EA] p-4 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[14px] font-bold text-[#111827]">
-          수동 반복 프롬프트 단계 단축
-        </span>
-        <span className="rounded-full bg-[#F0F9FF] border border-[#BAE6FD] px-2.5 py-0.5 text-[12.5px] font-bold text-[#0369A1] tnum">
-          수동 {wf.stepCountBefore}단계 → 장착 후 {wf.stepCountAfter}단계
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[14px] font-bold text-[#1D1D1F]">
+            반복 수작업 단계 단축
+          </span>
+          <span className="rounded-full bg-[#F2F2F7] px-2 py-0.5 text-[11px] font-semibold text-[#636366]">
+            낮을수록 빠름
+          </span>
+        </div>
+        <span className="tnum text-[17px] font-extrabold text-[#0284C7]">
+          {wf.stepCountBefore}단계 → {wf.stepCountAfter}단계
         </span>
       </div>
 
-      <svg
-        viewBox="0 0 520 62"
-        className="w-full h-auto block"
-        role="img"
-        aria-label={`수동 ${wf.stepCountBefore}단계에서 장착 후 ${wf.stepCountAfter}단계로 단축`}
-      >
-        <text x="0" y="13" fill="#6B7280" fontSize="12" fontWeight="500">
-          설치 전 순정 AI ({wf.stepCountBefore}번 반복 지시)
-        </text>
-        <rect x="0" y="20" width="520" height="9" rx="4.5" fill="#94A3B8" />
-        <text x="0" y="46" fill="#111827" fontSize="12" fontWeight="700">
-          스킬 장착 후 ({wf.stepCountAfter}단계로 자동 적용)
-        </text>
-        <rect x="0" y="52" width="520" height="9" rx="4.5" fill="#F0F9FF" />
-        <rect
-          x="0"
-          y="52"
-          width={(520 * afterPct) / 100}
-          height="9"
-          rx="4.5"
-          fill="#0284C7"
-        />
-      </svg>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[13px]">
-        <div className="rounded-xl bg-[#F8FAFC] border border-[#EAEEF4] p-3">
-          <div className="font-semibold text-[#6B7280] mb-1">설치 전 번거로움</div>
-          <ul className="space-y-1 text-[#374151] leading-snug">
-            {wf.manualSteps.map((s, idx) => (
-              <li key={idx}>· {s}</li>
-            ))}
-          </ul>
+      <div className="space-y-2">
+        <div className="space-y-1">
+          <div className="flex justify-between text-[12px] text-[#636366]">
+            <span>설치 전 순정 AI</span>
+            <span className="tnum font-semibold">{wf.stepCountBefore}회 반복</span>
+          </div>
+          <div className="h-2.5 w-full rounded-full bg-[#ECEEF2] overflow-hidden">
+            <div
+              className="animate-gauge-bar h-full rounded-full bg-[#94A3B8]"
+              style={{ width: "100%" }}
+            />
+          </div>
         </div>
-        <div className="rounded-xl bg-[#ECFDF5]/60 border border-[#A7F3D0] p-3">
-          <div className="font-semibold text-[#047857] mb-1">장착 후 변화</div>
-          <p className="text-[#111827] leading-relaxed font-medium">
-            {wf.autoStep}
-          </p>
+
+        <div className="space-y-1">
+          <div className="flex justify-between text-[12.5px] font-bold text-[#1D1D1F]">
+            <span>장착 후 자동 적용</span>
+            <span className="tnum text-[#0284C7]">{wf.stepCountAfter}단계 완료</span>
+          </div>
+          <div className="h-2.5 w-full rounded-full bg-[#F0F9FF] overflow-hidden">
+            <div
+              className="animate-gauge-bar h-full rounded-full bg-[#007AFF]"
+              style={{ width: `${afterPct}%` }}
+            />
+          </div>
         </div>
       </div>
+
+      <p className="text-[13px] text-[#515154] leading-snug pt-1 border-t border-[#ECEEF2]">
+        {wf.autoStep}
+      </p>
     </div>
   );
 }
@@ -260,8 +233,8 @@ function SafeDemoMedia({ skill }: { skill: SkillItem }) {
   const { type, url, caption } = skill.demoMedia;
 
   return (
-    <div className="rounded-xl bg-white border border-[#E5E7EB] overflow-hidden">
-      <div className="bg-[#F8FAFC] p-2.5 flex items-center justify-center">
+    <div className="rounded-2xl bg-[#FBFBFD] border border-[#E5E5EA] overflow-hidden">
+      <div className="p-2.5 flex items-center justify-center">
         {type === "mp4" ? (
           <video
             src={url}
@@ -271,27 +244,27 @@ function SafeDemoMedia({ skill }: { skill: SkillItem }) {
             playsInline
             controls
             onError={() => setHidden(true)}
-            className="w-full max-h-[340px] rounded-lg bg-black"
+            className="w-full max-h-[320px] rounded-xl bg-black"
           />
         ) : (
           <img
             src={url}
             alt={caption}
             onError={() => setHidden(true)}
-            className="w-full max-h-[340px] object-contain rounded-lg"
+            className="w-full max-h-[320px] object-contain rounded-xl"
             loading="lazy"
           />
         )}
       </div>
-      <div className="px-3.5 py-2.5 border-t border-[#F1F5F9] flex items-center justify-between gap-2 text-[12.5px] text-[#4B5563]">
-        <span>{caption}</span>
+      <div className="px-3.5 py-2 border-t border-[#ECEEF2] flex items-center justify-between gap-2 text-[12px] text-[#636366]">
+        <span className="truncate">{caption}</span>
         <a
           href={url}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-[#0284C7] font-semibold hover:underline shrink-0"
         >
-          원본
+          <span>원본</span>
           <ExternalLinkIcon className="w-3 h-3" />
         </a>
       </div>
@@ -314,50 +287,62 @@ export function SkillDetailModal({
   scope,
   onChangeScope,
   bridgeConnected,
-  bridgeDetectedTools,
   bridgeCwd,
-  bridgeInstalled,
   onRefreshBridge,
   onToast,
 }: SkillDetailModalProps) {
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const [showPromptPreview, setShowPromptPreview] = useState(false);
-  const [showCliPreview, setShowCliPreview] = useState(false);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
+  const [primaryDone, setPrimaryDone] = useState(false);
+  const [secondaryCopied, setSecondaryCopied] = useState(false);
+  const [promptCopied, setPromptCopied] = useState(false);
   const [bridgeBusy, setBridgeBusy] = useState(false);
-  const [bridgeMsg, setBridgeMsg] = useState<string | null>(null);
-  const [bridgeErr, setBridgeErr] = useState<string | null>(null);
-  const [projectDir, setProjectDir] = useState(bridgeCwd);
 
-  useEffect(() => {
-    setProjectDir(bridgeCwd);
-  }, [bridgeCwd]);
+  const onScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const top = el.scrollTop;
+    const max = Math.max(1, el.scrollHeight - el.clientHeight);
+    setScrolled(top > 12);
+    setScrollProgress(Math.min(100, Math.max(0, (top / max) * 100)));
+  }, []);
 
   useEffect(() => {
     if (!target) return;
-    setBridgeMsg(null);
-    setBridgeErr(null);
-    setShowPromptPreview(false);
-    setShowCliPreview(false);
+    setPrimaryDone(false);
+    setSecondaryCopied(false);
+    setPromptCopied(false);
+    setScrollProgress(0);
+    setScrolled(false);
+    scrollRef.current?.scrollTo({ top: 0 });
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
   }, [target, onClose]);
 
   if (!target) return null;
 
-  // Determine active skills list for Box 4 installation actions
-  const activeSkills: SkillItem[] =
-    target.kind === "skill"
-      ? [target.skill]
-      : target.kind === "deck"
-        ? target.deck.skillSlugs
-            .map((s) => skillsBySlug.get(s))
-            .filter((s): s is SkillItem => Boolean(s))
-        : dockSlugs
-            .map((s) => skillsBySlug.get(s))
-            .filter((s): s is SkillItem => Boolean(s));
+  const isSkill = target.kind === "skill";
+  const isDeck = target.kind === "deck";
+
+  const activeSkills: SkillItem[] = isSkill
+    ? [target.skill]
+    : isDeck
+      ? target.deck.skillSlugs
+          .map((s) => skillsBySlug.get(s))
+          .filter((s): s is SkillItem => Boolean(s))
+      : dockSlugs
+          .map((s) => skillsBySlug.get(s))
+          .filter((s): s is SkillItem => Boolean(s));
 
   const analysis = analyzeDockSkills(activeSkills);
   const weight = getFriendlyWeightLabel(analysis.weightTier);
@@ -370,139 +355,16 @@ export function SkillDetailModal({
   const webPack = buildWebBuilderPromptPack(activeSkills, 6500);
   const cliCommands = buildProCliCommands(activeSkills, selectedTools, scope);
 
+  const onlyWebBuilder =
+    selectedTools.length > 0 &&
+    selectedTools.every((t) => t === "web-builder");
   const localTools = selectedTools.filter((t) => t !== "web-builder");
   const effectiveLocalTools: ToolTargetId[] =
     localTools.length > 0 ? localTools : ["claude-code", "gemini-agy"];
-
-  async function handleCopy(
-    text: string,
-    key: string,
-    toastLabel: string,
-    installMethod?: InstallMethod,
-  ) {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedKey(key);
-      if (installMethod && activeSkills.length > 0) {
-        onRecordInstall({
-          slugs: activeSkills.map((s) => s.slug),
-          presetSlug: target?.kind === "deck" ? target.deck.slug : undefined,
-          presetTitle: target?.kind === "deck" ? target.deck.title : undefined,
-          method: installMethod,
-          clearCartAfter: target?.kind === "dock-bulk",
-          toastMessage: toastLabel,
-        });
-      } else {
-        onToast(toastLabel);
-      }
-      setTimeout(() => setCopiedKey(null), 1800);
-    } catch {
-      onToast("복사에 실패했어요. 아래 미리보기에서 직접 선택해 복사해 주세요.");
-    }
-  }
-
-  async function handleBridgeInstall() {
-    if (activeSkills.length === 0) return;
-    setBridgeBusy(true);
-    setBridgeErr(null);
-    setBridgeMsg(null);
-    try {
-      const targetTool = effectiveLocalTools[0];
-      const res = await fetch(`${BRIDGE_BASE}/install`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          scope,
-          projectDir: scope === "project" ? projectDir || bridgeCwd : undefined,
-          tools: effectiveLocalTools,
-          skills: activeSkills.map((s) => ({
-            slug: s.slug,
-            name: s.name,
-            repoUrl: s.repoUrl,
-            content: buildToolFilePreview(s, targetTool, scope).content,
-          })),
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.ok) {
-        throw new Error(json.error || `HTTP ${res.status}`);
-      }
-      setBridgeMsg(
-        `자동 설치 완료! 파일 ${json.writtenFiles.length}개를 안전하게 반영했어요 (백업 ${json.backups.length}건).`,
-      );
-      onRecordInstall({
-        slugs: activeSkills.map((s) => s.slug),
-        presetSlug: target?.kind === "deck" ? target.deck.slug : undefined,
-        presetTitle: target?.kind === "deck" ? target.deck.title : undefined,
-        method: "live-bridge",
-        clearCartAfter: target?.kind === "dock-bulk",
-        toastMessage: `${activeSkills.length}개 스킬을 내 PC에 자동 설치했어요! 좌측 '내 장착 독'에 기록되었습니다.`,
-      });
-      await onRefreshBridge();
-    } catch (err) {
-      setBridgeErr(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBridgeBusy(false);
-    }
-  }
-
-  async function handleBridgeToggle(entry: BridgeInstalledEntry) {
-    setBridgeBusy(true);
-    setBridgeErr(null);
-    try {
-      const res = await fetch(`${BRIDGE_BASE}/toggle`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          scope,
-          projectDir: scope === "project" ? projectDir || bridgeCwd : undefined,
-          tool: entry.tool,
-          slug: entry.slug,
-          enabled: !entry.enabled,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.ok) throw new Error(json.error || `HTTP ${res.status}`);
-      setBridgeMsg(
-        `${entry.name} 상태를 ${json.enabled ? "켜짐(ON)" : "꺼짐(OFF)"}으로 바꿨어요.`,
-      );
-      await onRefreshBridge();
-    } catch (err) {
-      setBridgeErr(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBridgeBusy(false);
-    }
-  }
-
-  async function handleBridgeUninstall(entry: BridgeInstalledEntry) {
-    setBridgeBusy(true);
-    setBridgeErr(null);
-    try {
-      const res = await fetch(`${BRIDGE_BASE}/uninstall`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          scope,
-          projectDir: scope === "project" ? projectDir || bridgeCwd : undefined,
-          tool: entry.tool,
-          slug: entry.slug,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.ok) throw new Error(json.error || `HTTP ${res.status}`);
-      setBridgeMsg(`${entry.name} 스킬을 깔끔하게 제거했어요.`);
-      await onRefreshBridge();
-    } catch (err) {
-      setBridgeErr(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBridgeBusy(false);
-    }
-  }
-
-  // Header fields
-  const isSkill = target.kind === "skill";
-  const isDeck = target.kind === "deck";
-  const isBulk = target.kind === "dock-bulk";
+  const localToolShortLabels = effectiveLocalTools
+    .slice(0, 2)
+    .map((id) => TOOL_TARGETS.find((t) => t.id === id)?.shortLabel ?? id)
+    .join(" · ");
 
   const domain = isSkill
     ? getDomainForCategory(target.skill.category)
@@ -510,750 +372,705 @@ export function SkillDetailModal({
       ? getDomainForDeck(target.deck, skillsBySlug)
       : null;
 
+  const modalTitle = isSkill
+    ? getFriendlySkillTitle(target.skill)
+    : isDeck
+      ? getFriendlyDeckTitle(target.deck)
+      : `담아둔 무기 ${activeSkills.length}개 한 번에 적용하기`;
+
   const isDockedNow = isSkill
     ? dockSlugs.includes(target.skill.slug)
     : isDeck
       ? target.deck.skillSlugs.every((s) => dockSlugs.includes(s))
       : activeSkills.length > 0;
 
-  // Benchmarks to display in Box 2
+  const isInstalledNow = isSkill
+    ? installedIds.has(target.skill.slug)
+    : isDeck
+      ? target.deck.skillSlugs.length > 0 &&
+        target.deck.skillSlugs.every((s) => installedIds.has(s))
+      : false;
+
   const combinedBenchmarks: BenchmarkMetric[] = isSkill
-    ? target.skill.benchmarks
-    : activeSkills.flatMap((s) => s.benchmarks.slice(0, 1));
+    ? target.skill.benchmarks.slice(0, 2)
+    : activeSkills.flatMap((s) => s.benchmarks.slice(0, 1)).slice(0, 2);
 
-  // Radar matches to display in Box 3
-  const radarList = isSkill
-    ? getCleanKoreanRadarMatches(target.skill)
+  const topRadar = isSkill
+    ? getCleanKoreanRadarMatches(target.skill)[0]
     : activeSkills
-        .flatMap((s) => getCleanKoreanRadarMatches(s).slice(0, 1))
-        .slice(0, 3);
+        .flatMap((s) => getCleanKoreanRadarMatches(s))
+        .find(Boolean);
 
-  const detectedCliNames = Object.entries(bridgeDetectedTools)
-    .filter(([, ok]) => ok)
-    .map(([k]) => k);
+  const tryPromptText = isSkill
+    ? getTryPromptExample(target.skill)
+    : activeSkills[0]
+      ? getTryPromptExample(activeSkills[0])
+      : "방금 장착한 스킬 조합으로 현재 프로젝트를 깔끔하게 개선해 줘";
+
+  const originalUrl = isSkill
+    ? target.skill.sourcePlatform === "huggingface" && target.skill.hfSpaceUrl
+      ? target.skill.hfSpaceUrl
+      : target.skill.repoUrl
+    : activeSkills[0]?.repoUrl ?? "https://github.com/rlawlstjr346-collab/skilldock";
+
+  const copyTryPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(tryPromptText);
+      setPromptCopied(true);
+      onToast("설치 후 첫마디 예시를 복사했어요.");
+      window.setTimeout(() => setPromptCopied(false), 1800);
+    } catch {
+      onToast("복사에 실패했어요.");
+    }
+  };
+
+  // Single Primary Solid-Black CTA execution
+  const handlePrimaryAction = async () => {
+    if (activeSkills.length === 0) return;
+
+    // Case 1: Only Lovable / Bolt / v0 selected
+    if (onlyWebBuilder) {
+      try {
+        await navigator.clipboard.writeText(webPack);
+        setPrimaryDone(true);
+        window.setTimeout(() => setPrimaryDone(false), 2200);
+        onRecordInstall({
+          slugs: activeSkills.map((s) => s.slug),
+          presetSlug: isDeck ? target.deck.slug : undefined,
+          presetTitle: isDeck ? target.deck.title : undefined,
+          method: "web-builder-pack",
+          clearCartAfter: target.kind === "dock-bulk",
+          toastMessage:
+            "Lovable · Bolt 프롬프트 팩을 복사했어요! 좌측 '내 장착 독'에 기록되었습니다.",
+        });
+      } catch {
+        onToast("복사에 실패했어요.");
+      }
+      return;
+    }
+
+    // Case 2: Local Live Bridge connected -> instant 1-click PC install
+    if (bridgeConnected) {
+      setBridgeBusy(true);
+      try {
+        const res = await fetch(`${BRIDGE_BASE}/install`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scope,
+            projectDir: scope === "project" ? bridgeCwd : undefined,
+            tools: effectiveLocalTools,
+            skills: activeSkills.map((s) => ({
+              slug: s.slug,
+              name: s.name,
+              repoUrl: s.repoUrl,
+              content: buildToolFilePreview(s, effectiveLocalTools[0], scope)
+                .content,
+            })),
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok || !json.ok) {
+          throw new Error(json.error || `HTTP ${res.status}`);
+        }
+        setPrimaryDone(true);
+        window.setTimeout(() => setPrimaryDone(false), 2400);
+        onRecordInstall({
+          slugs: activeSkills.map((s) => s.slug),
+          presetSlug: isDeck ? target.deck.slug : undefined,
+          presetTitle: isDeck ? target.deck.title : undefined,
+          method: "live-bridge",
+          clearCartAfter: target.kind === "dock-bulk",
+          toastMessage: `${activeSkills.length}개 무기를 내 PC(${localToolShortLabels})에 자동 장착했어요! 좌측 '내 장착 독'에 기록되었습니다.`,
+        });
+        await onRefreshBridge();
+      } catch (err) {
+        onToast(
+          `자동 장착 오류: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      } finally {
+        setBridgeBusy(false);
+      }
+      return;
+    }
+
+    // Case 3: General visitor -> Copy Korean 1-click AI chat auto-install prompt
+    try {
+      await navigator.clipboard.writeText(beginnerPrompt);
+      setPrimaryDone(true);
+      window.setTimeout(() => setPrimaryDone(false), 2200);
+      onRecordInstall({
+        slugs: activeSkills.map((s) => s.slug),
+        presetSlug: isDeck ? target.deck.slug : undefined,
+        presetTitle: isDeck ? target.deck.title : undefined,
+        method: "ai-chat-prompt",
+        clearCartAfter: target.kind === "dock-bulk",
+        toastMessage:
+          "설치 문구가 복사되었어요! 좌측 '내 장착 독'에 기록되었습니다.",
+      });
+    } catch {
+      onToast("복사에 실패했어요.");
+    }
+  };
+
+  // Single Slim Secondary Outline Action
+  const handleSecondaryAction = async () => {
+    if (activeSkills.length === 0) return;
+    try {
+      if (bridgeConnected && !onlyWebBuilder) {
+        await navigator.clipboard.writeText(beginnerPrompt);
+        setSecondaryCopied(true);
+        window.setTimeout(() => setSecondaryCopied(false), 2000);
+        onRecordInstall({
+          slugs: activeSkills.map((s) => s.slug),
+          presetSlug: isDeck ? target.deck.slug : undefined,
+          presetTitle: isDeck ? target.deck.title : undefined,
+          method: "ai-chat-prompt",
+          toastMessage:
+            "AI 채팅창 자동설치 문구를 복사했어요! 좌측 '내 장착 독'에 기록되었습니다.",
+        });
+      } else {
+        const textToCopy = selectedTools.includes("web-builder")
+          ? webPack
+          : cliCommands;
+        await navigator.clipboard.writeText(textToCopy);
+        setSecondaryCopied(true);
+        window.setTimeout(() => setSecondaryCopied(false), 2000);
+        onRecordInstall({
+          slugs: activeSkills.map((s) => s.slug),
+          presetSlug: isDeck ? target.deck.slug : undefined,
+          presetTitle: isDeck ? target.deck.title : undefined,
+          method: selectedTools.includes("web-builder")
+            ? "web-builder-pack"
+            : "ai-chat-prompt",
+          toastMessage: selectedTools.includes("web-builder")
+            ? "웹 빌더 프롬프트 팩을 복사했어요! '내 장착 독'에 기록되었습니다."
+            : "터미널 CLI 설치 명령어를 복사했어요! '내 장착 독'에 기록되었습니다.",
+        });
+      }
+    } catch {
+      onToast("복사에 실패했어요.");
+    }
+  };
+
+  // Primary CTA copy lines
+  const primarySubLabel = onlyWebBuilder
+    ? "프로젝트 지침 칸에 붙여넣으면 바로 적용됩니다"
+    : bridgeConnected
+      ? "기존 파일을 자동 백업하고 내 PC 툴 폴더에 즉시 반영합니다"
+      : "복사 후 켜둔 Claude · Gemini · Cursor 창에 붙여넣기만 하면 AI가 알아서 설치합니다";
+
+  const primaryMainLabel = bridgeBusy
+    ? "안전 백업 후 내 PC에 장착하는 중..."
+    : primaryDone
+      ? "적용 완료! 좌측 '내 장착 독'에 기록됐어요"
+      : onlyWebBuilder
+        ? "Lovable · Bolt 프롬프트 팩 바로 복사하기"
+        : bridgeConnected
+          ? `내 컴퓨터(${localToolShortLabels})에 원클릭 바로 장착하기`
+          : "내 AI 채팅창용 원클릭 자동설치 문구 복사하기";
+
+  const secondaryLabel = secondaryCopied
+    ? "보조 설치 문구 복사 완료!"
+    : bridgeConnected && !onlyWebBuilder
+      ? "AI 채팅창 복붙 문구로 복사하기"
+      : selectedTools.includes("web-builder")
+        ? "Lovable · Bolt · v0 프롬프트 팩으로 전환 복사"
+        : "개발자용 터미널 명령어 복사하기";
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-5"
-      role="dialog"
-      aria-modal="true"
-      aria-label="스킬 상세 요약 및 원클릭 설치"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-[min(92vw,720px)] max-h-[88vh] overflow-y-auto rounded-[24px] bg-white p-6 sm:p-8 shadow-2xl border border-[#E5E7EB]">
-        {/* Back button when drilled into a skill from a preset deck */}
-        {isSkill && target.fromDeck && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+      {/* AI Radar 1:1 Dimmed Blur Backdrop */}
+      <button
+        type="button"
+        aria-label="모달 닫기"
+        tabIndex={-1}
+        onClick={onClose}
+        className="liquid-backdrop animate-fade-in fixed inset-0 cursor-default"
+      />
+
+      {/* AI Radar 1:1 VisionOS Liquid Glass Dialog */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={modalTitle}
+        className="liquid-glass-modal animate-liquid-modal z-10 flex flex-col overflow-hidden"
+      >
+        {/* Sticky Frosted Top Control Bar + 2px Scroll Progress Bar */}
+        <div
+          data-scrolled={scrolled ? "true" : "false"}
+          className="reading-sticky-bar relative z-20 flex h-16 shrink-0 select-none items-center justify-between gap-3 border-b border-transparent px-6 sm:px-10"
+        >
+          <div className="min-w-0 flex-1 flex items-center gap-2">
+            {isSkill && target.fromDeck && (
+              <button
+                type="button"
+                onClick={() =>
+                  onChangeTarget({ kind: "deck", deck: target.fromDeck! })
+                }
+                className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#F2F2F7] px-3 py-1 text-[12.5px] font-semibold text-[#1D1D1F] hover:bg-[#E5E5EA]"
+              >
+                <ArrowLeftIcon className="w-3.5 h-3.5" />
+                <span>프리셋으로</span>
+              </button>
+            )}
+            <p
+              className={`min-w-0 flex-1 truncate text-[15px] font-semibold text-[#1D1D1F] transition-opacity duration-200 ${
+                scrolled ? "opacity-100" : "pointer-events-none opacity-0"
+              }`}
+              aria-hidden={!scrolled}
+            >
+              {modalTitle}
+            </p>
+          </div>
+
           <button
             type="button"
-            onClick={() =>
-              onChangeTarget({ kind: "deck", deck: target.fromDeck! })
-            }
-            className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#F3F4F6] px-3 py-1 text-[13px] font-semibold text-[#374151] hover:bg-[#E5E7EB]"
+            onClick={onClose}
+            aria-label="상세 보기 닫기"
+            title="닫기 (ESC)"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#E5E5EA] bg-white/80 text-[#515154] hover:bg-[#F2F2F7] hover:text-[#1D1D1F]"
           >
-            <ArrowLeftIcon className="w-3.5 h-3.5" />
-            <span>{target.fromDeck.title} 요약으로 돌아가기</span>
+            <CloseIcon className="w-4 h-4" />
           </button>
-        )}
 
-        {/* Modal Top Header */}
-        <header className="space-y-3.5 pb-5 border-b border-[#EAEEF4]">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-2 text-[13px]">
-              {domain && (
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-semibold ${domain.badgeClass}`}
-                >
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] bg-transparent"
+          >
+            <div
+              className="h-full bg-[#1D1D1F]/70 transition-[width] duration-75 ease-out"
+              style={{ width: `${scrolled ? scrollProgress : 0}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Smooth Scroll Body */}
+        <div
+          ref={scrollRef}
+          onScroll={onScroll}
+          className="thin-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain"
+        >
+          <div className="mx-auto flex w-full max-w-[76ch] flex-col gap-5 px-6 pb-10 pt-2 sm:px-10">
+            {/* Modal Header + 2 Raycast/AI Radar Top Capsules */}
+            <header
+              className="reading-stagger flex flex-col gap-3.5"
+              style={staggerStyle(0)}
+            >
+              <div className="flex flex-wrap items-center gap-2 text-[13px]">
+                {domain && (
                   <span
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ backgroundColor: domain.dotColor }}
-                    aria-hidden="true"
-                  />
-                  {domain.label}
-                </span>
-              )}
-              {isBulk && (
-                <span className="inline-flex items-center rounded-full bg-[#ECFDF5] border border-[#A7F3D0] px-2.5 py-0.5 font-semibold text-[#047857]">
-                  내 장착 독 일괄 설치 ({activeSkills.length}개)
-                </span>
-              )}
-              {isSkill && (
-                <>
-                  {(() => {
-                    const lc = getLifecycleBadgeMeta(target.skill.lifecycleTier);
-                    return (
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11.5px] font-semibold ${lc.badgeClass}`}
-                      >
-                        <span
-                          className="h-1.5 w-1.5 rounded-full"
-                          style={{ backgroundColor: lc.dotColor }}
-                        />
-                        {lc.label}
-                      </span>
-                    );
-                  })()}
-                  {radarList.length > 0 && (
-                    <span className="inline-flex items-center rounded-full bg-[#F0F9FF] border border-[#BAE6FD] px-2 py-0.5 text-[11.5px] font-semibold text-[#0369A1]">
-                      실시간 이슈 해결
-                    </span>
-                  )}
-                  {installedIds.has(target.skill.slug) && (
-                    <span className="inline-flex items-center rounded-full bg-[#ECFDF5] border border-[#A7F3D0] px-2 py-0.5 text-[11.5px] font-bold text-[#047857]">
-                      설치 완료 ✓
-                    </span>
-                  )}
-                  <span className="tnum inline-flex items-center gap-1 font-semibold text-[#374151]">
-                    <StarIcon className="w-3.5 h-3.5 text-[#D97706]" />
-                    GitHub {target.skill.stars.toLocaleString("en-US")}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-semibold ${domain.badgeClass}`}
+                  >
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: domain.dotColor }}
+                    />
+                    {domain.label}
                   </span>
-                  <span className="text-[#6B7280]">· {target.skill.license}</span>
-                </>
-              )}
-              {isDeck && (
-                <>
+                )}
+
+                {isSkill && (
+                  <>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#F2F2F7] px-2.5 py-0.5 font-bold text-[#1D1D1F]">
+                      {target.skill.sourcePlatform === "huggingface" ? (
+                        <HuggingFaceIcon className="w-3.5 h-3.5" />
+                      ) : target.skill.sourcePlatform === "skilldock" ? (
+                        <RadarIcon className="w-3.5 h-3.5 text-[#0F766E]" />
+                      ) : (
+                        <GitHubIcon className="w-3.5 h-3.5" />
+                      )}
+                      <span className="tnum">
+                        {target.skill.sourcePlatform === "huggingface"
+                          ? `HF ♥ ${formatStars(target.skill.likes ?? target.skill.stars)}`
+                          : target.skill.sourcePlatform === "skilldock"
+                            ? "AI Radar Live"
+                            : `GitHub ★ ${formatStars(target.skill.stars)}`}
+                      </span>
+                    </span>
+                    {(() => {
+                      const lc = getLifecycleBadgeMeta(
+                        target.skill.lifecycleTier,
+                      );
+                      return (
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11.5px] font-semibold ${lc.badgeClass}`}
+                        >
+                          {lc.label}
+                        </span>
+                      );
+                    })()}
+                  </>
+                )}
+
+                {isDeck && (
                   <span className="rounded-full bg-[#181D27] text-[#34D399] px-2.5 py-0.5 text-[12px] font-bold">
                     프리셋 세트 · {activeSkills.length}개 무기 합체
                   </span>
-                  {target.deck.skillSlugs.every((s) => installedIds.has(s)) && (
-                    <span className="inline-flex items-center rounded-full bg-[#ECFDF5] border border-[#A7F3D0] px-2 py-0.5 text-[11.5px] font-bold text-[#047857]">
-                      설치 완료 ✓
-                    </span>
-                  )}
-                </>
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="모달 닫기"
-              className="rounded-full p-2 text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]"
-            >
-              <CloseIcon className="w-4 h-4" />
-            </button>
-          </div>
-
-          <h2 className="text-[22px] sm:text-[26px] font-extrabold text-[#111827] leading-[1.34] tracking-[-0.025em]">
-            {isSkill
-              ? getFriendlySkillTitle(target.skill)
-              : isDeck
-                ? getFriendlyDeckTitle(target.deck)
-                : `담아둔 스킬 ${activeSkills.length}개 한 번에 설치하기`}
-          </h2>
-
-          <p className="text-[15px] text-[#4B5563] leading-relaxed">
-            {isSkill
-              ? target.skill.roleLabelKo
-              : isDeck
-                ? target.deck.targetAudience
-                : "선택한 모든 스킬을 내 코딩 툴 규격에 맞춰 한 번에 깔끔하게 적용할 수 있어요."}
-          </p>
-
-          {/* Two-column top capsule action buttons (AI Radar style) */}
-          {!isBulk && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-              <button
-                type="button"
-                onClick={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  if (isSkill) {
-                    onToggleDockSkill(target.skill.slug, rect);
-                  } else if (isDeck) {
-                    onLoadDeckToDock(target.deck, rect);
-                  }
-                }}
-                className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-[14px] font-bold border transition-colors ${
-                  isDockedNow
-                    ? "bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]"
-                    : "bg-[#111827] text-white border-[#111827] hover:bg-[#1F2937]"
-                }`}
-              >
-                {isDockedNow ? (
-                  <>
-                    <CheckIcon className="w-4 h-4" />
-                    <span>장바구니에 담김</span>
-                  </>
-                ) : (
-                  <>
-                    <PlusIcon className="w-4 h-4" />
-                    <span>
-                      {isDeck ? "이 세트 통째로 장바구니 담기" : "장바구니에 담기"}
-                    </span>
-                  </>
                 )}
-              </button>
 
-              {isSkill ? (
-                <a
-                  href={target.skill.repoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-[14px] font-semibold bg-white text-[#374151] border border-[#D1D5DB] hover:bg-[#F9FAFB]"
-                >
-                  <span>GitHub 원본 저장소</span>
-                  <ExternalLinkIcon className="w-3.5 h-3.5" />
-                </a>
-              ) : isDeck ? (
-                <a
-                  href={activeSkills[0]?.repoUrl ?? "https://github.com/rlawlstjr346-collab/skilldock"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2.5 text-[14px] font-semibold bg-white text-[#374151] border border-[#D1D5DB] hover:bg-[#F9FAFB]"
-                >
-                  <span>대표 원본 저장소 보기</span>
-                  <ExternalLinkIcon className="w-3.5 h-3.5" />
-                </a>
-              ) : null}
-            </div>
-          )}
-        </header>
-
-        {/* 4 FRIENDLY SUMMARY BOXES */}
-        <div className="mt-5 space-y-4">
-          {/* 박스 1: 한줄 핵심 요약 · 어떤 도구인가요? */}
-          <section className="modal-section-box p-5 space-y-3">
-            <h3 className="flex items-center gap-2 text-[14.5px] font-bold text-[#D97706]">
-              <LightbulbIcon className="w-4 h-4 shrink-0" />
-              <span>한줄 핵심 요약 · 어떤 도구인가요?</span>
-            </h3>
-
-            {isSkill && (
-              <div className="space-y-2.5 text-[15.5px] leading-[1.72] text-[#374151]">
-                <p className="font-medium text-[#111827]">
-                  <HighlightText text={target.skill.oneLineAnalogy} tone="yellow" />
-                </p>
-                <p>
-                  <HighlightText text={target.skill.summaryKo} tone="sky" />
-                </p>
-              </div>
-            )}
-
-            {isDeck && (
-              <div className="space-y-3.5">
-                <p className="text-[15.5px] leading-[1.72] text-[#374151]">
-                  <HighlightText text={target.deck.synergyNarrative} tone="yellow" />
-                </p>
-
-                <div className="space-y-2">
-                  <div className="text-[13px] font-bold text-[#111827]">
-                    같이 쓰면 이런 케미가 나요 (부품을 누르면 개별 상세를 볼 수 있어요)
-                  </div>
-                  <div className="space-y-2">
-                    {activeSkills.map((member, idx) => (
-                      <button
-                        key={member.slug}
-                        type="button"
-                        onClick={() =>
-                          onChangeTarget({
-                            kind: "skill",
-                            skill: member,
-                            fromDeck: target.deck,
-                          })
-                        }
-                        className="w-full text-left rounded-xl bg-white border border-[#E5E7EB] p-3.5 hover:border-[#CBD5E1] flex items-center justify-between gap-3"
-                      >
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 text-[14px] font-bold text-[#111827]">
-                            <span className="tnum text-[#059669]">0{idx + 1}</span>
-                            <span className="truncate">{member.name}</span>
-                            <span className="tnum text-[12px] font-medium text-[#6B7280]">
-                              ★{formatStars(member.stars)}
-                            </span>
-                          </div>
-                          <p className="mt-1 text-[13.5px] text-[#4B5563] line-clamp-1">
-                            <HighlightText
-                              text={member.oneLineAnalogy}
-                              tone="yellow"
-                            />
-                          </p>
-                        </div>
-                        <ArrowRightIcon className="w-4 h-4 text-[#6B7280] shrink-0" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {isBulk && (
-              <div className="space-y-2.5">
-                {activeSkills.length === 0 ? (
-                  <p className="text-[14.5px] text-[#6B7280]">
-                    아직 담아둔 스킬이 없어요. 피드에서 마음에 드는 스킬의 [+ 담기]를 눌러보세요.
-                  </p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {activeSkills.map((sk) => (
-                      <span
-                        key={sk.slug}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-white border border-[#E5E7EB] px-3 py-1.5 text-[13px] font-semibold text-[#111827]"
-                      >
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onChangeTarget({ kind: "skill", skill: sk })
-                          }
-                          className="hover:underline"
-                        >
-                          {sk.name}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onToggleDockSkill(sk.slug)}
-                          aria-label={`${sk.name} 제거`}
-                          className="text-[#6B7280] hover:text-[#DC2626]"
-                        >
-                          <CloseIcon className="w-3.5 h-3.5" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {analysis.conflicts.length > 0 && (
-                  <div className="rounded-xl bg-[#FFFBEB] border border-[#FDE68A] p-3 text-[13.5px] text-[#92400E] flex items-start gap-2">
-                    <AlertIcon className="w-4 h-4 shrink-0 mt-0.5 text-[#D97706]" />
-                    <span>{analysis.conflicts[0].messageKo}</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </section>
-
-          {/* 박스 2: 얼마나 좋아지나요? · 원본 실측 효용 그래프 & 시연 */}
-          {activeSkills.length > 0 && (
-            <section className="modal-section-box p-5 space-y-3.5">
-              <h3 className="flex items-center gap-2 text-[14.5px] font-bold text-[#0284C7]">
-                <BarChartIcon className="w-4 h-4 shrink-0" />
-                <span>얼마나 좋아지나요? · 원본 실측 효용 그래프 & 시연</span>
-              </h3>
-
-              {combinedBenchmarks.length > 0 ? (
-                <div className="space-y-3">
-                  {combinedBenchmarks.map((metric, idx) => (
-                    <LightBenchmarkChart key={idx} metric={metric} />
-                  ))}
-                </div>
-              ) : isSkill ? (
-                <WorkflowStepCompressionCard skill={target.skill} />
-              ) : (
-                <div className="rounded-xl bg-white border border-[#E5E7EB] p-4 space-y-2">
-                  <div className="text-[14px] font-bold text-[#111827]">
-                    이 조합의 핵심 실측·검증 포인트
-                  </div>
-                  <ul className="space-y-1.5 text-[14px] text-[#374151]">
-                    {(isDeck
-                      ? target.deck.highlightMetrics
-                      : activeSkills.map(
-                          (s) =>
-                            `${s.name}: 수동 ${s.workflowCompression.stepCountBefore}단계 → 자동 ${s.workflowCompression.stepCountAfter}단계 단축`,
-                        )
-                    ).map((line, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="tnum font-bold text-[#0284C7]">
-                          0{i + 1}
-                        </span>
-                        <span>{line}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Friendly AI Memory Burden Gauge */}
-              <div className="rounded-xl bg-white border border-[#E5E7EB] p-4 space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-[13.5px] font-bold text-[#111827]">
-                    내 AI 기억용량 부담 (장비 무게)
+                {isInstalledNow && (
+                  <span className="inline-flex items-center gap-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] px-2.5 py-0.5 text-[11.5px] font-bold text-[#047857]">
+                    설치 완료 ✓
                   </span>
-                  <span
-                    className={`rounded-full border px-2.5 py-0.5 text-[12px] font-bold ${weight.colorClass}`}
-                  >
-                    {weight.detail}
-                  </span>
-                </div>
-                <div className="w-full h-2.5 rounded-full bg-[#F1F5F9] overflow-hidden">
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${Math.max(10, analysis.percentOfBudget)}%`,
-                      backgroundColor: weight.barColor,
+                )}
+              </div>
+
+              <h2 className="text-[clamp(1.35rem,1.8vw,1.75rem)] font-extrabold leading-[1.34] tracking-[-0.024em] text-[#1D1D1F]">
+                {modalTitle}
+              </h2>
+
+              {/* 2 Top Secondary Capsules: Cart + Original Source */}
+              <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                {target.kind !== "dock-bulk" && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      if (isSkill) onToggleDockSkill(target.skill.slug, rect);
+                      else if (isDeck) onLoadDeckToDock(target.deck, rect);
                     }}
-                  />
-                </div>
-                <div className="flex justify-between text-[12px] text-[#6B7280] tnum">
+                    className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-[13.5px] font-semibold border transition-colors ${
+                      isDockedNow
+                        ? "bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]"
+                        : "bg-white text-[#1D1D1F] border-[#D1D1D6] hover:bg-[#F2F2F7]"
+                    }`}
+                  >
+                    {isDockedNow ? (
+                      <>
+                        <CheckIcon className="w-3.5 h-3.5" />
+                        <span>장바구니에 담김</span>
+                      </>
+                    ) : (
+                      <>
+                        <PlusIcon className="w-3.5 h-3.5" />
+                        <span>
+                          {isDeck ? "세트 장바구니 담기" : "장바구니 담기"}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                )}
+
+                <a
+                  href={originalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white border border-[#D1D1D6] px-4 py-2 text-[13.5px] font-semibold text-[#515154] hover:bg-[#F2F2F7] hover:text-[#1D1D1F]"
+                >
                   <span>
-                    예상 상시 점유 약 {analysis.totalTokens.toLocaleString("en-US")}{" "}
-                    tokens
+                    {isSkill && target.skill.sourcePlatform === "huggingface"
+                      ? "Hugging Face Space 열기"
+                      : "원본 저장소 열기"}
                   </span>
-                  <span>쾌적 권장 범위 4,500 tokens 이하</span>
-                </div>
+                  <ExternalLinkIcon className="w-3.5 h-3.5" />
+                </a>
               </div>
+            </header>
 
-              {/* Verified Demo Media (mp4/gif/image) */}
-              {isSkill && <SafeDemoMedia skill={target.skill} />}
-            </section>
-          )}
-
-          {/* 박스 3: 왜 지금 쓰면 좋을까요? · 최신 AI 동향 연결 */}
-          {!isBulk && (
-            <section className="modal-section-box p-5 space-y-3">
-              <h3 className="flex items-center gap-2 text-[14.5px] font-bold text-[#0F766E]">
-                <RadarIcon className="w-4 h-4 shrink-0" />
-                <span>왜 지금 쓰면 좋을까요? · 최신 AI 동향 연결</span>
+            {/* INSET CARD 1: 한줄 핵심 정체 (1~2 sentences + yellow highlighter + single-line radar badge) */}
+            <section
+              className="inset-health-card reading-stagger flex flex-col gap-3 p-6"
+              style={staggerStyle(1)}
+            >
+              <h3 className="flex select-none items-center gap-2 text-[14.5px] font-bold text-[#D97706]">
+                <LightbulbIcon className="h-[17px] w-[17px] shrink-0" />
+                <span>한줄 핵심 정체</span>
               </h3>
 
-              <p className="text-[15px] leading-[1.7] text-[#374151]">
-                {isSkill
-                  ? getEverydayProblemGuide(target.skill)
-                  : isDeck
-                    ? target.deck.installTipKo
-                    : ""}
+              <p className="text-[16px] leading-[1.7] font-medium text-[#1D1D1F]">
+                {isSkill ? (
+                  <HighlightText text={target.skill.oneLineAnalogy} tone="yellow" />
+                ) : isDeck ? (
+                  <HighlightText text={target.deck.synergyNarrative} tone="yellow" />
+                ) : (
+                  "장바구니에 담은 모든 무기를 현재 선택된 코딩 툴 규격으로 한 번에 적용합니다."
+                )}
               </p>
 
-              {radarList.length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-[12.5px] font-bold text-[#6B7280]">
-                    AI Radar 실시간 연결 소식
-                  </div>
-                  {radarList.slice(0, 2).map((sig) => (
-                    <a
-                      key={sig.id}
-                      href={sig.canonicalUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block rounded-xl bg-white border border-[#E5E7EB] p-3.5 hover:border-[#0284C7]"
+              {/* Single-line Hugging Face remote MCP pill if applicable */}
+              {isSkill && target.skill.hfMcpEndpoint && (
+                <div className="rounded-xl bg-[#FFFBEB] border border-[#FDE68A] px-3.5 py-2 text-[12.5px] text-[#92400E] flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-semibold">
+                    로컬 GPU 0% 원격 Gradio MCP SSE 직결 지원
+                  </span>
+                  <code className="font-mono text-[11.5px] text-[#78350F] truncate max-w-full">
+                    {target.skill.hfMcpEndpoint}
+                  </code>
+                </div>
+              )}
+
+              {/* Preset member mini chips */}
+              {isDeck && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {activeSkills.map((member) => (
+                    <button
+                      key={member.slug}
+                      type="button"
+                      onClick={() =>
+                        onChangeTarget({
+                          kind: "skill",
+                          skill: member,
+                          fromDeck: target.deck,
+                        })
+                      }
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-[#F2F2F7] hover:bg-[#E5E5EA] px-3 py-1.5 text-[13px] font-bold text-[#1D1D1F]"
                     >
-                      <div className="flex items-center justify-between gap-2 text-[12px] text-[#6B7280] mb-1">
-                        <span className="font-semibold text-[#0284C7]">
-                          {sig.platformId}
-                          {sig.isChinaSource ? " · 중국 테크" : ""}
-                        </span>
-                        <span className="tnum">{sig.publishedAt.slice(0, 10)}</span>
-                      </div>
-                      <div className="text-[14.5px] font-bold text-[#111827] leading-snug">
-                        {sig.titleKo}
-                      </div>
-                      {sig.highlightSummary && (
-                        <p className="mt-1 text-[13.5px] text-[#4B5563] leading-relaxed line-clamp-2">
-                          <HighlightText text={sig.highlightSummary} tone="sky" />
-                        </p>
-                      )}
-                    </a>
+                      <span>{member.name}</span>
+                      <span className="tnum text-[11.5px] font-medium text-[#636366]">
+                        ★{formatStars(member.stars)}
+                      </span>
+                      <ArrowRightIcon className="w-3 h-3 text-[#636366]" />
+                    </button>
                   ))}
                 </div>
               )}
-            </section>
-          )}
 
-          {/* 박스 4: 터미널 몰라도 10초 끝! · 내 툴에 바로 적용하기 */}
-          {activeSkills.length > 0 && (
-            <section className="modal-section-box p-5 space-y-4">
-              <h3 className="flex items-center gap-2 text-[14.5px] font-bold text-[#059669]">
-                <BoltIcon className="w-4 h-4 shrink-0" />
-                <span>터미널 몰라도 10초 끝! · 내 툴에 바로 적용하기</span>
-              </h3>
-
-              {/* Inline Tool Selector & Scope Switch */}
-              <div className="rounded-xl bg-white border border-[#E5E7EB] p-3.5 space-y-3">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[12.5px] font-bold text-[#374151] mr-1">
-                    적용할 툴:
+              {/* Single-line AI Radar trend badge (no multi-card news walls) */}
+              {topRadar && (
+                <a
+                  href={topRadar.canonicalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-between gap-2 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] px-3.5 py-2 text-[13px] text-[#0369A1] hover:bg-[#E0F2FE] transition-colors"
+                >
+                  <span className="min-w-0 truncate">
+                    <strong className="font-bold mr-1.5">요즘 뜨는 이유:</strong>
+                    <span className="text-[#1D1D1F] font-medium">
+                      {topRadar.titleKo}
+                    </span>
                   </span>
-                  {TOOL_TARGETS.map((tool) => {
-                    const active = selectedTools.includes(tool.id);
-                    return (
-                      <button
-                        key={tool.id}
-                        type="button"
-                        onClick={() => onToggleTool(tool.id)}
-                        aria-pressed={active}
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12.5px] font-semibold border ${
-                          active
-                            ? "bg-[#111827] text-white border-[#111827]"
-                            : "bg-[#F9FAFB] text-[#4B5563] border-[#E5E7EB] hover:bg-[#F3F4F6]"
-                        }`}
+                  <ExternalLinkIcon className="w-3.5 h-3.5 shrink-0" />
+                </a>
+              )}
+            </section>
+
+            {/* INSET CARD 2: 실측 효용 그래프 & 실물 화면 (Artificial Analysis style) */}
+            {activeSkills.length > 0 && (
+              <section
+                className="inset-health-card reading-stagger flex flex-col gap-3.5 p-6"
+                style={staggerStyle(2)}
+              >
+                <h3 className="flex select-none items-center gap-2 text-[14.5px] font-bold text-[#007AFF]">
+                  <BarChartIcon className="h-[17px] w-[17px] shrink-0" />
+                  <span>실측 효용 그래프 & 실물 화면</span>
+                </h3>
+
+                {combinedBenchmarks.length > 0 ? (
+                  <div className="space-y-3">
+                    {combinedBenchmarks.map((metric, idx) => (
+                      <AnimatedBenchmarkChart key={idx} metric={metric} />
+                    ))}
+                  </div>
+                ) : isSkill ? (
+                  <AnimatedStepGauge skill={target.skill} />
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    {(isDeck
+                      ? target.deck.highlightMetrics
+                      : activeSkills.slice(0, 3).map(
+                          (s) =>
+                            `${s.name} · ${s.workflowCompression.stepCountBefore}→${s.workflowCompression.stepCountAfter}단계`,
+                        )
+                    ).map((line, i) => (
+                      <div
+                        key={i}
+                        className="rounded-xl bg-[#FBFBFD] border border-[#E5E5EA] p-3 text-[13px] font-semibold text-[#1D1D1F] leading-snug"
                       >
-                        <ToolIcon tool={tool.id} className="w-3.5 h-3.5" />
-                        <span>{tool.shortLabel}</span>
-                      </button>
-                    );
-                  })}
+                        {line}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Compact AI Memory Burden Mini Gauge */}
+                <div className="rounded-xl bg-[#FBFBFD] border border-[#E5E5EA] px-4 py-3 flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between gap-2 text-[12.5px]">
+                    <span className="font-bold text-[#1D1D1F]">
+                      내 AI 기억 부담
+                    </span>
+                    <span className="tnum font-semibold text-[#515154]">
+                      {weight.short} · 약{" "}
+                      {analysis.totalTokens.toLocaleString("en-US")} tokens
+                    </span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-[#ECEEF2] overflow-hidden">
+                    <div
+                      className="animate-gauge-bar h-full rounded-full"
+                      style={{
+                        width: `${Math.max(10, analysis.percentOfBudget)}%`,
+                        backgroundColor: weight.barColor,
+                      }}
+                    />
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#F1F5F9]">
-                  <span className="text-[12.5px] font-bold text-[#374151]">
-                    적용 범위:
-                  </span>
-                  <div className="inline-flex rounded-full bg-[#F3F4F6] p-0.5 text-[12.5px]">
+                {isSkill && <SafeDemoMedia skill={target.skill} />}
+              </section>
+            )}
+
+            {/* INSET CARD 3: 3초 사용 공식 & 적용 툴 (shadcn/ui slim bar) */}
+            {activeSkills.length > 0 && (
+              <section
+                className="inset-health-card reading-stagger flex flex-col gap-4 p-6"
+                style={staggerStyle(3)}
+              >
+                <h3 className="flex select-none items-center gap-2 text-[14.5px] font-bold text-[#059669]">
+                  <BoltIcon className="h-[17px] w-[17px] shrink-0" />
+                  <span>3초 사용 공식 & 적용 툴</span>
+                </h3>
+
+                {/* Horizontal 3-Step Visual Formula */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div className="rounded-xl bg-[#FBFBFD] border border-[#E5E5EA] p-3.5">
+                    <div className="text-[11.5px] font-bold text-[#636366]">
+                      STEP 01
+                    </div>
+                    <div className="mt-1 text-[13.5px] font-bold text-[#1D1D1F]">
+                      아래 검은 버튼 클릭
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-[#FBFBFD] border border-[#E5E5EA] p-3.5">
+                    <div className="text-[11.5px] font-bold text-[#636366]">
+                      STEP 02
+                    </div>
+                    <div className="mt-1 text-[13.5px] font-bold text-[#1D1D1F]">
+                      {bridgeConnected && !onlyWebBuilder
+                        ? "내 PC에 자동 장착 완료"
+                        : "내 AI 창에 그대로 붙여넣기"}
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-[#FBFBFD] border border-[#E5E5EA] p-3.5 flex flex-col justify-between gap-1.5">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[11.5px] font-bold text-[#059669]">
+                        STEP 03 · 첫마디
+                      </span>
+                      <button
+                        type="button"
+                        onClick={copyTryPrompt}
+                        title="첫마디 예시 복사"
+                        className="inline-flex items-center gap-1 rounded-full bg-white border border-[#D1D1D6] px-2 py-0.5 text-[11px] font-semibold text-[#1D1D1F] hover:bg-[#F2F2F7]"
+                      >
+                        {promptCopied ? (
+                          <CheckIcon className="w-3 h-3 text-[#059669]" />
+                        ) : (
+                          <CopyIcon className="w-3 h-3" />
+                        )}
+                        <span>{promptCopied ? "복사됨" : "복사"}</span>
+                      </button>
+                    </div>
+                    <p className="text-[12.5px] font-medium text-[#1D1D1F] leading-snug line-clamp-2">
+                      &ldquo;{tryPromptText}&rdquo;
+                    </p>
+                  </div>
+                </div>
+
+                {/* shadcn/ui style single-row slim tool & scope bar */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-[#F2F2F7]">
+                  <div className="flex flex-wrap items-center gap-1">
+                    {TOOL_TARGETS.filter((t) => t.id !== "codex").map(
+                      (tool) => {
+                        const active = selectedTools.includes(tool.id);
+                        return (
+                          <button
+                            key={tool.id}
+                            type="button"
+                            onClick={() => onToggleTool(tool.id)}
+                            aria-pressed={active}
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-semibold border transition-colors ${
+                              active
+                                ? "bg-[#1D1D1F] text-[#FBFBFD] border-[#1D1D1F]"
+                                : "bg-[#F2F2F7] text-[#515154] border-transparent hover:text-[#1D1D1F]"
+                            }`}
+                          >
+                            <ToolIcon tool={tool.id} className="w-3 h-3" />
+                            <span>
+                              {tool.id === "web-builder"
+                                ? "Lovable · Bolt"
+                                : tool.shortLabel}
+                            </span>
+                          </button>
+                        );
+                      },
+                    )}
+                  </div>
+
+                  <div className="inline-flex rounded-full bg-[#F2F2F7] p-0.5 text-[11.5px]">
                     <button
                       type="button"
                       onClick={() => onChangeScope("project")}
-                      className={`rounded-full px-3 py-1 font-semibold ${
+                      className={`rounded-full px-2.5 py-1 font-semibold ${
                         scope === "project"
-                          ? "bg-white text-[#111827] shadow-xs"
-                          : "text-[#6B7280]"
+                          ? "bg-white text-[#1D1D1F] shadow-xs"
+                          : "text-[#636366]"
                       }`}
                     >
-                      이 프로젝트만 적용 (추천)
+                      프로젝트만
                     </button>
                     <button
                       type="button"
                       onClick={() => onChangeScope("global")}
-                      className={`rounded-full px-3 py-1 font-semibold ${
+                      className={`rounded-full px-2.5 py-1 font-semibold ${
                         scope === "global"
-                          ? "bg-white text-[#111827] shadow-xs"
-                          : "text-[#6B7280]"
+                          ? "bg-white text-[#1D1D1F] shadow-xs"
+                          : "text-[#636366]"
                       }`}
                     >
-                      내 컴퓨터 전체 적용
+                      전체
                     </button>
                   </div>
                 </div>
-              </div>
+              </section>
+            )}
 
-              {/* 3 Big Friendly Action Buttons */}
-              <div className="space-y-3">
-                {/* Button A: Beginner #1 Priority */}
-                <div className="rounded-xl bg-white border-2 border-[#10B981] p-4 space-y-2">
+            {/* BOTTOM SINGLE SOLID-BLACK CTA (1:1 AI Radar ItemDetail BTN_PRIMARY + 1 Slim Outline BTN_SECONDARY) */}
+            {activeSkills.length > 0 && (
+              <div
+                className="reading-stagger flex flex-col gap-2.5 pt-1"
+                style={staggerStyle(4)}
+              >
+                <button
+                  type="button"
+                  disabled={bridgeBusy}
+                  onClick={handlePrimaryAction}
+                  data-primary-black-cta="true"
+                  className="sheen group flex w-full select-none items-center justify-between gap-4 rounded-2xl bg-[#1D1D1F] px-6 py-4 text-left text-[#FBFBFD] hover:opacity-92 active:scale-[0.99] transition-all disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0284C7] focus-visible:ring-offset-2"
+                >
+                  <span className="flex min-w-0 items-center gap-3.5">
+                    {primaryDone ? (
+                      <CheckIcon className="animate-cta-check h-5 w-5 shrink-0 text-[#34D399]" />
+                    ) : (
+                      <BoltIcon className="h-5 w-5 shrink-0 text-[#FBFBFD]" />
+                    )}
+                    <span className="flex min-w-0 flex-col gap-0.5 leading-[1.35]">
+                      <span className="text-[13px] font-medium text-[#FBFBFD]/75 truncate">
+                        {primarySubLabel}
+                      </span>
+                      <span className="text-[16px] font-bold text-[#FBFBFD]">
+                        {primaryMainLabel}
+                      </span>
+                    </span>
+                  </span>
+                  <ArrowRightIcon className="h-5 w-5 shrink-0 transition-transform group-hover:translate-x-0.5" />
+                </button>
+
+                {!onlyWebBuilder && (
                   <button
                     type="button"
-                    onClick={() =>
-                      handleCopy(
-                        beginnerPrompt,
-                        "beginner-chat",
-                        "설치 문구가 복사되었어요! 좌측 '내 장착 독'에 기록되었습니다.",
-                        "ai-chat-prompt",
-                      )
-                    }
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#059669] px-4 py-3 text-[15px] font-bold text-white hover:bg-[#047857]"
+                    onClick={handleSecondaryAction}
+                    className="inline-flex w-full select-none items-center justify-center gap-2 rounded-2xl border border-[#D1D1D6] bg-white/85 px-5 py-3 text-[14.5px] font-medium text-[#515154] hover:bg-[#F2F2F7] hover:text-[#1D1D1F] transition-colors"
                   >
-                    {copiedKey === "beginner-chat" ? (
-                      <>
-                        <CheckIcon className="w-4 h-4" />
-                        <span>복사 완료! 이제 AI 채팅창에 붙여넣기만 하세요</span>
-                      </>
+                    {secondaryCopied ? (
+                      <CheckIcon className="w-4 h-4 text-[#059669]" />
                     ) : (
-                      <>
-                        <CopyIcon className="w-4 h-4" />
-                        <span>
-                          [터미널 없이 설치] AI 채팅창에 붙여넣을 한글 자동설치 문구 복사
-                        </span>
-                      </>
+                      <CopyIcon className="w-4 h-4" />
                     )}
+                    <span>{secondaryLabel}</span>
                   </button>
-                  <p className="text-[13px] text-[#4B5563] leading-relaxed">
-                    복사한 뒤 지금 켜둔 클로드·제미나이·커서 채팅창에 그대로 붙여넣고
-                    엔터만 치면 AI가 기존 파일을 백업하고 알아서 설치해 줘요!
-                  </p>
-                  <div className="flex flex-wrap gap-3 pt-1 text-[12.5px]">
-                    <button
-                      type="button"
-                      onClick={() => setShowPromptPreview((v) => !v)}
-                      className="font-semibold text-[#059669] hover:underline"
-                    >
-                      {showPromptPreview
-                        ? "한글 지시문 미리보기 접기"
-                        : "복사될 한글 지시문 미리보기 펼치기"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowCliPreview((v) => !v)}
-                      className="font-semibold text-[#6B7280] hover:underline"
-                    >
-                      {showCliPreview
-                        ? "터미널 명령 접기"
-                        : "개발자용 터미널 명령 보기"}
-                    </button>
-                  </div>
-                  {showPromptPreview && (
-                    <pre className="mt-2 rounded-xl bg-[#F8FAFC] border border-[#E5E7EB] p-3.5 font-mono text-[12px] text-[#111827] overflow-x-auto whitespace-pre-wrap max-h-60">
-                      {beginnerPrompt}
-                    </pre>
-                  )}
-                  {showCliPreview && (
-                    <div className="mt-2 space-y-1.5">
-                      <pre className="rounded-xl bg-[#F8FAFC] border border-[#E5E7EB] p-3.5 font-mono text-[12px] text-[#111827] overflow-x-auto whitespace-pre-wrap">
-                        {cliCommands}
-                      </pre>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleCopy(
-                            cliCommands,
-                            "cli-cmd",
-                            "터미널 설치 명령을 복사했어요.",
-                          )
-                        }
-                        className="text-[12px] font-semibold text-[#0284C7] hover:underline"
-                      >
-                        터미널 명령 복사하기
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Button B: Web Builders (Lovable / Bolt / v0) */}
-                <div className="rounded-xl bg-white border border-[#E5E7EB] p-4 space-y-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleCopy(
-                        webPack,
-                        "web-pack",
-                        "웹 빌더 프롬프트 팩이 복사되었어요! 좌측 '내 장착 독'에 기록되었습니다.",
-                        "web-builder-pack",
-                      )
-                    }
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#0284C7] px-4 py-2.5 text-[14.5px] font-bold text-white hover:bg-[#0369A1]"
-                  >
-                    {copiedKey === "web-pack" ? (
-                      <>
-                        <CheckIcon className="w-4 h-4" />
-                        <span>웹 빌더 프롬프트 팩 복사 완료 ({webPack.length.toLocaleString("en-US")}자)</span>
-                      </>
-                    ) : (
-                      <>
-                        <CopyIcon className="w-4 h-4" />
-                        <span>[Lovable · Bolt · v0용] 프롬프트 팩 복사하기</span>
-                      </>
-                    )}
-                  </button>
-                  <p className="text-[13px] text-[#4B5563]">
-                    설치 폴더가 없는 웹 코딩 툴이라면 프로젝트 지침(Knowledge) 칸에 그대로
-                    붙여넣으세요. (총 {webPack.length.toLocaleString("en-US")}자 자동 압축)
-                  </p>
-                </div>
-
-                {/* Button C: Local PC Live Bridge */}
-                <div className="rounded-xl bg-white border border-[#E5E7EB] p-4 space-y-2.5">
-                  {bridgeConnected ? (
-                    <>
-                      {scope === "project" && (
-                        <div className="space-y-1">
-                          <label className="block text-[12px] font-semibold text-[#4B5563]">
-                            설치할 프로젝트 폴더 경로
-                          </label>
-                          <input
-                            type="text"
-                            value={projectDir}
-                            onChange={(e) => setProjectDir(e.target.value)}
-                            className="w-full rounded-lg border border-[#D1D5DB] bg-[#F9FAFB] px-3 py-1.5 font-mono text-[12px] text-[#111827] focus:outline-none focus:border-[#0284C7]"
-                          />
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        disabled={bridgeBusy}
-                        onClick={handleBridgeInstall}
-                        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#111827] px-4 py-2.5 text-[14.5px] font-bold text-white hover:bg-[#1F2937] disabled:opacity-50"
-                      >
-                        <BridgeIcon className="w-4 h-4" />
-                        <span>
-                          {bridgeBusy
-                            ? "안전 백업 후 설치하는 중..."
-                            : "[내 PC 즉시 장착] 클릭 한 번으로 자동 설치하기"}
-                        </span>
-                      </button>
-                      <p className="text-[12.5px] text-[#047857] font-medium">
-                        내 PC 자동설치 연결됨 ({detectedCliNames.join(" · ") || "준비됨"}) — 기존 파일은 자동으로 백업돼요.
-                      </p>
-
-                      {bridgeMsg && (
-                        <div className="rounded-lg bg-[#ECFDF5] border border-[#A7F3D0] px-3 py-2 text-[12.5px] text-[#047857] font-medium">
-                          {bridgeMsg}
-                        </div>
-                      )}
-                      {bridgeErr && (
-                        <div className="rounded-lg bg-[#FEF2F2] border border-[#FECACA] px-3 py-2 text-[12.5px] text-[#B91C1C]">
-                          {bridgeErr}
-                        </div>
-                      )}
-
-                      {bridgeInstalled.length > 0 && (
-                        <div className="pt-2 border-t border-[#F1F5F9] space-y-1.5">
-                          <div className="text-[12px] font-bold text-[#4B5563]">
-                            이 폴더에 설치된 스킬 ({bridgeInstalled.length}개)
-                          </div>
-                          {bridgeInstalled.map((entry) => (
-                            <div
-                              key={`${entry.tool}:${entry.slug}`}
-                              className="flex items-center justify-between gap-2 rounded-lg bg-[#F8FAFC] border border-[#E5E7EB] px-3 py-2 text-[12.5px]"
-                            >
-                              <span className="font-semibold text-[#111827] truncate">
-                                {entry.name}{" "}
-                                <span className="text-[#6B7280] font-normal">
-                                  ({entry.tool})
-                                </span>
-                              </span>
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => handleBridgeToggle(entry)}
-                                  className={`rounded-full px-2.5 py-0.5 text-[11.5px] font-bold border ${
-                                    entry.enabled
-                                      ? "bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]"
-                                      : "bg-white text-[#6B7280] border-[#D1D5DB]"
-                                  }`}
-                                >
-                                  {entry.enabled ? "켜짐" : "꺼짐"}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleBridgeUninstall(entry)}
-                                  className="rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold bg-white text-[#B91C1C] border border-[#FECACA]"
-                                >
-                                  제거
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="inline-flex items-center gap-1.5 text-[14px] font-bold text-[#111827]">
-                          <BridgeIcon className="w-4 h-4 text-[#059669]" />
-                          [내 PC 즉시 장착] 자동 설치 브릿지
-                        </span>
-                        <button
-                          type="button"
-                          onClick={onRefreshBridge}
-                          className="rounded-full border border-[#D1D5DB] px-3 py-1 text-[12px] font-semibold text-[#374151] hover:bg-[#F3F4F6]"
-                        >
-                          연결 확인
-                        </button>
-                      </div>
-                      <p className="text-[13px] text-[#4B5563] leading-relaxed">
-                        지금은 <strong>클릭 복사 설치 모드</strong>로 동작 중이라 위의 초록색 버튼으로 바로 설치하실 수 있어요. 복붙까지 생략하고 싶을 때만 아래 1줄을 터미널에 실행해 연결하세요.
-                      </p>
-                      <div className="flex items-center justify-between gap-2 rounded-lg bg-[#F8FAFC] border border-[#E5E7EB] px-3 py-2 font-mono text-[11.5px] text-[#374151]">
-                        <code className="truncate">
-                          curl -sS http://localhost:3000/bridge.mjs -o bridge.mjs && node bridge.mjs
-                        </code>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleCopy(
-                              "curl -sS http://localhost:3000/bridge.mjs -o bridge.mjs && node bridge.mjs",
-                              "bridge-1line",
-                              "브릿지 실행 명령을 복사했어요.",
-                            )
-                          }
-                          className="shrink-0 font-sans text-[12px] font-semibold text-[#0284C7] hover:underline"
-                        >
-                          복사
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
+                )}
               </div>
-            </section>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

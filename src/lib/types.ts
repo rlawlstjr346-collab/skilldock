@@ -49,6 +49,8 @@ export type InstallScope = "project" | "global";
 
 export type LifecycleTier = "evergreen" | "rising";
 
+export type SourcePlatform = "github" | "huggingface" | "skilldock";
+
 export type InstallMethod =
   | "ai-chat-prompt"
   | "web-builder-pack"
@@ -106,7 +108,15 @@ export interface SkillItem {
   summaryKo: string;
   repo: string;
   repoUrl: string;
+  sourcePlatform: SourcePlatform;
   stars: number;
+  likes?: number;
+  hfMcpEndpoint?: string;
+  hfSpaceUrl?: string;
+  hfSdk?: string;
+  tryPromptExample?: string;
+  keyMetricBadge?: string;
+  discoveredVia?: "seed" | "hf-mcp" | "hf-trending" | "hf-paper" | "gh-search";
   language: string;
   license: string;
   pushedAt: string;
@@ -146,6 +156,15 @@ export interface SynergyDeck {
   installTipKo: string;
 }
 
+export interface HfTrendingPreviewItem {
+  id: string;
+  likes: number;
+  sdk?: string;
+  shortDescription?: string;
+  isMcp: boolean;
+  url: string;
+}
+
 export interface CatalogData {
   version: number;
   syncedAt: string;
@@ -153,6 +172,12 @@ export interface CatalogData {
   radarTotalSignals: number;
   radarChinaSignals: number;
   radarMatchedCount: number;
+  sourceCounts?: {
+    github: number;
+    huggingface: number;
+    skilldock: number;
+  };
+  hfTrendingPreview?: HfTrendingPreviewItem[];
   skills: SkillItem[];
   radarItems: RadarSignal[];
 }

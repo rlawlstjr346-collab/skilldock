@@ -60,7 +60,7 @@ export default async function DeckDetailPage({
   const dockQs = serializeDockParam(deck.skillSlugs);
 
   return (
-    <div className="min-h-screen bg-[#F5F6F8] text-[#111827] pb-16">
+    <div className="min-h-screen bg-[#FBFBFD] text-[#1D1D1F] pb-16">
       <div className="max-w-[780px] mx-auto px-5 sm:px-8 py-8 space-y-6">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/">
@@ -69,16 +69,16 @@ export default async function DeckDetailPage({
           <div className="flex items-center gap-2">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white border border-[#E5E7EB] px-3.5 py-2 text-[13.5px] font-semibold text-[#374151] hover:bg-[#F9FAFB]"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white border border-[#E5E5EA] px-3.5 py-2 text-[13.5px] font-semibold text-[#515154] hover:bg-[#F2F2F7]"
             >
               <ArrowLeftIcon className="w-3.5 h-3.5" />
               <span>목록으로</span>
             </Link>
             <Link
               href={`/?dock=${dockQs}`}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#059669] px-4 py-2 text-[13.5px] font-bold text-white hover:bg-[#047857]"
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-[#1D1D1F] px-5 py-2 text-[13.5px] font-bold text-[#FBFBFD] hover:opacity-90"
             >
-              <span>이 세트 통째로 내 독에 담기</span>
+              <span>이 세트 한 번에 적용하기</span>
             </Link>
           </div>
         </header>

@@ -319,3 +319,43 @@ export function HomeGridIcon({ className = "w-4 h-4" }: { className?: string }) 
     </svg>
   );
 }
+
+export function GitHubIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M8 1.2C4.24 1.2 1.2 4.24 1.2 8c0 3 1.94 5.55 4.65 6.45.34.06.46-.15.46-.33 0-.16-.01-.7-.01-1.27-1.89.41-2.29-.8-2.29-.8-.31-.79-.75-1-.75-1-.62-.42.05-.41.05-.41.68.05 1.04.7 1.04.7.61 1.04 1.59.74 1.98.57.06-.44.24-.74.43-.91-1.51-.17-3.1-.76-3.1-3.36 0-.74.27-1.35.7-1.83-.07-.17-.3-.87.07-1.8 0 0 .57-.18 1.87.7.54-.15 1.13-.23 1.71-.23.58 0 1.17.08 1.71.23 1.3-.88 1.87-.7 1.87-.7.37.93.14 1.63.07 1.8.43.48.7 1.09.7 1.83 0 2.61-1.59 3.19-3.11 3.36.24.21.46.63.46 1.27 0 .92-.01 1.66-.01 1.88 0 .18.12.4.47.33A6.803 6.803 0 0 0 14.8 8c0-3.76-3.04-6.8-6.8-6.8Z"
+      />
+    </svg>
+  );
+}
+
+export function HuggingFaceIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="8" cy="8" r="6.2" fill="#FFD21E" stroke="#B45309" strokeWidth="1" />
+      <circle cx="5.9" cy="6.7" r="0.85" fill="#1D1D1F" />
+      <circle cx="10.1" cy="6.7" r="0.85" fill="#1D1D1F" />
+      <path d="M5.4 9.5C6.1 10.6 7 11.1 8 11.1C9 11.1 9.9 10.6 10.6 9.5" stroke="#1D1D1F" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function HeartIcon({ className = "w-3.5 h-3.5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M8 13.7C7.7 13.5 2 9.8 2 5.7C2 3.7 3.5 2.3 5.3 2.3C6.4 2.3 7.4 2.9 8 3.8C8.6 2.9 9.6 2.3 10.7 2.3C12.5 2.3 14 3.7 14 5.7C14 9.8 8.3 13.5 8 13.7Z" />
+    </svg>
+  );
+}
+
+export function HistoryReadIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M5.6 8.2L7.3 9.9L10.6 6.3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

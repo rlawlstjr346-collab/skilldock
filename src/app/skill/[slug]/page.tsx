@@ -78,7 +78,7 @@ export default async function SkillDetailPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F6F8] text-[#111827] pb-16">
+    <div className="min-h-screen bg-[#FBFBFD] text-[#1D1D1F] pb-16">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -92,16 +92,16 @@ export default async function SkillDetailPage({
           <div className="flex items-center gap-2">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white border border-[#E5E7EB] px-3.5 py-2 text-[13.5px] font-semibold text-[#374151] hover:bg-[#F9FAFB]"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white border border-[#E5E5EA] px-3.5 py-2 text-[13.5px] font-semibold text-[#515154] hover:bg-[#F2F2F7]"
             >
               <ArrowLeftIcon className="w-3.5 h-3.5" />
               <span>목록으로</span>
             </Link>
             <Link
               href={`/?dock=${skill.slug}`}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#111827] px-4 py-2 text-[13.5px] font-bold text-white hover:bg-[#1F2937]"
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-[#1D1D1F] px-5 py-2 text-[13.5px] font-bold text-[#FBFBFD] hover:opacity-90"
             >
-              <span>내 독에 담아 열기</span>
+              <span>장바구니에 담아 적용하기</span>
             </Link>
           </div>
         </header>

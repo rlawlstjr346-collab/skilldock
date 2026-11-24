@@ -13,14 +13,61 @@ const OUT_DIR = path.join(ROOT, "public", "data");
 const CATALOG_PATH = path.join(OUT_DIR, "skills-catalog.json");
 const DECKS_PATH = path.join(OUT_DIR, "synergy-decks.json");
 const ETAG_CACHE_PATH = path.join(ROOT, ".sync-etag-cache.json");
+const TRANSLATION_CACHE_PATH = path.join(ROOT, "src", "data", "translation-cache.json");
 
 const USER_AGENT =
-  "SKILLDOCK-CatalogSync/1.0 (+https://github.com/rlawlstjr346-collab/skilldock)";
+  "SKILLDOCK-Harvester/2.0 (+https://github.com/rlawlstjr346-collab/skilldock)";
 
 const PLANNING_FEED_URL =
   "https://raw.githubusercontent.com/rlawlstjr346-collab/ai-radar/main/web/public/data/planning-feed.json";
 const LIVE_FEED_URL =
   "https://raw.githubusercontent.com/rlawlstjr346-collab/ai-radar/main/web/public/live-feed.json";
+const HF_MCP_SPACES_URL =
+  "https://huggingface.co/api/spaces?filter=mcp-server&sort=likes&direction=-1&limit=16";
+const HF_TRENDING_SPACES_URL =
+  "https://huggingface.co/api/trending?type=space&limit=16";
+const HF_DAILY_PAPERS_URL =
+  "https://huggingface.co/api/daily_papers?limit=10";
+
+const GH_DISCOVERY_QUERIES = [
+  "https://api.github.com/search/repositories?q=topic:claude-code+stars:>120+pushed:>2026-09-01&sort=stars&order=desc&per_page=10",
+  "https://api.github.com/search/repositories?q=topic:mcp-server+stars:>150+pushed:>2026-09-01&sort=stars&order=desc&per_page=10",
+  "https://api.github.com/search/repositories?q=cursor-rules+OR+cursorrules+stars:>120+pushed:>2026-09-01&sort=stars&order=desc&per_page=10",
+];
+
+const GH_NOISE_RE =
+  /proxy-list|free-proxy|awesome-.*download|crack|vpn|cheat|torrent|scraper-proxy|minecraft|roblox|airdrop|crypto-bot|cursor-download/i;
+const GH_RELEVANT_RE =
+  /claude|cursor|mcp|agent|skill|memory|code|ide|prompt|rule|workflow|llm|codex|gemini|search|ui|design|test|debug|harness|context|rag|copilot|windsurf|antigravity/i;
+
+/**
+ * Converts a Hugging Face Space ID (`owner/Space_Name`) into its real Gradio SSE MCP endpoint URL.
+ * Example: `mrfakename/Z-Image-Turbo` -> `https://mrfakename-z-image-turbo.hf.space/gradio_api/mcp/sse`
+ */
+export function toHfGradioMcpUrl(spaceId) {
+  const clean = String(spaceId || "").trim();
+  const [owner, space] = clean.split("/");
+  if (!owner || !space) return "";
+  const subdomain = `${owner}-${space}`
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return `https://${subdomain}.hf.space/gradio_api/mcp/sse`;
+}
+
+function slugifyId(raw) {
+  return String(raw || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48);
+}
+
+function jitterMs() {
+  return 1500 + Math.floor(Math.random() * 700);
+}
 
 const CHINA_PLATFORMS = new Set([
   "v2ex",
@@ -34,8 +81,501 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function jitterMs() {
-  return 1500 + Math.floor(Math.random() * 1000);
+async function translateToKoreanCached(text, cache) {
+  const clean = String(text || "").replace(/\s+/g, " ").trim();
+  if (!clean) return "";
+  if (/[가-힣]/.test(clean) && !/[A-Za-z]{25,}/.test(clean)) return clean;
+  const key = clean.slice(0, 260);
+  if (cache[key]) return cache[key];
+
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ko&dt=t&q=${encodeURIComponent(key)}`;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (Array.isArray(json?.[0])) {
+        const translated = json[0]
+          .map((seg) => (Array.isArray(seg) ? seg[0] : ""))
+          .join("")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (translated && /[가-힣]/.test(translated)) {
+          cache[key] = translated;
+          return translated;
+        }
+      }
+    }
+  } catch {
+    // offline or rate-limited fallback below
+  }
+  return "";
+}
+
+const GH_CURATED_DISCOVERY = {
+  "nextlevelbuilder/ui-ux-pro-max-skill": {
+    name: "UI/UX Pro Max Skill",
+    koreanAlias: "UI/UX Pro Max — 멀티 플랫폼 화면·디자인 시스템 자동 완성 스킬",
+    oneLineAnalogy:
+      "AI에게 대충 요청해도 ==50종 이상의 검증된 UI/UX 디자인 시스템과 타이포 규칙으로 제품 화면을 뽑아주는 디자인 인텔리전스 스킬==입니다.",
+    tryPromptExample: "UI/UX Pro Max 규칙으로 지금 대시보드의 여백·색상·카드 위계를 프로덕트급으로 다듬어 줘",
+    keyMetricBadge: "50+ UI 디자인 시스템",
+  },
+  "JuliusBrussee/caveman": {
+    name: "Caveman",
+    koreanAlias: "Caveman — AI의 장황한 말투를 65~75% 압축해 토큰을 아끼는 스킬",
+    oneLineAnalogy:
+      "불필요한 인사·서론·부연설명을 걷어내고 ==핵심 코드와 결론만 짧게 답하게 해 출력 토큰을 65~75% 절감하는 초압축 스킬==입니다.",
+    tryPromptExample: "지금부터 Caveman 모드로 불필요한 서론 없이 원인·수정 코드·검증 결과만 짧게 답해 줘",
+    keyMetricBadge: "출력 토큰 -75%",
+  },
+  "farion1231/cc-switch": {
+    name: "CC Switch",
+    koreanAlias: "CC Switch — Claude·Codex·Gemini 설정·MCP·스킬 원클릭 통합 관리기",
+    oneLineAnalogy:
+      "여러 코딩 에이전트(Claude Code·Codex·Gemini CLI)의 ==API 프로바이더·MCP·스킬을 한 화면에서 전환하는 올인원 스위치==입니다.",
+    tryPromptExample: "내 Claude Code와 Gemini CLI의 MCP 서버 목록을 정리하고 충돌 없는 기본 프로파일을 만들어 줘",
+    keyMetricBadge: "5대 AI 툴 통합 스위치",
+  },
+  "NousResearch/hermes-agent": {
+    name: "Hermes Agent",
+    koreanAlias: "Hermes Agent — 작업할수록 스스로 성장·기억하는 자율형 오픈소스 에이전트",
+    oneLineAnalogy:
+      "Nous Research가 공개한 ==작업 경험을 학습하고 도구를 조합해 점점 똑똑해지는 자가 진화 코딩·자동화 에이전트==입니다.",
+    tryPromptExample: "Hermes Agent 워크플로우처럼 반복 빌드 오류 해결법을 프로젝트 메모리에 자동 기록해 줘",
+    keyMetricBadge: "자가 학습 에이전트",
+  },
+  "google-gemini/gemini-cli": {
+    name: "Gemini CLI",
+    koreanAlias: "Gemini CLI — Google 공식 터미널 코딩 에이전트 & MCP 호스트",
+    oneLineAnalogy:
+      "터미널에서 바로 코드베이스 탐색·수정·MCP 도구 호출까지 수행하는 ==Google 공식 오픈소스 AI 코딩 에이전트==입니다.",
+    tryPromptExample: "현재 프로젝트 구조를 분석하고 TypeScript 에러와 누락된 테스트를 한 번에 정리해 줘",
+    keyMetricBadge: "Google 공식 에이전트",
+  },
+  "D4Vinci/Scrapling": {
+    name: "Scrapling",
+    koreanAlias: "Scrapling — 사이트 구조가 바뀌어도 스스로 적응하는 초고속 웹 수집 MCP",
+    oneLineAnalogy:
+      "CSS 셀렉터가 깨져도 자동으로 요소를 다시 찾아내는 ==안티봇 대응·적응형 고속 웹 스크래핑 프레임워크 겸 MCP==입니다.",
+    tryPromptExample: "Scrapling MCP로 경쟁사 요금제 페이지의 표 데이터를 깨끗한 JSON으로 추출해 줘",
+    keyMetricBadge: "자가 복구 웹 수집",
+  },
+  "n8n-io/n8n": {
+    name: "n8n Workflow",
+    koreanAlias: "n8n — 400+ 앱·AI 에이전트를 노드로 엮는 대표 오픈소스 자동화 엔진",
+    oneLineAnalogy:
+      "슬랙·노션·깃허브·LLM을 시각적 워크플로우와 코드로 연결해 ==반복 업무를 24시간 자동 실행하는 AI 자동화 허브==입니다.",
+    tryPromptExample: "GitHub 이슈가 올라오면 요약해서 슬랙으로 보내는 n8n 워크플로우 JSON을 설계해 줘",
+    keyMetricBadge: "400+ 앱 자동화 연동",
+  },
+  "uclanlp/OpenVLHarness": {
+    name: "OpenVLHarness",
+    koreanAlias: "OpenVLHarness — 멀티모달 검색 에이전트가 스스로 도구를 생성하는 연구 하네스",
+    oneLineAnalogy:
+      "Hugging Face Daily Papers 선정 ToolSmith 공식 구현체로 ==멀티모달 에이전트가 작업에 맞는 도구를 자동 생성·실행하는 하네스==입니다.",
+    tryPromptExample: "화면 스크린샷과 문서를 함께 분석해서 UI 버그 원인을 단계별로 추적해 줘",
+    keyMetricBadge: "HF 논문 검증 하네스",
+  },
+  "morluto/rea": {
+    name: "REA",
+    koreanAlias: "REA — 앱 동작부터 네이티브 바이너리까지 AI 에이전트로 역공학 분석",
+    oneLineAnalogy:
+      "복잡한 앱 동작·네트워크 프로토콜·바이너리 구조를 ==AI 에이전트가 자동으로 리버스 엔지니어링해 분석하는 초인기 오픈소스==입니다.",
+    tryPromptExample: "이 서비스의 API 호출 구조와 핵심 상태 흐름을 단계별로 역추적해서 정리해 줘",
+    keyMetricBadge: "에이전트 자동 역공학",
+  },
+  "stablyai/orca": {
+    name: "Orca Fleet",
+    koreanAlias: "Orca — 내 Claude·Agy·Codex 구독으로 멀티 에이전트 함대를 원격 운영",
+    oneLineAnalogy:
+      "기존에 구독 중인 Claude Code·Agy·Codex를 묶어 ==데스크톱·모바일·원격 환경에서 여러 에이전트 봇을 동시에 굴리는 오케스트레이터==입니다.",
+    tryPromptExample: "프론트엔드·백엔드·테스트 에이전트 3개로 작업을 나눠 병렬 실행 계획을 세워줘",
+    keyMetricBadge: "멀티 구독 에이전트 함대",
+  },
+  "koala73/worldmonitor": {
+    name: "WorldMonitor",
+    koreanAlias: "WorldMonitor — 글로벌 뉴스·인프라·지정학 시그널을 실시간 추적하는 AI 대시보드",
+    oneLineAnalogy:
+      "전 세계 실시간 뉴스·클라우드 인프라·지정학 이벤트를 ==AI가 자동 수집·집계해 한눈에 상황 파악하게 해주는 오픈소스 관제 대시보드==입니다.",
+    tryPromptExample: "오늘 주요 클라우드·AI 인프라 장애 및 글로벌 테크 이슈를 우선순위 순으로 요약해 줘",
+    keyMetricBadge: "실시간 글로벌 AI 관제",
+  },
+};
+
+const HF_CURATED_META = {
+  "mrfakename/Z-Image-Turbo": {
+    name: "Z-Image-Turbo MCP",
+    koreanAlias: "Z-Image-Turbo — GPU 없이 초고속 이미지를 뽑아주는 원격 MCP",
+    oneLineAnalogy:
+      "로컬 그래픽카드 없이도 AI 코딩 툴에서 ==초고속으로 제품 썸네일·UI 일러스트를 생성하는 Hugging Face 원격 MCP==입니다.",
+    category: "design",
+    roleSlot: "ui-design",
+    roleLabelKo: "원격 초고속 이미지 생성 Gradio MCP",
+    tryPromptExample: "방금 연결한 Z-Image-Turbo MCP로 미니멀한 앱 히어로 일러스트 1장 만들어 줘",
+    keyMetricBadge: "GPU 0% 초고속 이미지",
+  },
+  "zerogpu-aoti/wan2-2-fp8da-aoti-faster": {
+    name: "Wan 2.2 Faster MCP",
+    koreanAlias: "Wan 2.2 Faster — AI 코딩 중 고화질 영상 클립을 뽑는 원격 MCP",
+    oneLineAnalogy:
+      "로컬 GPU 설치 없이 ==Wan 2.2 고속 영상 생성 모델을 Claude·Cursor에서 원격 도구로 바로 호출하는 MCP==입니다.",
+    category: "video",
+    roleSlot: "video-render",
+    roleLabelKo: "원격 고속 AI 비디오 생성 Gradio MCP",
+    tryPromptExample: "Wan 2.2 Faster MCP로 제품 로고가 부드럽게 등장하는 4초 모션 클립 만들어 줘",
+    keyMetricBadge: "GPU 0% 고속 영상",
+  },
+  "not-lain/background-removal": {
+    name: "Background Removal MCP",
+    koreanAlias: "배경 제거 원격 MCP — UI 에셋·로고 누끼를 1초 만에 따주는 도구",
+    oneLineAnalogy:
+      "포토샵을 켜지 않고도 ==코딩 에이전트가 이미지 배경을 깔끔하게 투명 PNG로 분리해 주는 원격 누끼 MCP==입니다.",
+    category: "design",
+    roleSlot: "ui-design",
+    roleLabelKo: "원격 이미지 배경제거 · 에셋 누끼 MCP",
+    tryPromptExample: "이 상품 이미지 배경을 투명 PNG로 깔끔하게 제거해서 public/images에 저장해 줘",
+    keyMetricBadge: "1초 투명 PNG 누끼",
+  },
+  "prithivMLmods/Qwen-Image-Edit-2511-LoRAs-Fast": {
+    name: "Qwen Image Edit MCP",
+    koreanAlias: "Qwen Image Edit — 말 한마디로 화면 시안·이미지를 부분 수정하는 MCP",
+    oneLineAnalogy:
+      "기존 이미지를 처음부터 다시 뽑지 않고 ==원하는 부분만 자연어로 정밀 편집해 주는 Qwen 기반 원격 MCP==입니다.",
+    category: "design",
+    roleSlot: "ui-design",
+    roleLabelKo: "자연어 부분 이미지 편집 원격 MCP",
+    tryPromptExample: "이 배너 이미지 배경을 밝은 오프화이트 톤으로 자연스럽게 교체해 줘",
+    keyMetricBadge: "자연어 부분 이미지 편집",
+  },
+  "JCisHERE/wan2-2-i2v-v3": {
+    name: "Wan 2.2 I2V v3 MCP",
+    koreanAlias: "Wan 2.2 I2V — 정지 이미지 1장을 모션 영상으로 살려내는 원격 MCP",
+    oneLineAnalogy:
+      "제품 스크린샷이나 이미지 1장만 넘기면 ==자연스러운 움직임이 들어간 짧은 홍보 영상을 생성하는 원격 MCP==입니다.",
+    category: "video",
+    roleSlot: "video-render",
+    roleLabelKo: "이미지→비디오(I2V) 원격 모션 MCP",
+    tryPromptExample: "이 랜딩페이지 목업 이미지를 부드러운 줌인 모션 영상으로 변환해 줘",
+    keyMetricBadge: "이미지 1장→모션 영상",
+  },
+  "MiniMaxAI/minimax-h3-image": {
+    name: "MiniMax H3 Image",
+    koreanAlias: "MiniMax H3 Image — 6스텝 고속 이미지 생성·다중 이미지 편집 스페이스",
+    oneLineAnalogy:
+      "단 6스텝 만에 ==최대 8장의 레퍼런스 이미지를 조합해 고품질 비주얼을 만드는 최신 Hugging Face 트렌딩 도구==입니다.",
+    category: "design",
+    roleSlot: "ui-design",
+    roleLabelKo: "6스텝 다중 이미지 합성·편집 AI 스페이스",
+    tryPromptExample: "MiniMax H3 Image API로 브랜드 톤에 맞춘 제품 카드 썸네일을 생성해 줘",
+    keyMetricBadge: "6스텝 다중 이미지 편집",
+  },
+  "joelniklaus/harness-leaderboard": {
+    name: "Harness Leaderboard",
+    koreanAlias: "에이전트 하네스 리더보드 — 내 모델에 가장 잘 맞는 코딩 하네스 비교",
+    oneLineAnalogy:
+      "Claude Code·Codex·Cursor 등 ==코딩 에이전트 하네스별 실제 성능 순위를 한눈에 비교하는 Hugging Face 벤치마크==입니다.",
+    category: "radar",
+    roleSlot: "live-radar",
+    roleLabelKo: "코딩 에이전트 하네스 실측 성능 비교",
+    tryPromptExample: "내 주력 모델 기준으로 가장 성능이 잘 나오는 코딩 에이전트 하네스 조합을 추천해 줘",
+    keyMetricBadge: "하네스 실측 순위표",
+  },
+  "r3gm/wan2-2-fp8da-aoti-preview": {
+    name: "Wan 2.2 Preview MCP",
+    koreanAlias: "Wan 2.2 Preview — 빠른 영상 프로토타입 프리뷰를 뽑는 원격 MCP",
+    oneLineAnalogy:
+      "무거운 렌더링 전에 ==AI 대화창에서 빠르게 영상 시안 프리뷰를 확인하게 해주는 경량 원격 MCP==입니다.",
+    category: "video",
+    roleSlot: "video-render",
+    roleLabelKo: "고속 AI 비디오 시안 프리뷰 원격 MCP",
+    tryPromptExample: "Wan 2.2 Preview MCP로 숏폼 오프닝 시안 프리뷰를 먼저 빠르게 뽑아줘",
+    keyMetricBadge: "초고속 영상 시안",
+  },
+  "fffiloni/diffusers-image-outpaint": {
+    name: "Image Outpaint MCP",
+    koreanAlias: "Image Outpaint — 잘린 배너·썸네일 배경을 자연스럽게 확장하는 원격 MCP",
+    oneLineAnalogy:
+      "정사각형 이미지를 16:9 히어로 배너나 9:16 숏폼 비율로 ==어색함 없이 바깥 배경을 AI로 그려 넓혀주는 원격 MCP==입니다.",
+    category: "design",
+    roleSlot: "ui-design",
+    roleLabelKo: "이미지 비율 확장 · 아웃페인팅 원격 MCP",
+    tryPromptExample: "이 정사각형 제품 이미지를 16:9 랜딩페이지 히어로 배너 비율로 자연스럽게 확장해 줘",
+    keyMetricBadge: "비율 자동 배경 확장",
+  },
+  "linoyts/Qwen-Image-Edit-Angles": {
+    name: "Qwen Image Angles MCP",
+    koreanAlias: "Qwen Image Angles — 제품 사진 1장으로 다양한 카메라 각도를 생성하는 MCP",
+    oneLineAnalogy:
+      "정면 사진 1장만 주면 ==측면·부감·클로즈업 등 다양한 시점의 제품 컷을 일관되게 뽑아주는 원격 MCP==입니다.",
+    category: "design",
+    roleSlot: "ui-design",
+    roleLabelKo: "다각도 시점 변환 이미지 편집 원격 MCP",
+    tryPromptExample: "이 제품 목업 이미지를 45도 측면 시점으로 자연스럽게 회전시킨 컷을 만들어 줘",
+    keyMetricBadge: "다각도 시점 자동 생성",
+  },
+};
+
+function inferCategoryAndRole(text, defaultCat = "workflow") {
+  const s = String(text || "").toLowerCase();
+  if (/video|mp4|motion|i2v|t2v|wan2|ffmpeg|remotion|audio|voice|tts/.test(s)) {
+    return { category: "video", roleSlot: "video-render", roleLabelKo: "AI 영상·모션·오디오 자동 제작" };
+  }
+  if (/image|background|design|ui|css|tailwind|figma|frontend|icon|photo/.test(s)) {
+    return { category: "design", roleSlot: "ui-design", roleLabelKo: "AI 이미지·UI 디자인 자동화" };
+  }
+  if (/memory|mem|context|compress|token|cache/.test(s)) {
+    return { category: "context", roleSlot: "memory", roleLabelKo: "장기 기억·컨텍스트 토큰 절약" };
+  }
+  if (/router|gateway|proxy|fallback|quota/.test(s)) {
+    return { category: "routing", roleSlot: "llm-router", roleLabelKo: "멀티 모델 라우팅·무중단 폴백" };
+  }
+  if (/search|rag|graph|index|codebase|ast|docs|symbol|lsp/.test(s)) {
+    return { category: "knowledge", roleSlot: "code-graph", roleLabelKo: "코드·문서 정밀 탐색 및 인덱싱" };
+  }
+  if (/browser|playwright|scrape|crawl|web/.test(s)) {
+    return { category: "browser", roleSlot: "browser-mcp", roleLabelKo: "브라우저·웹 자동 검증 도구" };
+  }
+  if (/guard|lint|test|review|security|yagni|harness|eval/.test(s)) {
+    return { category: "guardrail", roleSlot: "code-restraint", roleLabelKo: "코드 품질·보안·테스트 가드레일" };
+  }
+  return { category: defaultCat, roleSlot: "harness-suite", roleLabelKo: "멀티 에이전트 코딩 워크플로우" };
+}
+
+async function buildHfSpaceSkill(space, { discoveredVia, nowIso, translationCache, prev }) {
+  const spaceId = space.id;
+  if (!spaceId || !spaceId.includes("/")) return null;
+  const [, rawSpaceName] = spaceId.split("/");
+  const slug = `hf-${slugifyId(rawSpaceName)}`;
+  const isMcp = Array.isArray(space.tags) && space.tags.includes("mcp-server");
+  const sdk = space.sdk || "gradio";
+  const mcpEndpoint = isMcp || sdk === "gradio" ? toHfGradioMcpUrl(spaceId) : undefined;
+  const spaceUrl = `https://huggingface.co/spaces/${spaceId}`;
+  const likes = typeof space.likes === "number" ? space.likes : (prev?.likes ?? 0);
+  const rawDesc =
+    space.ai_short_description ||
+    space.shortDescription ||
+    space.cardData?.short_description ||
+    space.title ||
+    `${rawSpaceName} Hugging Face AI Space`;
+
+  const curated = HF_CURATED_META[spaceId];
+  let translatedKo = curated ? "" : await translateToKoreanCached(rawDesc, translationCache);
+  if (!translatedKo && !curated) {
+    translatedKo = `${rawSpaceName} 기능을 로컬 GPU 없이 원격으로 실행하는 Hugging Face AI 도구입니다.`;
+  }
+
+  const inferred = inferCategoryAndRole(`${spaceId} ${rawDesc}`, "design");
+  const name = curated?.name ?? rawSpaceName.replace(/[-_]+/g, " ");
+  const category = curated?.category ?? inferred.category;
+  const roleSlot = curated?.roleSlot ?? inferred.roleSlot;
+  const roleLabelKo = curated?.roleLabelKo ?? (isMcp ? `원격 ${inferred.roleLabelKo} (HF MCP)` : inferred.roleLabelKo);
+  const koreanAlias = curated?.koreanAlias ?? `${name} — ${translatedKo.slice(0, 44)}`;
+  const oneLineAnalogy =
+    curated?.oneLineAnalogy ??
+    `로컬 설치나 GPU 부담 없이 ==${translatedKo.replace(/\.$/, "")}== 기능을 바로 연결하는 Hugging Face 원격 도구입니다.`;
+  const summaryKo = curated
+    ? `${stripHighlightMarkers(curated.oneLineAnalogy)} Hugging Face 공식 ${isMcp ? "MCP Server 태그가 검증된 " : ""}Space(${spaceId})로, Claude Code·Gemini CLI·Cursor에서 원격 SSE MCP로 즉시 붙이거나 Lovable·Bolt에서 API로 호출할 수 있습니다.`
+    : `${translatedKo} Hugging Face Space(${spaceId})에서 클라우드 GPU로 실행되며, 원격 Gradio MCP 또는 API로 내 코딩 툴에 바로 연결됩니다.`;
+
+  const tryPromptExample =
+    curated?.tryPromptExample ??
+    `방금 연결한 ${name} 원격 도구로 지금 프로젝트에 필요한 결과물을 바로 만들어 줘`;
+
+  const skillMdTemplate = `---
+name: ${slug}
+description: ${stripHighlightMarkers(oneLineAnalogy).slice(0, 140)}
+source: ${spaceUrl}
+${mcpEndpoint ? `mcp_sse: ${mcpEndpoint}` : ""}
+---
+
+# ${name} — Hugging Face 원격 MCP 활용 규칙
+
+1. **로컬 GPU 0% 원격 실행**: 무거운 모델 가중치를 로컬에 받지 않고 \`${spaceId}\` 원격 Space(${mcpEndpoint || spaceUrl})를 호출해 작업한다.
+2. **입출력 경로 명확화**: 생성·변환된 결과물(이미지·영상·분석 결과)은 프로젝트 내 지정 자산 폴더에 저장하고 파일 경로를 보고한다.
+3. **오류 시 원본 Space 폴백**: 원격 큐가 혼잡하면 재시도하거나 원본 Space(${spaceUrl}) 상태를 안내한다.`;
+
+  return {
+    slug,
+    name,
+    koreanAlias,
+    oneLineAnalogy,
+    summaryKo,
+    repo: spaceId,
+    repoUrl: spaceUrl,
+    sourcePlatform: "huggingface",
+    stars: likes,
+    likes,
+    hfMcpEndpoint: mcpEndpoint,
+    hfSpaceUrl: spaceUrl,
+    hfSdk: sdk,
+    tryPromptExample,
+    keyMetricBadge: curated?.keyMetricBadge ?? (isMcp ? "GPU 0% 원격 MCP" : "HF 실시간 트렌딩"),
+    discoveredVia,
+    language: sdk === "gradio" ? "Gradio MCP" : "Docker Space",
+    license: "Hugging Face Space",
+    pushedAt: space.lastModified || nowIso,
+    createdAt: space.createdAt || undefined,
+    lifecycleTier: likes >= 2000 ? "evergreen" : "rising",
+    vitalityScore: 0,
+    category,
+    roleSlot,
+    roleLabelKo,
+    installFormats: isMcp ? ["MCP", "SKILL.md"] : ["MCP", "Rules"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "web-builder"],
+    contextTokens: 280,
+    contextTier: "초경량",
+    installCommands: {
+      cli: mcpEndpoint
+        ? `claude mcp add --transport sse ${slug} ${mcpEndpoint}`
+        : `open ${spaceUrl}`,
+    },
+    skillMdTemplate,
+    demoMedia: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "로컬 GPU 세팅·파이썬 환경 충돌·모델 다운로드 반복",
+      afterTitle: "원격 Hugging Face MCP 주소 1줄 연결로 즉시 실행",
+      manualSteps: [
+        "로컬 CUDA/파이썬 의존성 설치 및 충돌 해결",
+        "수 GB 모델 체크포인트 수동 다운로드",
+        "별도 웹앱에서 생성 후 프로젝트 폴더로 수동 복사",
+      ],
+      autoStep: `${name} 원격 MCP를 내 코딩 툴에 직결해 대화 한 줄로 결과물 즉시 생성`,
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: [
+      rawSpaceName.toLowerCase(),
+      "huggingface",
+      "mcp",
+      "gradio",
+      category,
+      ...spaceId.toLowerCase().split(/[/-]+/).filter((w) => w.length >= 3),
+    ].slice(0, 10),
+    matchedRadar: [],
+    verifiedAt: nowIso,
+    archived: Boolean(space.disabled),
+    httpStatus: 200,
+    starDelta: typeof prev?.likes === "number" ? likes - prev.likes : 10,
+  };
+}
+
+async function buildDiscoveredGithubSkill(repoMeta, { discoveredVia, nowIso, translationCache, prev }) {
+  const fullName = repoMeta.full_name;
+  if (!fullName || !fullName.includes("/")) return null;
+  const [, repoName] = fullName.split("/");
+  const slug = slugifyId(repoName);
+  if (!slug || slug.length < 2) return null;
+
+  const curated = GH_CURATED_DISCOVERY[fullName];
+  const rawDesc = (repoMeta.description || "").trim();
+  const translatedKo =
+    curated
+      ? stripHighlightMarkers(curated.oneLineAnalogy)
+      : (await translateToKoreanCached(rawDesc, translationCache)) ||
+        `${repoName} 코딩 에이전트 생산성을 높여주는 검증 오픈소스 무기입니다.`;
+
+  const inferred = inferCategoryAndRole(`${fullName} ${rawDesc} ${(repoMeta.topics || []).join(" ")}`, "workflow");
+  const displayName =
+    curated?.name ??
+    repoName
+      .split(/[-_]+/)
+      .map((w) => (w.length <= 3 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1)))
+      .join(" ");
+
+  const shortKo = translatedKo.replace(/\.$/, "");
+  const headlineKo =
+    shortKo.length > 48 ? `${shortKo.slice(0, 46).trimEnd()}…` : shortKo;
+
+  const stars = typeof repoMeta.stargazers_count === "number" ? repoMeta.stargazers_count : 0;
+  const license =
+    (repoMeta.license && repoMeta.license.spdx_id && repoMeta.license.spdx_id !== "NOASSERTION"
+      ? repoMeta.license.spdx_id
+      : repoMeta.license?.name) || "Open Source";
+
+  const tryPromptExample =
+    curated?.tryPromptExample ??
+    `${displayName} 규칙을 적용해서 지금 코드베이스의 핵심 문제부터 빠르게 해결해 줘`;
+
+  const skillMdTemplate = `---
+name: ${slug}
+description: ${shortKo.slice(0, 140)}
+source: https://github.com/${fullName}
+---
+
+# ${displayName} — 실전 오픈소스 코딩 무기
+
+1. **목적**: ${shortKo}
+2. **적용 방식**: 작업 전 기존 프로젝트 구조를 먼저 파악한 뒤 \`${fullName}\`의 핵심 패턴을 최소 변경으로 적용한다.
+3. **검증 완료 보고**: 변경 파일과 테스트·실행 결과를 간결히 요약해 보고한다.`;
+
+  return {
+    slug,
+    name: displayName,
+    koreanAlias: curated?.koreanAlias ?? `${displayName} — ${headlineKo}`,
+    oneLineAnalogy:
+      curated?.oneLineAnalogy ??
+      `AI 코딩 에이전트에 ==${shortKo}== 능력을 즉시 장착해 주는 최신 검증 오픈소스입니다.`,
+    summaryKo: `${translatedKo} GitHub(${fullName})에서 최근까지 활발히 유지보수 중인 오픈소스 도구로, Claude Code·Cursor·Gemini CLI 워크플로우에 바로 연결할 수 있습니다.`,
+    repo: fullName,
+    repoUrl: `https://github.com/${fullName}`,
+    sourcePlatform: "github",
+    stars,
+    tryPromptExample,
+    keyMetricBadge:
+      curated?.keyMetricBadge ??
+      (discoveredVia === "hf-paper" ? "HF 논문 실전 코드" : "신규 급상승 오픈소스"),
+    discoveredVia,
+    language: repoMeta.language || "TypeScript",
+    license,
+    pushedAt: repoMeta.pushed_at || nowIso,
+    createdAt: repoMeta.created_at || undefined,
+    lifecycleTier: "rising",
+    vitalityScore: 0,
+    category: inferred.category,
+    roleSlot: inferred.roleSlot,
+    roleLabelKo: inferred.roleLabelKo,
+    installFormats: ["SKILL.md", "MCP", "CLI"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex"],
+    contextTokens: 540,
+    contextTier: "초경량",
+    installCommands: {
+      npxSkills: `npx skills add ${fullName}`,
+    },
+    skillMdTemplate,
+    demoMedia: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "매번 반복적인 수동 설정과 긴 프롬프트 설명 작성",
+      afterTitle: `${displayName} 규칙·도구 1회 장착으로 자동 실행`,
+      manualSteps: [
+        "관련 오픈소스 문서를 직접 찾아 수동 세팅",
+        "코딩 툴마다 다른 규칙 파일 형식에 맞춰 변환",
+        "세션마다 동일한 작업 지침 반복 입력",
+      ],
+      autoStep: `${displayName} 자동 설치 문구로 내 코딩 툴에 즉시 이식해 1회 명령으로 실행`,
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: [
+      repoName.toLowerCase(),
+      inferred.category,
+      ...(repoMeta.topics || []).slice(0, 5),
+      "agent",
+      "mcp",
+    ].slice(0, 10),
+    matchedRadar: [],
+    verifiedAt: nowIso,
+    archived: Boolean(repoMeta.archived),
+    httpStatus: 200,
+    starDelta: typeof prev?.stars === "number" ? stars - prev.stars : 15,
+  };
 }
 
 function resolveGithubToken() {
@@ -1579,19 +2119,19 @@ const SYNERGY_DECKS = [
   {
     slug: "non-dev-web-builder-oneshot",
     title: "비개발자 웹 빌더(Lovable · Bolt · v0) 원샷 품질 고정 덱",
-    subtitle: "Taste-Skill + Ponytail + Task Master AI",
+    subtitle: "Taste-Skill + Ponytail + Superpowers",
     targetAudience: "터미널 없이 Lovable·Bolt·v0에서 첫 프롬프트부터 프로급 품질의 웹 앱을 뽑고 싶은 기획자·창업자",
     synergyNarrative:
-      "웹 빌더의 고질병인 '뻔한 디자인·지저분한 코드·중반부 기능 붕괴'를 3가지 규칙으로 한 번에 잡습니다. ==Task Master==가 아이디어를 단계별 체크리스트로 정리하고, ==Taste-Skill==이 깔끔한 디자인 시스템을 고정하며, ==Ponytail==이 불필요한 코드 폭증을 막아 크레딧 소모를 확 줄입니다. 하단 독의 **[Lovable · Bolt · v0 프롬프트 팩 복사]** 버튼으로 1초 만에 붙여넣을 수 있습니다.",
-    skillSlugs: ["taste-skill", "ponytail", "claude-task-master"],
+      "웹 빌더의 고질병인 '뻔한 디자인·지저분한 코드·중반부 기능 붕괴'를 3가지 규칙으로 한 번에 잡습니다. ==Superpowers==가 아이디어를 단계별 설계·검증 체크리스트로 정리하고, ==Taste-Skill==이 깔끔한 디자인 시스템을 고정하며, ==Ponytail==이 불필요한 코드 폭증을 막아 크레딧 소모를 확 줄입니다. 단일 검은 버튼 클릭 한 번으로 통합 프롬프트 팩을 바로 복사할 수 있습니다.",
+    skillSlugs: ["taste-skill", "ponytail", "superpowers"],
     recommendedTools: ["web-builder", "cursor", "claude-code"],
     highlightMetrics: [
       "웹 빌더 Knowledge / Custom Instructions 글자 수 예산에 자동 압축",
       "터미널 명령 0줄 · 1클릭 복붙으로 즉시 적용",
-      "기획 분해 + 안티-슬롭 디자인 + 크레딧 절약 최소 코드 3박자",
+      "단계별 설계 + 안티-슬롭 디자인 + 크레딧 절약 최소 코드 3박자",
     ],
     installTipKo:
-      "상단 툴 스위치에서 'Lovable / Bolt / v0'를 켜고 하단 독의 [Lovable · Bolt · v0 프롬프트 팩 복사]를 누르세요.",
+      "상단 툴 스위치에서 'Lovable · Bolt'를 선택하고 모달 최하단 검은 버튼을 누르면 프롬프트 팩이 즉시 복사됩니다.",
   },
 ];
 
@@ -1757,7 +2297,9 @@ function matchRadarToSkills(signals, skills) {
 
 async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
+  fs.mkdirSync(path.dirname(TRANSLATION_CACHE_PATH), { recursive: true });
   const etagCache = loadJsonSafe(ETAG_CACHE_PATH, {});
+  const translationCache = loadJsonSafe(TRANSLATION_CACHE_PATH, {});
   const previousCatalog = loadJsonSafe(CATALOG_PATH, { skills: [] });
   const prevBySlug = new Map(
     (previousCatalog.skills || []).map((s) => [s.slug, s]),
@@ -1767,7 +2309,7 @@ async function main() {
   const ghHeaders = ghToken ? { Authorization: `Bearer ${ghToken}` } : {};
 
   console.log(
-    `[SKILLDOCK sync] Starting sync for ${SKILL_SEEDS.length} repos (GitHub auth: ${ghToken ? "SET" : "UNSET"})`,
+    `[SKILLDOCK sync] Starting V5 multi-source harvest: ${SKILL_SEEDS.length} seeds + Hugging Face + GitHub Search (GitHub auth: ${ghToken ? "SET" : "UNSET"})`,
   );
 
   // 1. Fetch AI Radar planning-feed.json + live-feed.json
@@ -1780,10 +2322,12 @@ async function main() {
     `[SKILLDOCK sync] AI Radar: planning=${planningRes.status}, live=${liveRes.status}, merged=${radar.totalSignals}, china=${radar.chinaSignals}, generated_at=${radar.generatedAt}`,
   );
 
-  // 2. Sync each GitHub repository with ETag, 1500-2500ms jitter, and 429/403 Circuit Breaker
+  // 2. Sync 24 verified core seeds with ETag, 1500-2200ms jitter, and 429/403 Circuit Breaker
   let circuitOpen = false;
   const nowIso = new Date().toISOString();
   const builtSkills = [];
+  const seenRepos = new Set();
+  const seenSlugs = new Set();
 
   for (let i = 0; i < SKILL_SEEDS.length; i++) {
     const seed = SKILL_SEEDS[i];
@@ -1805,11 +2349,11 @@ async function main() {
       if (res.data && res.data.full_name) {
         meta = res.data;
         console.log(
-          `  [${i + 1}/${SKILL_SEEDS.length}] ${meta.full_name} (HTTP ${res.status}) ★${meta.stargazers_count}`,
+          `  [Seed ${i + 1}/${SKILL_SEEDS.length}] ${meta.full_name} (HTTP ${res.status}) ★${meta.stargazers_count}`,
         );
       } else {
         console.warn(
-          `  [${i + 1}/${SKILL_SEEDS.length}] ${seed.repo} HTTP ${res.status} — falling back to previous snapshot if present`,
+          `  [Seed ${i + 1}/${SKILL_SEEDS.length}] ${seed.repo} HTTP ${res.status} — falling back to previous snapshot`,
         );
       }
     }
@@ -1833,7 +2377,6 @@ async function main() {
     const createdAt = meta?.created_at || prev?.createdAt || undefined;
     const archived = Boolean(meta?.archived);
 
-    // Verify demo media URL (HTTP 200 only)
     let demoMedia = null;
     if (seed.mediaCandidate) {
       const candidateUrl = seed.mediaCandidate.relPath.startsWith("http")
@@ -1848,10 +2391,11 @@ async function main() {
         };
       } else if (prev?.demoMedia?.url === candidateUrl) {
         demoMedia = prev.demoMedia;
-      } else {
-        console.warn(`    media check non-200 skipped: ${candidateUrl}`);
       }
     }
+
+    seenRepos.add(fullName.toLowerCase());
+    seenSlugs.add(seed.slug);
 
     builtSkills.push({
       slug: seed.slug,
@@ -1861,7 +2405,9 @@ async function main() {
       summaryKo: seed.summaryKo,
       repo: fullName,
       repoUrl: `https://github.com/${fullName}`,
+      sourcePlatform: seed.slug === "ai-radar-live" ? "skilldock" : "github",
       stars,
+      discoveredVia: "seed",
       language,
       license,
       pushedAt,
@@ -1889,7 +2435,160 @@ async function main() {
     });
   }
 
-  // 3. Match AI Radar real signals to verified installable skills
+  // 3. Harvest Hugging Face MCP Spaces + Trending Spaces + Daily Papers (githubStars >= 100)
+  const hfTrendingPreview = [];
+  const hfCandidates = [];
+  const hfSeenIds = new Set();
+
+  await sleep(jitterMs());
+  const hfMcpRes = await fetchJsonWithCache(HF_MCP_SPACES_URL, { Accept: "application/json" }, etagCache);
+  if (Array.isArray(hfMcpRes.data)) {
+    console.log(`[SKILLDOCK sync] Hugging Face MCP Spaces: HTTP ${hfMcpRes.status}, count=${hfMcpRes.data.length}`);
+    for (const sp of hfMcpRes.data) {
+      if (!sp?.id || sp.private || sp.disabled) continue;
+      if (hfSeenIds.has(sp.id.toLowerCase())) continue;
+      hfSeenIds.add(sp.id.toLowerCase());
+      hfCandidates.push({ space: sp, discoveredVia: "hf-mcp" });
+    }
+  }
+
+  await sleep(jitterMs());
+  const hfTrendRes = await fetchJsonWithCache(HF_TRENDING_SPACES_URL, { Accept: "application/json" }, etagCache);
+  if (Array.isArray(hfTrendRes.data?.recentlyTrending)) {
+    console.log(
+      `[SKILLDOCK sync] Hugging Face Trending Spaces: HTTP ${hfTrendRes.status}, count=${hfTrendRes.data.recentlyTrending.length}`,
+    );
+    for (const entry of hfTrendRes.data.recentlyTrending) {
+      const sp = entry?.repoData;
+      if (!sp?.id || sp.private || sp.disabled) continue;
+      const isMcp = Array.isArray(sp.tags) && sp.tags.includes("mcp-server");
+      hfTrendingPreview.push({
+        id: sp.id,
+        likes: typeof sp.likes === "number" ? sp.likes : 0,
+        sdk: sp.sdk,
+        shortDescription: sp.ai_short_description || sp.shortDescription,
+        isMcp,
+        url: `https://huggingface.co/spaces/${sp.id}`,
+      });
+      // Include trending Spaces that are MCP servers or high-utility AI creator/agent tools
+      if (
+        !hfSeenIds.has(sp.id.toLowerCase()) &&
+        (isMcp || HF_CURATED_META[sp.id] || (sp.sdk === "gradio" && (sp.likes ?? 0) >= 200))
+      ) {
+        hfSeenIds.add(sp.id.toLowerCase());
+        hfCandidates.push({ space: sp, discoveredVia: "hf-trending" });
+      }
+    }
+  }
+
+  // Pick top 10 Hugging Face Spaces (prioritizing curated & MCP servers with highest likes)
+  hfCandidates.sort((a, b) => {
+    const aCur = HF_CURATED_META[a.space.id] ? 1 : 0;
+    const bCur = HF_CURATED_META[b.space.id] ? 1 : 0;
+    if (aCur !== bCur) return bCur - aCur;
+    const aMcp = Array.isArray(a.space.tags) && a.space.tags.includes("mcp-server") ? 1 : 0;
+    const bMcp = Array.isArray(b.space.tags) && b.space.tags.includes("mcp-server") ? 1 : 0;
+    if (aMcp !== bMcp) return bMcp - aMcp;
+    return (b.space.likes ?? 0) - (a.space.likes ?? 0);
+  });
+
+  let hfAdded = 0;
+  for (const cand of hfCandidates) {
+    if (hfAdded >= 10) break;
+    const prev = prevBySlug.get(`hf-${slugifyId(cand.space.id.split("/")[1])}`);
+    const built = await buildHfSpaceSkill(cand.space, {
+      discoveredVia: cand.discoveredVia,
+      nowIso,
+      translationCache,
+      prev,
+    });
+    if (!built || seenSlugs.has(built.slug) || seenRepos.has(built.repo.toLowerCase())) continue;
+    seenSlugs.add(built.slug);
+    seenRepos.add(built.repo.toLowerCase());
+    builtSkills.push(built);
+    hfAdded += 1;
+    console.log(`  [HF +${hfAdded}] ${built.repo} ♥${built.likes} (${built.hfMcpEndpoint ? "MCP SSE" : "Space"})`);
+  }
+
+  // 4. Harvest Hugging Face Daily Papers with verified githubRepo & githubStars >= 100
+  await sleep(jitterMs());
+  const hfPapersRes = await fetchJsonWithCache(HF_DAILY_PAPERS_URL, { Accept: "application/json" }, etagCache);
+  const paperReposToFetch = [];
+  if (Array.isArray(hfPapersRes.data)) {
+    for (const item of hfPapersRes.data) {
+      const paper = item?.paper;
+      if (!paper?.githubRepo || (paper.githubStars ?? 0) < 100) continue;
+      const m = String(paper.githubRepo).match(/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)/i);
+      if (!m) continue;
+      const repoId = m[1].replace(/\.git$/, "");
+      if (seenRepos.has(repoId.toLowerCase())) continue;
+      const blob = `${paper.title || ""} ${(paper.ai_keywords || []).join(" ")} ${repoId}`;
+      if (GH_RELEVANT_RE.test(blob)) {
+        paperReposToFetch.push(repoId);
+      }
+    }
+  }
+
+  for (const repoId of paperReposToFetch.slice(0, 3)) {
+    if (circuitOpen) break;
+    await sleep(jitterMs());
+    const res = await fetchJsonWithCache(`https://api.github.com/repos/${repoId}`, ghHeaders, etagCache);
+    if (res.rateLimited) {
+      circuitOpen = true;
+      break;
+    }
+    if (res.data?.full_name && !res.data.archived) {
+      const built = await buildDiscoveredGithubSkill(res.data, {
+        discoveredVia: "hf-paper",
+        nowIso,
+        translationCache,
+        prev: prevBySlug.get(slugifyId(res.data.name)),
+      });
+      if (built && !seenSlugs.has(built.slug) && !seenRepos.has(built.repo.toLowerCase())) {
+        seenSlugs.add(built.slug);
+        seenRepos.add(built.repo.toLowerCase());
+        builtSkills.push(built);
+        console.log(`  [HF Paper->GH] ${built.repo} ★${built.stars}`);
+      }
+    }
+  }
+
+  // 5. Harvest New Rising GitHub Skills / MCP / Cursor Rules via Search API
+  let ghDiscoveredAdded = 0;
+  for (const queryUrl of GH_DISCOVERY_QUERIES) {
+    if (circuitOpen || ghDiscoveredAdded >= 10) break;
+    await sleep(jitterMs());
+    const res = await fetchJsonWithCache(queryUrl, ghHeaders, etagCache);
+    if (res.rateLimited) {
+      console.warn(`[SKILLDOCK sync] GitHub search circuit breaker tripped (HTTP ${res.status}).`);
+      circuitOpen = true;
+      break;
+    }
+    const items = Array.isArray(res.data?.items) ? res.data.items : [];
+    console.log(`[SKILLDOCK sync] GitHub Search HTTP ${res.status}, candidates=${items.length}`);
+    for (const repoMeta of items) {
+      if (ghDiscoveredAdded >= 10) break;
+      if (!repoMeta?.full_name || repoMeta.archived || repoMeta.fork) continue;
+      if (seenRepos.has(repoMeta.full_name.toLowerCase())) continue;
+      const blob = `${repoMeta.full_name} ${repoMeta.description || ""} ${(repoMeta.topics || []).join(" ")}`;
+      if (!repoMeta.description || GH_NOISE_RE.test(blob) || !GH_RELEVANT_RE.test(blob)) continue;
+
+      const built = await buildDiscoveredGithubSkill(repoMeta, {
+        discoveredVia: "gh-search",
+        nowIso,
+        translationCache,
+        prev: prevBySlug.get(slugifyId(repoMeta.name)),
+      });
+      if (!built || seenSlugs.has(built.slug)) continue;
+      seenSlugs.add(built.slug);
+      seenRepos.add(built.repo.toLowerCase());
+      builtSkills.push(built);
+      ghDiscoveredAdded += 1;
+      console.log(`  [GH +${ghDiscoveredAdded}] ${built.repo} ★${built.stars}`);
+    }
+  }
+
+  // 6. Match AI Radar real signals to verified installable skills & evaluate vitality
   const { matchedBySkill, matchedSignals } = matchRadarToSkills(
     radar.signals,
     builtSkills,
@@ -1905,7 +2604,7 @@ async function main() {
     skill.vitalityScore = vitalityScore;
   }
 
-  // 4. Prune archived/404/stale repos and enforce MAX_CATALOG_SIZE = 120
+  // 7. Prune archived/404/stale repos and enforce MAX_CATALOG_SIZE = 120
   const { kept: finalSkills, pruned } = pruneAndCapCatalog(builtSkills, {
     nowMs,
     maxSize: MAX_CATALOG_SIZE,
@@ -1918,13 +2617,21 @@ async function main() {
     );
   }
 
+  const sourceCounts = {
+    github: finalSkills.filter((s) => s.sourcePlatform === "github").length,
+    huggingface: finalSkills.filter((s) => s.sourcePlatform === "huggingface").length,
+    skilldock: finalSkills.filter((s) => s.sourcePlatform === "skilldock").length,
+  };
+
   const catalogPayload = {
-    version: 2,
+    version: 3,
     syncedAt: nowIso,
     radarGeneratedAt: radar.generatedAt,
     radarTotalSignals: radar.totalSignals,
     radarChinaSignals: radar.chinaSignals,
     radarMatchedCount: matchedSignals.length,
+    sourceCounts,
+    hfTrendingPreview: hfTrendingPreview.slice(0, 8),
     skills: finalSkills,
     radarItems: matchedSignals.slice(0, 30),
   };
@@ -1940,11 +2647,16 @@ async function main() {
     "utf8",
   );
   fs.writeFileSync(ETAG_CACHE_PATH, JSON.stringify(etagCache, null, 2), "utf8");
+  fs.writeFileSync(
+    TRANSLATION_CACHE_PATH,
+    JSON.stringify(translationCache, null, 2) + "\n",
+    "utf8",
+  );
 
   const evergreenCount = finalSkills.filter((s) => s.lifecycleTier === "evergreen").length;
   const risingCount = finalSkills.filter((s) => s.lifecycleTier === "rising").length;
   console.log(
-    `[SKILLDOCK sync] Done! Wrote ${finalSkills.length} verified skills (evergreen=${evergreenCount}, rising=${risingCount}, pruned=${pruned.length}), ${SYNERGY_DECKS.length} synergy decks, and ${matchedSignals.length} matched AI Radar signals.`,
+    `[SKILLDOCK sync] Done! Wrote ${finalSkills.length} verified skills (github=${sourceCounts.github}, huggingface=${sourceCounts.huggingface}, skilldock=${sourceCounts.skilldock}, evergreen=${evergreenCount}, rising=${risingCount}, pruned=${pruned.length}), ${SYNERGY_DECKS.length} synergy decks, and ${matchedSignals.length} matched AI Radar signals.`,
   );
 }
 

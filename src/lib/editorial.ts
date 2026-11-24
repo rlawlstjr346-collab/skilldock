@@ -10,6 +10,159 @@ import type {
 
 export type QuickFilterId = "all" | "presets" | "rising" | "evergreen";
 
+export type SourceFilterId = "all" | "github" | "huggingface";
+
+export interface CardMetricSummary {
+  effectLabel: string;
+  effectValue: string;
+  gaugePercent: number;
+  gaugeColor: string;
+  directionHint: string;
+  memoryLabel: string;
+  verifyLabel: string;
+  verifyCount: string;
+}
+
+export function formatRelativeTimeKo(iso: string | undefined, nowMs = Date.now()): string {
+  if (!iso) return "최근 갱신";
+  const ts = Date.parse(iso);
+  if (Number.isNaN(ts)) return "최근 갱신";
+  const diffSec = Math.max(0, Math.floor((nowMs - ts) / 1000));
+  if (diffSec < 3600) return `${Math.max(1, Math.floor(diffSec / 60))}분 전`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}시간 전`;
+  const days = Math.floor(diffSec / 86400);
+  if (days < 30) return `${days}일 전`;
+  return `${Math.floor(days / 30)}개월 전`;
+}
+
+export function isFreshItem(iso: string | undefined, nowMs = Date.now()): boolean {
+  if (!iso) return false;
+  const ts = Date.parse(iso);
+  if (Number.isNaN(ts)) return false;
+  return nowMs - ts <= 7 * 24 * 60 * 60 * 1000;
+}
+
+export function getTryPromptExample(skill: SkillItem): string {
+  if (skill.tryPromptExample && skill.tryPromptExample.trim().length > 0) {
+    return skill.tryPromptExample.trim();
+  }
+  switch (skill.slug) {
+    case "ponytail":
+      return "불필요한 추상화 없이 핵심 기능과 테스트만 최소 코드로 구현해 줘";
+    case "headroom":
+      return "긴 빌드 로그 핵심 에러만 압축해서 원인 바로 찾아줘";
+    case "omniroute":
+      return "한도 초과 시 무료 폴백 모델로 자동 우회해서 계속 작업해 줘";
+    case "graphify":
+      return "이 저장소 코드 지도를 먼저 그려서 수정 영향 범위를 알려줘";
+    case "taste-skill":
+      return "뻔한 양산형 UI 빼고 깔끔한 프로덕트 디자인으로 화면 고쳐줘";
+    case "hyperframes":
+      return "이 서비스 소개용 15초 MP4 모션 런칭 영상을 코드로 렌더링해 줘";
+    case "ecc-core":
+      return "수정 전에 관련 파일·테스트 먼저 읽고 보안 검수까지 마친 뒤 보고해 줘";
+    case "ai-radar-live":
+      return "오늘 AI Radar에 뜬 최신 개발·모델 이슈 3가지만 근거 링크와 함께 알려줘";
+    default:
+      if (skill.sourcePlatform === "huggingface" && skill.hfMcpEndpoint) {
+        return `방금 연결한 ${skill.name} 원격 MCP 도구로 바로 결과물 만들어 줘`;
+      }
+      return `${skill.name} 스킬 규칙을 적용해서 현재 작업을 깔끔하게 처리해 줘`;
+  }
+}
+
+export function getCardMetrics(skill: SkillItem): CardMetricSummary {
+  const wf = skill.workflowCompression;
+  const stepReductionPct = Math.min(
+    92,
+    Math.max(
+      40,
+      Math.round(
+        ((Math.max(1, wf.stepCountBefore) - Math.max(1, wf.stepCountAfter)) /
+          Math.max(1, wf.stepCountBefore)) *
+          100,
+      ),
+    ),
+  );
+
+  let effectLabel = "작업 단축";
+  let effectValue = `${wf.stepCountBefore}→${wf.stepCountAfter}단계`;
+  let gaugePercent = stepReductionPct;
+  let gaugeColor = "#0284C7";
+  let directionHint = "단계가 적을수록 빠름";
+
+  if (skill.slug === "ponytail") {
+    effectLabel = "코드·토큰";
+    effectValue = "코드 -53%";
+    gaugePercent = 84;
+    gaugeColor = "#10B981";
+    directionHint = "낮을수록 토큰·시간 절약";
+  } else if (skill.slug === "headroom") {
+    effectLabel = "토큰 압축";
+    effectValue = "로그 -88%";
+    gaugePercent = 88;
+    gaugeColor = "#10B981";
+    directionHint = "낮을수록 입력 비용 절감";
+  } else if (skill.slug === "omniroute") {
+    effectLabel = "응답 압축";
+    effectValue = "최대 -95%";
+    gaugePercent = 92;
+    gaugeColor = "#10B981";
+    directionHint = "375개 모델 무중단 우회";
+  } else if (skill.slug === "graphify") {
+    effectLabel = "탐색 정확도";
+    effectValue = "회상 3.3배";
+    gaugePercent = 82;
+    gaugeColor = "#2563EB";
+    directionHint = "높을수록 대형 코드 정확";
+  } else if (skill.sourcePlatform === "huggingface") {
+    effectLabel = skill.hfMcpEndpoint ? "원격 MCP" : "HF Space";
+    effectValue = skill.hfMcpEndpoint ? "GPU 0% 직결" : "즉시 체험";
+    gaugePercent = skill.hfMcpEndpoint ? 86 : 72;
+    gaugeColor = "#D97706";
+    directionHint = "로컬 설치 없이 클라우드 실행";
+  } else if (skill.keyMetricBadge) {
+    effectLabel = "핵심 효과";
+    effectValue = skill.keyMetricBadge;
+    gaugePercent = 76;
+    gaugeColor = "#10B981";
+    directionHint = "실전 작업 반복 제거";
+  }
+
+  const memoryLabel =
+    skill.sourcePlatform === "huggingface"
+      ? `원격 ${skill.contextTokens}t`
+      : `${skill.contextTier} ${skill.contextTokens}t`;
+
+  const verifyLabel =
+    skill.sourcePlatform === "huggingface"
+      ? "HF"
+      : skill.sourcePlatform === "skilldock"
+        ? "Live"
+        : "GitHub";
+  const countNum =
+    skill.sourcePlatform === "huggingface"
+      ? (skill.likes ?? skill.stars)
+      : skill.stars;
+  const verifyCount =
+    skill.sourcePlatform === "huggingface"
+      ? `♥ ${formatStars(countNum)}`
+      : skill.sourcePlatform === "skilldock"
+        ? "실시간"
+        : `★ ${formatStars(countNum)}`;
+
+  return {
+    effectLabel,
+    effectValue,
+    gaugePercent,
+    gaugeColor,
+    directionHint,
+    memoryLabel,
+    verifyLabel,
+    verifyCount,
+  };
+}
+
 export type MagazineBlock =
   | { kind: "deck-full"; deck: SynergyDeck }
   | { kind: "skill-pair"; skills: [SkillItem, SkillItem] }
