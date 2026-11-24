@@ -1,0 +1,1796 @@
+#!/usr/bin/env node
+import fs from "node:fs";
+import path from "node:path";
+import { execSync } from "node:child_process";
+
+const ROOT = process.cwd();
+const OUT_DIR = path.join(ROOT, "public", "data");
+const CATALOG_PATH = path.join(OUT_DIR, "skills-catalog.json");
+const DECKS_PATH = path.join(OUT_DIR, "synergy-decks.json");
+const ETAG_CACHE_PATH = path.join(ROOT, ".sync-etag-cache.json");
+
+const USER_AGENT =
+  "SKILLDOCK-CatalogSync/1.0 (+https://github.com/rlawlstjr346-collab/skilldock)";
+
+const PLANNING_FEED_URL =
+  "https://raw.githubusercontent.com/rlawlstjr346-collab/ai-radar/main/web/public/data/planning-feed.json";
+const LIVE_FEED_URL =
+  "https://raw.githubusercontent.com/rlawlstjr346-collab/ai-radar/main/web/public/live-feed.json";
+
+const CHINA_PLATFORMS = new Set([
+  "v2ex",
+  "juejin",
+  "qbitai",
+  "jiqizhixin",
+  "36kr-ai",
+]);
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function jitterMs() {
+  return 1500 + Math.floor(Math.random() * 1000);
+}
+
+function resolveGithubToken() {
+  if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN.trim();
+  try {
+    const token = execSync("gh auth token", {
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString("utf8")
+      .trim();
+    return token || null;
+  } catch {
+    return null;
+  }
+}
+
+function loadJsonSafe(filePath, fallback) {
+  try {
+    if (fs.existsSync(filePath)) {
+      return JSON.parse(fs.readFileSync(filePath, "utf8"));
+    }
+  } catch {
+    // ignore corrupted cache
+  }
+  return fallback;
+}
+
+function stripHighlightMarkers(input) {
+  if (!input) return "";
+  return input.replace(/==([^=]+?)==/g, "$1").replace(/==/g, "");
+}
+
+function classifyContextTier(tokens) {
+  if (tokens <= 800) return "초경량";
+  if (tokens <= 2200) return "보통";
+  return "무거움";
+}
+
+/**
+ * 24 verified real open-source skill / MCP / rule repositories + self-built #1 AI Radar Live skill.
+ * Metadata (stars, language, license, pushedAt, default_branch) is synced live via GitHub API HTTP 200.
+ */
+const SKILL_SEEDS = [
+  {
+    slug: "ponytail",
+    name: "Ponytail",
+    koreanAlias: "[과잉 코딩 방지 브레이크] Ponytail",
+    oneLineAnalogy:
+      "AI가 10줄이면 끝날 기능을 500줄로 부풀리지 못하게 막아주는 ==가장 게으른 시니어 개발자== 모드입니다.",
+    summaryKo:
+      "단순한 요청에도 불필요한 추상화·래퍼·파일을 과잉 생성하는 코딩 에이전트의 습관을 7단계 단순화 사다리로 제어합니다. 보안·유효성 검증·에러 처리는 절대 생략하지 않으면서도 불필요한 코드·토큰·작업 시간을 대폭 줄여줍니다.",
+    repo: "DietrichGebert/ponytail",
+    category: "guardrail",
+    roleSlot: "code-restraint",
+    roleLabelKo: "과잉 코딩 억제 · YAGNI 가드레일",
+    installFormats: ["Plugin", "SKILL.md", "Rules"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex", "web-builder"],
+    contextTokens: 640,
+    installCommands: {
+      claudePlugin: "/plugin marketplace add DietrichGebert/ponytail && /plugin install ponytail@ponytail",
+      npxSkills: "npx skills add DietrichGebert/ponytail",
+    },
+    mediaCandidate: {
+      type: "image",
+      relPath: "assets/band/band.png",
+      caption: "Claude Code 프롬프트 상단에 실시간 비용·토큰·세션 시간을 표시하는 Ponytail Band 화면",
+    },
+    benchmarks: [
+      {
+        label: "작성 코드량 (LOC)",
+        beforeLabel: "순정 Claude Code",
+        afterLabel: "Ponytail 장착 후",
+        beforeValue: 100,
+        afterValue: 47,
+        unit: "%",
+        deltaText: "-53% 코드",
+        lowerIsBetter: true,
+        sourceUrl: "https://github.com/DietrichGebert/ponytail",
+        methodology: "Claude Code 39개 실전 태스크(FastAPI+React 포함, Opus 5.5, 각 5회 반복 실측)",
+      },
+      {
+        label: "소모 토큰량",
+        beforeLabel: "순정 Claude Code",
+        afterLabel: "Ponytail 장착 후",
+        beforeValue: 100,
+        afterValue: 55,
+        unit: "%",
+        deltaText: "-45% 토큰",
+        lowerIsBetter: true,
+        sourceUrl: "https://github.com/DietrichGebert/ponytail",
+        methodology: "동일 39개 태스크 세션 합산 토큰 실측",
+      },
+      {
+        label: "작업 소요 시간",
+        beforeLabel: "순정 Claude Code",
+        afterLabel: "Ponytail 장착 후",
+        beforeValue: 100,
+        afterValue: 59,
+        unit: "%",
+        deltaText: "-41% 시간",
+        lowerIsBetter: true,
+        sourceUrl: "https://github.com/DietrichGebert/ponytail",
+        methodology: "동일 39개 태스크 평균 완료 시간 실측",
+      },
+      {
+        label: "고위험 로직 테스트 포함률",
+        beforeLabel: "순정 Claude Code",
+        afterLabel: "Ponytail 장착 후",
+        beforeValue: 68,
+        afterValue: 98,
+        unit: "%",
+        deltaText: "+30%p 상승",
+        lowerIsBetter: false,
+        sourceUrl: "https://github.com/DietrichGebert/ponytail",
+        methodology: "보안·데이터 손실·신뢰 경계 태스크 테스트 커버리지 비교",
+      },
+    ],
+    workflowCompression: {
+      beforeTitle: "매번 '짧게 짜줘, 파일 쪼개지 마' 잔소리 반복",
+      afterTitle: "요구사항만 입력하면 최소 변경 + 핵심 테스트 자동 적용",
+      manualSteps: [
+        "AI가 만든 과잉 추상화 파일 6개 검토",
+        "불필요한 인터페이스·래퍼 수동 삭제 지시",
+        "보안 검증·에러 처리 누락 재점검",
+        "핵심 분기 테스트 작성 추가 요청",
+      ],
+      autoStep: "Ponytail 7단계 단순화 가드레일이 초안 단계부터 최소 코드·테스트 동시 출력",
+      stepCountBefore: 4,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["claude code", "codex", "agent", "token", "coding", "harness", "yagni", "refactor", "vibe"],
+    skillMdTemplate: `---
+name: ponytail
+description: 과잉 엔지니어링을 억제하고 최소 변경과 핵심 테스트로 품질을 지키는 시니어 개발자 규율 스킬
+source: https://github.com/DietrichGebert/ponytail
+---
+
+# Ponytail — 최소 코드 · 최대 신뢰 원칙
+
+1. **요청하지 않은 추상화 금지**: 1회성 로직을 위해 불필요한 팩토리, 인터페이스, 래퍼 파일을 만들지 않는다.
+2. **기존 패턴 우선 재사용**: 새 유틸리티나 의존성을 추가하기 전에 저장소 내 기존 구현을 먼저 확인한다.
+3. **변경 범위 최소화**: 작업과 무관한 파일 포맷팅·리팩터링을 건드리지 않는다.
+4. **절대 타협 불가 4요소**: 입력 경계 검증, 데이터 손실 방지, 보안(XSS/주입/경로이탈), 접근성은 코드를 줄이더라도 절대 생략하지 않는다.
+5. **위험 로직 테스트 동반**: 상태 변경·권한·파서·계산 로직은 최소 1개 이상의 자동화 테스트와 함께 제출한다.`,
+  },
+  {
+    slug: "headroom",
+    name: "Headroom",
+    koreanAlias: "[AI 기억력 88% 압축팩] Headroom",
+    oneLineAnalogy:
+      "긴 에러 로그와 JSON 응답을 AI에게 보내기 직전 ==알맹이만 압축해 주는 컨텍스트 진공포장기==입니다.",
+    summaryKo:
+      "코딩 에이전트가 도구 호출로 쏟아내는 수만 토큰짜리 로그·JSON·파일 출력을 LLM에 도달하기 직전에 0.21ms 만에 압축합니다. 원본은 로컬 CCR 캐시에 보관해 AI가 필요 시 즉시 복원(headroom_retrieve)할 수 있어 정확도 손실 없이 비용을 줄입니다.",
+    repo: "headroomlabs-ai/headroom",
+    category: "context",
+    roleSlot: "context-compression",
+    roleLabelKo: "컨텍스트 · 도구 출력 토큰 압축",
+    installFormats: ["Proxy", "CLI", "MCP", "Plugin", "SKILL.md"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "codex"],
+    contextTokens: 520,
+    installCommands: {
+      cli: 'uv tool install --python 3.13 "headroom-ai[all]" && headroom deploy',
+      npxSkills: "npx skills add headroomlabs-ai/headroom",
+    },
+    mediaCandidate: {
+      type: "gif",
+      relPath: "HeadroomDemo-Fast.gif",
+      caption: "10,144 토큰 로그 덤프를 1,260 토큰(88% 절감)으로 압축하면서 FATAL 원인을 정확히 유지하는 실측 시연",
+    },
+    benchmarks: [
+      {
+        label: "로그 덤프 압축 실측 (데모)",
+        beforeLabel: "원본 로그 입력",
+        afterLabel: "Headroom 압축 후",
+        beforeValue: 10144,
+        afterValue: 1260,
+        unit: "tokens",
+        deltaText: "-87.6% 절감",
+        lowerIsBetter: true,
+        sourceUrl: "https://github.com/headroomlabs-ai/headroom",
+        methodology: "README 공식 Proof: 10,144 tokens 로그 → 1,260 tokens (동일 FATAL 원인 탐지 유지)",
+      },
+      {
+        label: "코딩 에이전트 4대 시나리오 입력 토큰",
+        beforeLabel: "순정 에이전트",
+        afterLabel: "Headroom 프록시",
+        beforeValue: 100,
+        afterValue: 61,
+        unit: "%",
+        deltaText: "21~57% 절감",
+        lowerIsBetter: true,
+        sourceUrl: "https://github.com/headroomlabs-ai/headroom",
+        methodology: "4개 코딩 에이전트 실측 시나리오(21~57% 절감, 반복 JSON·로그는 60~95% 절감)",
+      },
+      {
+        label: "10K JSON 압축 처리 지연 (p50)",
+        beforeLabel: "일반 LLM 요약 (참고 1000ms)",
+        afterLabel: "Headroom 로컬 압축",
+        beforeValue: 1000,
+        afterValue: 0.21,
+        unit: "ms",
+        deltaText: "0.21ms p50",
+        lowerIsBetter: true,
+        sourceUrl: "https://github.com/headroomlabs-ai/headroom",
+        methodology: "10K 토큰 JSON 검색 결과 p50 0.21ms, 100K 토큰 1.4ms (로컬 처리)",
+      },
+    ],
+    workflowCompression: {
+      beforeTitle: "컨텍스트 초과로 대화가 끊기고 세션 요약 반복",
+      afterTitle: "프록시·MCP 레이어에서 자동 압축 + 원본 필요 시 즉시 복원",
+      manualSteps: [
+        "긴 테스트/빌드 로그 수동 복사 및 핵심 줄 발췌",
+        "컨텍스트 80% 도달 시 /compact 수동 실행",
+        "압축 과정에서 유실된 파일 내용 다시 읽히기",
+      ],
+      autoStep: "Headroom 로컬 프록시가 도구 출력을 0.21ms 만에 자동 압축하고 원본은 CCR 캐시 보존",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["token", "context", "compress", "cost", "log", "json", "proxy", "memory", "claude code", "rag"],
+    skillMdTemplate: `---
+name: headroom
+description: 도구 출력·로그·JSON·RAG 청크를 로컬에서 가역 압축해 입력 토큰을 21~95% 절감하는 컨텍스트 최적화 스킬
+source: https://github.com/headroomlabs-ai/headroom
+---
+
+# Headroom — 가역 컨텍스트 압축 규칙
+
+1. **대용량 출력 선압축**: 빌드 로그, API JSON 배열, 검색 결과처럼 반복 구조가 큰 출력은 원문 전체를 컨텍스트에 밀어 넣지 않고 핵심 시그널(에러·스택트레이스·스키마·통계) 우선으로 요약해 소비한다.
+2. **원본 복원 경로 유지**: 압축된 청크에서 정확한 원문이 필요할 때만 \`headroom_retrieve\` 또는 특정 라인 범위 읽기로 정밀 조회한다.
+3. **실패 학습 환류**: 반복되는 빌드·테스트 오류 해결책은 \`headroom learn\` 또는 프로젝트 메모리 규칙 파일에 1줄 교훈으로 누적한다.`,
+  },
+  {
+    slug: "omniroute",
+    name: "OmniRoute",
+    koreanAlias: "[사용량 한도 무적 스위치] OmniRoute",
+    oneLineAnalogy:
+      "한 AI 모델이 한도에 걸리거나 오류가 나도 ==375개 프로바이더로 자동 우회해 코딩을 멈추지 않게 하는 통합 게이트웨이==입니다.",
+    summaryKo:
+      "단일 로컬 엔드포인트(`localhost:20128`) 뒤에서 Claude·GPT·Gemini·DeepSeek·Kimi·Qwen 등 1,400+ 모델(150+ 무료 티어 포함)을 쿼터 인식 자동 폴백으로 묶어줍니다. 내장 RTK+Caveman 압축 파이프라인으로 15~95% 토큰 절감과 MCP/A2A 브릿지까지 지원합니다.",
+    repo: "cheaper-inference/OmniRoute",
+    category: "routing",
+    roleSlot: "llm-router",
+    roleLabelKo: "멀티 LLM 라우터 · 무중단 폴백 게이트웨이",
+    installFormats: ["Proxy", "CLI", "MCP", "SKILL.md", "Rules"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex"],
+    contextTokens: 780,
+    installCommands: {
+      cli: "npm install -g omniroute && omniroute",
+      npxSkills: "npx skills add cheaper-inference/OmniRoute",
+    },
+    mediaCandidate: {
+      type: "image",
+      relPath: "docs/screenshots/MainOmniRoute.png",
+      caption: "OmniRoute 통합 대시보드: 멀티 프로바이더 쿼터·자동 폴백 콤보·토큰 압축 현황",
+    },
+    benchmarks: [
+      {
+        label: "응답 압축 예시 (영어 설명)",
+        beforeLabel: "일반 장황 응답",
+        afterLabel: "OmniRoute RTK+Caveman",
+        beforeValue: 69,
+        afterValue: 19,
+        unit: "tokens",
+        deltaText: "-72.5% 절감",
+        lowerIsBetter: true,
+        sourceUrl: "https://github.com/cheaper-inference/OmniRoute",
+        methodology: "README 공식 압축 파이프라인 비교(69 tokens → 19 tokens, 전체 범위 15~95% 절감)",
+      },
+      {
+        label: "응답 압축 예시 (포르투갈어 설명)",
+        beforeLabel: "일반 장황 응답",
+        afterLabel: "OmniRoute RTK+Caveman",
+        beforeValue: 42,
+        afterValue: 12,
+        unit: "tokens",
+        deltaText: "-71.4% 절감",
+        lowerIsBetter: true,
+        sourceUrl: "https://github.com/cheaper-inference/OmniRoute",
+        methodology: "README 공식 다국어 압축 비교(42 tokens → 12 tokens)",
+      },
+    ],
+    workflowCompression: {
+      beforeTitle: "429 한도 초과 시 키 교체·툴 재시작·모델 수동 변경",
+      afterTitle: "단일 로컬 주소 연결만으로 16개 지표 기반 자동 폴백",
+      manualSteps: [
+        "Claude/GPT 사용량 한도(429) 도달로 작업 중단",
+        "다른 API 키 발급 및 환경변수 수정",
+        "코딩 에디터 모델 설정 수동 변경 후 재시작",
+      ],
+      autoStep: "OmniRoute Auto-Combo가 헬스·쿼터·비용·지연 16개 지표로 무중단 자동 전환",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["router", "gateway", "kimi", "deepseek", "qwen", "gemini", "claude", "openai", "quota", "fallback", "free", "v2ex"],
+    skillMdTemplate: `---
+name: omniroute
+description: 375개 LLM 프로바이더와 1,400+ 모델을 단일 로컬 게이트웨이로 묶어 쿼터 초과 없이 자동 폴백하는 라우팅 스킬
+source: https://github.com/cheaper-inference/OmniRoute
+---
+
+# OmniRoute — 무중단 멀티 모델 라우팅 지침
+
+1. **단일 로컬 엔드포인트 사용**: 코딩 도구의 OpenAI/Anthropic 호환 베이스 URL을 \`http://localhost:20128/v1\`으로 연결한다.
+2. **작업별 콤보 분리**: 아키텍처 설계·복잡 디버깅은 \`auto/smart\`, 단순 반복 수정·문서 정리는 \`cost-optimized\` 콤보로 라우팅한다.
+3. **압축 답변 원칙**: 장황한 서론 대신 원인·수정 파일·검증 결과 중심으로 간결하게 출력한다.`,
+  },
+  {
+    slug: "graphify",
+    name: "Graphify",
+    koreanAlias: "[내 코드 전체 지도 생성기] Graphify",
+    oneLineAnalogy:
+      "수백 개 소스파일·문서·SQL 스키마를 ==AI가 길을 잃지 않는 지식 그래프 지도로 바꿔주는 로컬 네비게이션==입니다.",
+    summaryKo:
+      "tree-sitter AST로 코드를 로컬에서 결정론적 파싱(LLM 크레딧 0)해 함수·모듈·문서·스키마 간 관계를 쿼리 가능한 지식 그래프로 구축합니다. 벡터 DB 없이도 대형 저장소 탐색 정확도를 크게 높이며 Claude Code·Cursor·Codex·Gemini CLI `/graphify` 스킬을 공식 지원합니다.",
+    repo: "Graphify-Labs/graphify",
+    category: "knowledge",
+    roleSlot: "code-graph",
+    roleLabelKo: "코드베이스 지식 그래프 · AST 구조 인덱싱",
+    installFormats: ["CLI", "SKILL.md", "MCP", "Rules"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "codex"],
+    contextTokens: 710,
+    installCommands: {
+      cli: "uv tool install graphifyy && graphify install",
+      npxSkills: "npx skills add Graphify-Labs/graphify",
+    },
+    mediaCandidate: {
+      type: "image",
+      relPath: "docs/graph-hero.png",
+      caption: "코드·문서·스키마의 모든 연결선(Edge)에 근거를 부여하는 Graphify 지식 그래프 시각화",
+    },
+    benchmarks: [
+      {
+        label: "LOCOMO (n=300) recall@10",
+        beforeLabel: "supermemory (비교군)",
+        afterLabel: "Graphify",
+        beforeValue: 0.149,
+        afterValue: 0.497,
+        unit: "score",
+        deltaText: "3.3배 (mem0 대비 10.4배)",
+        lowerIsBetter: false,
+        sourceUrl: "https://github.com/Graphify-Labs/graphify",
+        methodology: "LOCOMO n=300 동일 하네스 평가(graphify 0.497 vs supermemory 0.149 vs mem0 0.048)",
+      },
+      {
+        label: "ERPNext 크로스툴 핵심 사실 커버리지",
+        beforeLabel: "grep/read 기본 탐색",
+        afterLabel: "Graphify 지식 그래프",
+        beforeValue: 70.8,
+        afterValue: 82.0,
+        unit: "%",
+        deltaText: "+11.2%p 상승",
+        lowerIsBetter: false,
+        sourceUrl: "https://github.com/Graphify-Labs/graphify",
+        methodology: "ERPNext 크로스툴 n=6 블라인드 이중 검증 평가(평가자 일치도 90.6%)",
+      },
+      {
+        label: "LongMemEval-S (n=50) QA 정확도",
+        beforeLabel: "단순 메모리 기준선",
+        afterLabel: "Graphify (Dense RAG 동급)",
+        beforeValue: 45.3,
+        afterValue: 76.0,
+        unit: "%",
+        deltaText: "76% 달성",
+        lowerIsBetter: false,
+        sourceUrl: "https://github.com/Graphify-Labs/graphify",
+        methodology: "LongMemEval-S n=50 QA 정확도 76% (Dense RAG 동급, 코드 AST 파싱 0 LLM 크레딧)",
+      },
+    ],
+    workflowCompression: {
+      beforeTitle: "대형 프로젝트에서 파일 수십 개를 grep으로 반복 탐색",
+      afterTitle: "지식 그래프 1회 질의로 연관 모듈·호출 체인 즉시 파악",
+      manualSteps: [
+        "전역 grep으로 키워드 검색 후 후보 파일 15개 열람",
+        "호출자·피호출자·DB 스키마 연결 관계 수동 추적",
+        "문서(PDF/MD)와 실제 코드 불일치 확인",
+      ],
+      autoStep: "로컬 tree-sitter AST 지식 그래프에서 연관 커뮤니티와 근거 엣지를 1회 쿼리로 반환",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["graph", "ast", "codebase", "rag", "memory", "knowledge", "tree-sitter", "search", "repo", "architecture"],
+    skillMdTemplate: `---
+name: graphify
+description: tree-sitter AST와 문서 파싱으로 저장소 전체를 로컬 지식 그래프로 인덱싱해 탐색 정확도를 높이는 스킬
+source: https://github.com/Graphify-Labs/graphify
+---
+
+# Graphify — 지식 그래프 우선 탐색 규칙
+
+1. **무작정 전체 파일 읽기 금지**: 낯선 코드베이스 수정 전 \`graphify\` 그래프 또는 모듈 의존성 지도부터 조회해 영향 범위를 특정한다.
+2. **근거 엣지 확인**: 심볼 호출 관계, SQL 스키마, 설정 파일 연결을 그래프 엣지 단위로 확인한 뒤 수정 계획을 세운다.
+3. **로컬 우선 파싱**: 코드 구조 분석은 tree-sitter 기반 로컬 AST 파싱을 우선 사용하고, 의미론적 요약만 LLM에 위임한다.`,
+  },
+  {
+    slug: "taste-skill",
+    name: "Taste-Skill",
+    koreanAlias: "[양산형 UI 교정 필터] Taste-Skill",
+    oneLineAnalogy:
+      "AI가 뽑아내는 뻔한 보라색 템플릿 화면을 ==실제 디자이너가 만든 아트 디렉션·브라우저 검증 기반 UI로 교정하는 필터==입니다.",
+    summaryKo:
+      "뻔한 AI 슬롭(AI-slop) 레이아웃·남발된 카드·어색한 간격을 원천 차단하고, 타이포그래피 위계·아트 디렉션·실제 제품 UI 레퍼런스·브라우저 시각 검증 루프를 코딩 에이전트에 주입하는 프론트엔드 미감 스킬입니다.",
+    repo: "Leonxlnx/taste-skill",
+    category: "design",
+    roleSlot: "ui-design",
+    roleLabelKo: "UI 아트 디렉션 · 안티-슬롭 디자인 교정",
+    installFormats: ["SKILL.md", "Plugin"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex", "web-builder"],
+    contextTokens: 980,
+    installCommands: {
+      npxSkills: 'npx skills add https://github.com/Leonxlnx/taste-skill --skill "design-taste-frontend"',
+      claudePlugin: "/plugin marketplace add Leonxlnx/taste-skill && /plugin install taste-skill@taste-skill",
+    },
+    mediaCandidate: {
+      type: "image",
+      relPath: "assets/readme-tastecode.webp",
+      caption: "Taste-Skill 적용 시 AI 슬롭을 제거하고 아트 디렉션 기반으로 생성된 프론트엔드 UI 결과물",
+    },
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "AI가 만든 뻔한 보라색 랜딩페이지를 5~6번 수동 교정",
+      afterTitle: "아트 디렉션·타이포·브라우저 검증 규칙을 1회 주입해 원샷 출력",
+      manualSteps: [
+        "보라색 그라데이션·기본 이모지 남발 제거 지시",
+        "카드 패딩·그리드 정렬·타이포 대비 수동 수정 요청",
+        "실제 SVG 아이콘 및 실데이터 위계 재구성 지시",
+        "브라우저에서 깨진 반응형 레이아웃 스크린샷 재전달",
+      ],
+      autoStep: "Taste-Skill 규칙이 아트 디렉션·대비·아이콘·브라우저 체크를 초안부터 강제",
+      stepCountBefore: 4,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["ui", "frontend", "design", "css", "landing", "web", "tailwind", "react", "nextjs", "slop", "browser"],
+    skillMdTemplate: `---
+name: design-taste-frontend
+description: 뻔한 양산형 AI UI를 금지하고 명확한 아트 디렉션·고대비 타이포그래피·실제 SVG 아이콘으로 화면을 설계하는 디자인 스킬
+source: https://github.com/Leonxlnx/taste-skill
+---
+
+# Taste-Skill — 안티-슬롭 프론트엔드 디자인 규율
+
+1. **진부한 AI 클리셰 금지**: 보라색 네온 그라데이션, 본문·버튼 이모지 남발, 과도한 호버 확대/바운스 애니메이션을 쓰지 않는다.
+2. **명확한 시각 위계**: 표면 계층(배경 → 패널 → 카드)을 1px 실선과 미세한 명도 차이로 구분하고, 본문 텍스트는 고대비로 유지한다.
+3. **실제 제품 UI 표현**: 추상적인 장식 대신 실제 데이터 구조·도구 아이콘(인라인 SVG)·고정폭 숫자 정렬(tabular-nums)로 신뢰감을 만든다.
+4. **브라우저 실측 검증**: 완성 후 실제 뷰포트에서 줄바꿈·오버플로우·대비를 확인한다.`,
+  },
+  {
+    slug: "hyperframes",
+    name: "Hyperframes",
+    koreanAlias: "[코드로 모션영상 렌더링] Hyperframes",
+    oneLineAnalogy:
+      "HTML·CSS·GSAP 코드를 작성하듯 AI와 대화하면 ==고화질 MP4 제품 홍보·설명 영상을 자동 렌더링하는 오픈소스 영상 엔진==입니다.",
+    summaryKo:
+      "HeyGen이 공개한 오픈소스 AI 비디오 에디터 겸 스킬 팩(29개 SKILL.md 내장)입니다. Remotion 대안으로 HTML 기반 컴포지션·자막 오버레이·모션 커브·실제 영상 클립 편집을 Claude Code·Codex·Cursor에서 바로 실행해 MP4로 렌더링합니다.",
+    repo: "heygen-com/hyperframes",
+    category: "video",
+    roleSlot: "video-render",
+    roleLabelKo: "HTML→MP4 모션·비디오 자동 렌더링",
+    installFormats: ["CLI", "SKILL.md", "Plugin", "MCP", "Rules"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "codex"],
+    contextTokens: 1350,
+    installCommands: {
+      npxSkills: "npx skills add heygen-com/hyperframes",
+      claudePlugin: "claude plugin marketplace add heygen-com/hyperframes && claude plugin install hyperframes@hyperframes",
+      cli: "npx hyperframes init my-video",
+    },
+    mediaCandidate: {
+      type: "mp4",
+      relPath: "https://static.heygen.ai/hyperframes-oss/homepage/showcase/hq/website-to-launch-v1.mp4",
+      caption: "웹사이트를 런칭 영상으로 자동 변환·렌더링한 HeyGen Hyperframes 공식 MP4 쇼케이스",
+    },
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "애프터이펙트·프리미어 타임라인 키프레임 수동 편집",
+      afterTitle: "HTML/모션 씬 명세 1회 지시로 MP4 제품 영상 자동 렌더",
+      manualSteps: [
+        "화면 녹화 및 씬별 스토리보드 수동 분리",
+        "영상 편집 툴에서 자막·트랜지션·모션 커브 수작업 배치",
+        "카피 수정 시 전체 타임라인 재정렬 및 재인코딩",
+      ],
+      autoStep: "Hyperframes 스킬이 HTML 씬·모션 커브·자막을 코드로 생성해 MP4로 즉시 렌더링",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["video", "motion", "heygen", "render", "mp4", "animation", "remotion", "shorts", "reels", "video_audio"],
+    skillMdTemplate: `---
+name: hyperframes
+description: HTML/CSS/GSAP 컴포지션으로 제품 런칭·설명·체인지로그 MP4 모션 영상을 코드로 제작하는 비디오 스킬
+source: https://github.com/heygen-com/hyperframes
+---
+
+# Hyperframes — 코드 기반 모션 비디오 제작 규칙
+
+1. **초 단위 씬 스펙 우선**: 렌더링 전에 각 씬의 시작/종료 초, 화면 카피, 카메라 전환, 이징 커브를 표로 먼저 확정한다.
+2. **프레임 결정론 유지**: 비동기 네트워크 의존성 대신 로컬 에셋과 확정 타임라인 타임스탬프로 프레임 드롭을 방지한다.
+3. **가독성 안전 영역 준수**: 16:9 및 9:16 숏폼 모두 자막 안전 여백과 고대비 타이포그래피를 유지한다.`,
+  },
+  {
+    slug: "ecc-core",
+    name: "ECC Core",
+    koreanAlias: "[해커톤 우승자 알짜 선별팩] ECC Core",
+    oneLineAnalogy:
+      "Anthropic 해커톤 우승자가 정리한 에이전트 운영체제에서 ==컨텍스트 낭비 없이 핵심 보안·검증·학습 모듈만 쏙 뽑아 쓰는 하네스==입니다.",
+    summaryKo:
+      "구 `everything-claude-code`에서 `affaan-m/ECC`(★309k+)로 진화한 대표 에이전트 하네스 시스템입니다. 1,000개 이상 스킬을 통째로 깔면 무거워지므로 `--profile minimal` 경량 프로필로 Claude Code·Codex·Cursor·Gemini CLI·Antigravity에 핵심 가드레일과 검증 루프만 선별 장착하는 것이 정석입니다.",
+    repo: "affaan-m/ECC",
+    category: "workflow",
+    roleSlot: "harness-suite",
+    roleLabelKo: "종합 에이전트 하네스 · 보안·검증 프로필",
+    installFormats: ["CLI", "Plugin", "SKILL.md", "Rules"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex"],
+    contextTokens: 2450,
+    installCommands: {
+      cli: "npx ecc-universal@2.2.3 setup",
+      npxSkills: "npx ecc-universal@2.2.3 install --guided",
+    },
+    mediaCandidate: {
+      type: "image",
+      relPath: "assets/hero.png",
+      caption: "affaan-m/ECC 멀티 플랫폼 에이전트 하네스 공식 히어로 다이어그램",
+    },
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "에이전트·훅·보안 규칙·메모리 구조를 프로젝트마다 처음부터 설계",
+      afterTitle: "검증된 minimal 프로필 1회 설치로 보안·검증·리서치 루프 즉시 가동",
+      manualSteps: [
+        "CLAUDE.md / AGENTS.md / Cursor rules 각각 따로 작성",
+        "위험 명령 차단 훅(Hook) 및 시크릿 유출 검사기 수동 구성",
+        "세션 간 학습(Instinct) 및 검증 워크플로우 수동 정의",
+      ],
+      autoStep: "ECC minimal 프로필이 툴별 어댑터·보안 가드레일·검증 체크리스트를 자동 배치",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["claude code", "harness", "plugin", "hook", "security", "agent", "anthropic", "codex", "antigravity"],
+    skillMdTemplate: `---
+name: ecc-core
+description: 연구 우선(Research-First)·보안 가드레일·검증 완료 후 보고 원칙을 적용하는 ECC 경량 핵심 프로필
+source: https://github.com/affaan-m/ECC
+---
+
+# ECC Core — 경량 에이전트 하네스 핵심 규율
+
+1. **선탐색 후수정 (Research-First)**: 파일을 수정하기 전에 관련 타입·호출부·테스트를 먼저 읽고 영향 범위를 문서화한다.
+2. **시크릿·파괴 명령 가드레일**: API 키 출력, 무분별한 전역 파일 삭제, 범위 밖 디렉터리 수정을 엄격히 차단한다.
+3. **검증 없는 완료 보고 금지**: 타입체크·단위 테스트·빌드 실행 결과(실제 출력 근거) 없이 완료를 선언하지 않는다.`,
+  },
+  {
+    slug: "claude-video",
+    name: "Claude Video",
+    koreanAlias: "[AI 영상 시청·분석 눈] Claude Video",
+    oneLineAnalogy:
+      "링크나 영상 파일만 던져주면 ==프레임 추출과 음성 전사를 묶어 Claude가 영상을 직접 보고 이해하게 해주는 눈==입니다.",
+    summaryKo:
+      "`/watch` 명령 하나로 유튜브·로컬 영상에서 16x16 RGB 기반 중복 프레임을 제거한 핵심 장면과 텍스트 트랜스크립트를 자동 추출해 Claude Code·Codex에 전달합니다. 영상 레퍼런스 분석·버그 녹화 재현에 즉시 활용할 수 있습니다.",
+    repo: "bradautomates/claude-video",
+    category: "video",
+    roleSlot: "video-watch",
+    roleLabelKo: "영상 시청 · 프레임 추출 · 음성 전사 분석",
+    installFormats: ["Plugin", "SKILL.md", "Rules"],
+    supportedTools: ["claude-code", "gemini-agy", "codex"],
+    contextTokens: 480,
+    installCommands: {
+      claudePlugin: "claude plugin marketplace add bradautomates/claude-video && claude plugin install watch@claude-video",
+      npxSkills: "npx skills add bradautomates/claude-video --skill watch",
+    },
+    mediaCandidate: {
+      type: "image",
+      relPath: "docs/images/install/claude-customize-plugins.png",
+      caption: "Claude Code 플러그인 매니저에서 /watch 영상 시청 스킬을 장착하는 공식 가이드 화면",
+    },
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "영상을 직접 보며 스크린샷 찍고 자막 긁어서 AI에 수동 첨부",
+      afterTitle: "/watch <URL 또는 파일> 1줄로 핵심 프레임+자막 자동 주입",
+      manualSteps: [
+        "영상 다운로드 및 주요 구간 재생·일시정지",
+        "장면별 스크린샷 수동 캡처 및 파일 정리",
+        "음성/자막 별도 추출 후 채팅창에 순차 업로드",
+      ],
+      autoStep: "/watch 스킬이 중복 프레임을 제거하고 음성 전사와 함께 AI에 자동 전달",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["video", "youtube", "multimodal", "watch", "frame", "transcript", "audio", "video_audio"],
+    skillMdTemplate: `---
+name: claude-video-watch
+description: 영상 URL이나 로컬 파일에서 중복 제거 핵심 프레임과 음성 전사를 추출해 AI가 영상을 직접 분석하게 하는 스킬
+source: https://github.com/bradautomates/claude-video
+---
+
+# Claude Video (/watch) — 영상 이해 워크플로우
+
+1. **핵심 장면 선별**: 16x16 RGB 평균 차이 기반 중복 프레임 제거로 정지 화면 토큰 낭비를 막는다.
+2. **시각+음성 동기화 분석**: 추출된 프레임 타임스탬프와 트랜스크립트를 교차 참조해 UI 버그·발표 슬라이드·제품 데모를 구조화해 요약한다.
+3. **세부 화면 보존**: 미세한 텍스트나 코드 화면이 중요한 영상은 \`--no-dedup\` 모드로 정밀 추출한다.`,
+  },
+  {
+    slug: "claude-code-video-toolkit",
+    name: "Claude Video Toolkit",
+    koreanAlias: "[AI 영상 대본·편집 스튜디오] Video Toolkit",
+    oneLineAnalogy:
+      "대본 작성부터 AI 보이스오버·음악·FFmpeg/Remotion/Blender 렌더링까지 ==오픈소스 모델로 몇 센트에 영상을 찍어내는 제작 툴킷==입니다.",
+    summaryKo:
+      "17개의 전문 `SKILL.md`(FFmpeg, ElevenLabs, Qwen-TTS, Blender, Remotion 등)와 전용 `video_mcp.py` 서버를 제공해 Claude Code에서 스크립트→나레이션→배경음악→영상 합성을 일괄 자동화합니다.",
+    repo: "digitalsamba/claude-code-video-toolkit",
+    category: "video",
+    roleSlot: "video-render",
+    roleLabelKo: "AI 대본·보이스·FFmpeg·Remotion 영상 제작",
+    installFormats: ["SKILL.md", "MCP", "Rules"],
+    supportedTools: ["claude-code", "gemini-agy", "codex"],
+    contextTokens: 1620,
+    installCommands: {
+      cli: "git clone https://github.com/digitalsamba/claude-code-video-toolkit.git",
+      npxSkills: "npx skills add digitalsamba/claude-code-video-toolkit",
+    },
+    mediaCandidate: {
+      type: "gif",
+      relPath: "assets/banner/toolkit-banner.gif",
+      caption: "Claude Code Video Toolkit으로 대본·음성·모션 합성을 자동 생성하는 시연 배너",
+    },
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "대본·TTS·BGM·영상 편집기 4개 툴을 오가며 수작업 제작",
+      afterTitle: "17개 영상 파이프라인 스킬 + MCP로 원스톱 자동 합성",
+      manualSteps: [
+        "대본 작성 후 별도 TTS 서비스에서 나레이션 녹음",
+        "배경음악·화면 캡처·클립을 편집 툴 타임라인에 수동 정렬",
+        "FFmpeg 인코딩 및 자막 싱크 수동 보정",
+      ],
+      autoStep: "Video Toolkit의 17개 SKILL.md + video_mcp 파이프라인이 대본~렌더까지 일괄 처리",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["video", "tts", "voice", "remotion", "ffmpeg", "blender", "shorts", "audio", "video_audio"],
+    skillMdTemplate: `---
+name: claude-code-video-toolkit
+description: 대본·AI 나레이션·음악·FFmpeg/Remotion 합성을 오픈소스 파이프라인으로 자동화하는 영상 제작 스킬
+source: https://github.com/digitalsamba/claude-code-video-toolkit
+---
+
+# Claude Code Video Toolkit — 멀티미디어 제작 규율
+
+1. **에셋-타임라인 분리**: 대본(\`script.md\`), 오디오 트랙, 비주얼 씬을 독립 산출물로 생성해 부분 재생성이 가능하게 한다.
+2. **오디오 길이 기준 동기화**: TTS 생성 후 실제 오디오 duration을 측정해 각 씬 프레임 수를 정확히 맞춘다.
+3. **저비용 오픈소스 우선**: 로컬 FFmpeg·오픈소스 TTS/렌더러로 먼저 프리뷰를 확인한 뒤 최종본을 렌더링한다.`,
+  },
+  {
+    slug: "vercel-agent-skills",
+    name: "Vercel Agent Skills",
+    koreanAlias: "[Vercel 공식 프론트엔드 모범규칙] Agent Skills",
+    oneLineAnalogy:
+      "Next.js·React 제작사 Vercel이 직접 정리한 ==워터폴 제거·성능 최적화·컴포지션 정석 교과서==입니다.",
+    summaryKo:
+      "Vercel 공식 에이전트 스킬 컬렉션(9개 SKILL.md)입니다. `react-best-practices`, `composition-patterns`, `deploy-to-vercel`, `web-design-guidelines` 등 실전 프로덕션 성능과 구조 규칙을 AI에게 그대로 이식합니다.",
+    repo: "vercel-labs/agent-skills",
+    category: "design",
+    roleSlot: "ui-design",
+    roleLabelKo: "React · Next.js · Vercel 공식 베스트 프랙티스",
+    installFormats: ["SKILL.md", "Rules"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex", "web-builder"],
+    contextTokens: 890,
+    installCommands: {
+      npxSkills: "npx skills add vercel-labs/agent-skills",
+    },
+    mediaCandidate: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "클라이언트 워터폴·불필요한 리렌더·SSR 경계 오류를 배포 후 수정",
+      afterTitle: "Vercel 공식 React/Next.js 규칙을 코드 작성 시점에 자동 반영",
+      manualSteps: [
+        "Next.js App Router 서버/클라이언트 경계 오류 디버깅",
+        "순차 fetch 워터폴을 Promise.all 병렬화로 사후 리팩터링",
+        "번들 비대화 및 접근성 체크 수동 점검",
+      ],
+      autoStep: "Vercel Agent Skills가 병렬 페칭·컴포지션·SSR 경계 규칙을 작성 단계에서 자동 강제",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["vercel", "nextjs", "react", "frontend", "skills", "typescript", "web", "deploy"],
+    skillMdTemplate: `---
+name: vercel-react-best-practices
+description: Vercel 공식 React·Next.js 성능 최적화(워터폴 제거·번들 경량화·서버 컴포넌트 경계) 및 웹 UI 품질 스킬
+source: https://github.com/vercel-labs/agent-skills
+---
+
+# Vercel Agent Skills — React & Next.js 정석 규칙
+
+1. **비동기 워터폴 제거**: 독립적인 데이터 요청은 \`Promise.all()\`로 병렬 실행하고, \`useSearchParams()\` 사용 클라이언트 컴포넌트는 반드시 \`<Suspense>\`로 감싼다.
+2. **서버 컴포넌트 우선**: 상태·이벤트가 필요 없는 UI는 Server Component로 유지해 클라이언트 JS 번들을 최소화한다.
+3. **컴포지션 패턴**: 거대한 boolean prop 분기 대신 명시적인 하위 컴포넌트 조합으로 확장성을 확보한다.`,
+  },
+  {
+    slug: "vercel-skills-cli",
+    name: "Vercel Skills CLI",
+    koreanAlias: "[전 AI 툴 공용 스킬 설치기] Skills CLI",
+    oneLineAnalogy:
+      "`npx skills add` 한 줄로 ==Claude·Cursor·Codex·Gemini 모든 툴에 표준 스킬을 설치하는 오픈 앱스토어 명령줄==입니다.",
+    summaryKo:
+      "Vercel Labs가 주도하는 개방형 `SKILL.md` 표준 생태계의 핵심 CLI(`npx skills`)입니다. `find`, `add`, `list`, `use` 명령으로 특정 GitHub 저장소의 스킬을 여러 코딩 에이전트 규격에 맞춰 일괄 배포·업데이트합니다.",
+    repo: "vercel-labs/skills",
+    category: "workflow",
+    roleSlot: "skill-installer",
+    roleLabelKo: "표준 SKILL.md 크로스-툴 패키지 매니저",
+    installFormats: ["CLI", "SKILL.md"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex"],
+    contextTokens: 320,
+    installCommands: {
+      cli: "npx skills find",
+      npxSkills: "npx skills add vercel-labs/agent-skills",
+    },
+    mediaCandidate: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "GitHub에서 마크다운 수동 복사 후 툴별 숨김 폴더에 일일이 붙여넣기",
+      afterTitle: "npx skills add <owner/repo> 1줄로 모든 코딩 툴에 자동 동기화",
+      manualSteps: [
+        "스킬 저장소 탐색 및 raw 마크다운 복사",
+        ".claude/skills, .gemini/skills, .cursor/rules 각각 수동 생성",
+        "업데이트 시 모든 폴더 다시 덮어쓰기",
+      ],
+      autoStep: "npx skills CLI가 툴별 표준 경로 감지·설치·버전 갱신을 1줄로 자동화",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["skills", "npx", "agent-skills", "cli", "ecosystem", "claude code", "cursor", "codex"],
+    skillMdTemplate: `---
+name: vercel-skills-cli
+description: npx skills CLI를 이용해 오픈소스 SKILL.md 패키지를 여러 코딩 에이전트에 표준 방식으로 설치·관리하는 스킬
+source: https://github.com/vercel-labs/skills
+---
+
+# Skills CLI — 표준 스킬 패키지 운영 규칙
+
+1. **표준 포맷 준수**: 모든 프로젝트 스킬은 YAML frontmatter(\`name\`, \`description\`)를 포함한 \`SKILL.md\` 형식으로 관리한다.
+2. **프로젝트 격리 우선**: 팀/프로젝트 전용 스킬은 기본 로컬 스코프로 설치하고, 개인 공통 스킬만 \`-g\` 전역 옵션을 사용한다.
+3. **일회성 테스트 활용**: 영구 설치 전에 \`npx skills use <source>@<skill>\`로 효과를 먼저 검증한다.`,
+  },
+  {
+    slug: "ai-radar-live",
+    name: "AI Radar Live",
+    koreanAlias: "[실시간 AI 이슈 수혈기] AI Radar Live",
+    oneLineAnalogy:
+      "오래된 학습 지식에 갇힌 AI에게 ==방금 뜬 최신 AI·개발·중국 테크 이슈를 실시간 JSON으로 먹여주는 직결 안테나==입니다.",
+    summaryKo:
+      "SKILLDOCK 자체 1호 실전 스킬입니다. `rlawlstjr346-collab/ai-radar`의 `planning-feed.json`과 `live-feed.json`(글로벌 + 중국 5대 소스 `v2ex`·`juejin`·`qbitai`·`jiqizhixin`·`36kr-ai`)을 실시간 조회해, AI가 최신 모델·신규 SDK·오픈소스 릴리즈를 근거로 답하게 만듭니다.",
+    repo: "rlawlstjr346-collab/ai-radar",
+    category: "radar",
+    roleSlot: "live-radar",
+    roleLabelKo: "실시간 글로벌·중국 AI 기술 피드 수혈",
+    installFormats: ["SKILL.md"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex", "web-builder"],
+    contextTokens: 420,
+    installCommands: {
+      cli: "curl -sS https://raw.githubusercontent.com/rlawlstjr346-collab/ai-radar/main/web/public/data/planning-feed.json | head -c 500",
+    },
+    mediaCandidate: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "최신 모델·라이브러리 소식을 매번 웹 검색해 복붙해서 AI에 설명",
+      afterTitle: "AI Radar JSON 피드 1회 조회로 최신 100개 시그널 즉시 주입",
+      manualSteps: [
+        "HackerNews·GitHub·X·중국 커뮤니티(v2ex/juejin) 직접 순회",
+        "핵심 기사 번역 및 릴리즈 노트 발췌",
+        "채팅창에 배경 지식으로 매번 붙여넣기",
+      ],
+      autoStep: "AI Radar Live 스킬이 planning-feed.json & live-feed.json에서 검증된 최신 기술 시그널을 즉시 조회",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["ai", "llm", "agent", "open-source", "github", "v2ex", "juejin", "qbitai", "jiqizhixin", "36kr-ai", "anthropic", "openai"],
+    skillMdTemplate: `---
+name: ai-radar-live
+description: rlawlstjr346-collab/ai-radar의 최신 글로벌·중국 AI/개발 실시간 JSON 피드를 조회해 최신 근거 기반 답변을 생성하는 스킬
+source: https://github.com/rlawlstjr346-collab/ai-radar
+---
+
+# AI Radar Live — 최신 기술 시그널 실시간 조회 스킬
+
+## 데이터 엔드포인트 (읽기 전용 · 공개 JSON)
+- 기획 시그널 피드: \`https://raw.githubusercontent.com/rlawlstjr346-collab/ai-radar/main/web/public/data/planning-feed.json\`
+- 풀 리치 피드: \`https://raw.githubusercontent.com/rlawlstjr346-collab/ai-radar/main/web/public/live-feed.json\`
+
+## 실행 절차
+1. 사용자가 "최신 AI 동향", "오늘 뜬 개발 도구", "신규 모델/오픈소스 릴리즈"를 물으면 위 두 JSON을 조회해 \`generated_at\` 시각을 먼저 확인한다.
+2. \`category === "dev"\` 및 GitHub·Anthropic·OpenAI·HuggingFace·중국 5대 소스(\`v2ex\`, \`juejin\`, \`qbitai\`, \`jiqizhixin\`, \`36kr-ai\`) 시그널을 우선 필터링한다.
+3. 추측 없이 반드시 \`canonical_url\` 원문 링크와 \`published_at\` 날짜를 함께 인용해 보고한다.`,
+  },
+  {
+    slug: "superpowers",
+    name: "Superpowers",
+    koreanAlias: "[TDD · 체계적 설계 완주 엔진] Superpowers",
+    oneLineAnalogy:
+      "AI가 막무가내로 코드부터 치지 않고 ==설계서→태스크 분해→TDD 테스트→리뷰 순으로 꼼꼼히 일하게 만드는 개발 방법론 스킬==입니다.",
+    summaryKo:
+      "GitHub 32만 스타를 돌파한 대표 에이전틱 개발 워크플로우 프레임워크입니다. 브레인스토밍→설계 승인→작업 계획→서브에이전트 구현→테스트 검증→코드 리뷰의 엄격한 공정을 스킬 세트로 자동화합니다.",
+    repo: "obra/superpowers",
+    category: "workflow",
+    roleSlot: "task-planner",
+    roleLabelKo: "설계 · TDD · 체계적 개발 공정 프레임워크",
+    installFormats: ["Plugin", "SKILL.md"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "codex"],
+    contextTokens: 1180,
+    installCommands: {
+      claudePlugin: "/plugin marketplace add obra/superpowers && /plugin install superpowers@superpowers",
+      npxSkills: "npx skills add obra/superpowers",
+    },
+    mediaCandidate: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "요구사항 누락·테스트 없는 즉흥 구현 후 대규모 재작업",
+      afterTitle: "설계 확인 → 실패 테스트 선작성 → 최소 구현 → 검증 자동 순환",
+      manualSteps: [
+        "구현 전 설계 문서 작성 별도 지시",
+        "단위 테스트 먼저 짜라고 매 턴 재요청",
+        "작업 완료 후 엣지케이스·회귀 리뷰 수동 진행",
+      ],
+      autoStep: "Superpowers 워크플로우가 브레인스토밍·계획·TDD·리뷰 게이트를 자동으로 강제",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["tdd", "workflow", "planning", "agent", "debug", "testing", "claude code", "engineering"],
+    skillMdTemplate: `---
+name: superpowers
+description: 설계 우선·TDD(테스트 주도 개발)·체계적 디버깅·완료 전 검증 게이트를 적용하는 에이전틱 소프트웨어 공학 스킬
+source: https://github.com/obra/superpowers
+---
+
+# Superpowers — 설계 · TDD · 검증 완주 규율
+
+1. **설계 먼저 합의**: 비자명한 기능은 구현 전에 데이터 흐름·경계 조건·파일 변경 목록을 짧게 정리한다.
+2. **실패하는 테스트 우선 (Red-Green-Refactor)**: 버그 수정과 핵심 로직은 재현 테스트를 먼저 작성해 실패를 확인한 뒤 구현한다.
+3. **체계적 근본 원인 디버깅**: 증상만 덮는 임시 패치 대신 재현→가설→로그 검증→근본 수정 순서를 따른다.`,
+  },
+  {
+    slug: "anthropic-official-skills",
+    name: "Anthropic Official Skills",
+    koreanAlias: "[Anthropic 공식 표준 스킬 모음] Official Skills",
+    oneLineAnalogy:
+      "Claude를 만든 Anthropic이 직접 공개한 ==문서·PDF·스프레드시트·프론트엔드·스킬 제작 공식 레퍼런스 팩==입니다.",
+    summaryKo:
+      "`SKILL.md` 표준 사양의 출발점이 된 Anthropic 공식 공개 저장소입니다. 새 스킬을 설계하는 `skill-creator`, 프론트엔드 디자인, DOCX/PDF/PPTX/XLSX 오피스 자동화 등 검증된 1차 공식 스킬을 제공합니다.",
+    repo: "anthropics/skills",
+    category: "workflow",
+    roleSlot: "harness-suite",
+    roleLabelKo: "Anthropic 공식 레퍼런스 스킬 컬렉션",
+    installFormats: ["SKILL.md", "Plugin"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "codex"],
+    contextTokens: 920,
+    installCommands: {
+      npxSkills: "npx skills add anthropics/skills",
+      claudePlugin: "/plugin marketplace add anthropics/skills",
+    },
+    mediaCandidate: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "문서·프레젠테이션·스킬 포맷 프롬프트를 매번 새로 시행착오",
+      afterTitle: "Anthropic 공식 표준 SKILL.md 템플릿으로 즉시 고품질 산출",
+      manualSteps: [
+        "스킬 파일 구조와 트리거 설명 수동 작성",
+        "PDF/DOCX/PPTX 생성 스크립트 매번 디버깅",
+        "출력 포맷 깨짐 반복 수정",
+      ],
+      autoStep: "Anthropic 공식 SKILL.md 패키지가 표준 트리거와 검증된 산출 절차를 제공",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["anthropic", "claude", "skills", "official", "pdf", "document", "agent"],
+    skillMdTemplate: `---
+name: anthropic-official-skills
+description: Anthropic 공식 Agent Skills 표준(간결한 frontmatter·명확한 트리거 조건·재현 가능한 출력 검증)을 따르는 기본 스킬
+source: https://github.com/anthropics/skills
+---
+
+# Anthropic Official Skills — 표준 스킬 설계·실행 규율
+
+1. **명확한 활성화 조건**: 스킬 frontmatter의 \`description\`에 언제 발동하고 언제 쓰지 않을지 구체적으로 명시한다.
+2. **점진적 컨텍스트 로드**: 핵심 지침은 \`SKILL.md\`에 간결하게 유지하고, 세부 레퍼런스·스크립트는 필요 시에만 참조한다.
+3. **산출물 실물 검증**: 생성한 문서·코드·이미지는 완료 보고 전에 실제 파싱/렌더링으로 무결성을 확인한다.`,
+  },
+  {
+    slug: "context7",
+    name: "Context7 MCP",
+    koreanAlias: "[최신 공식문서 실시간 주입기] Context7",
+    oneLineAnalogy:
+      "AI가 옛날 문법으로 헛소리하는 걸 막기 위해 ==라이브러리 최신 공식 문서를 실시간으로 꽂아주는 MCP 사전==입니다.",
+    summaryKo:
+      "Upstash가 만든 대표 개발자 MCP 서버입니다. Next.js 15, Tailwind v4, React 19처럼 빠르게 바뀌는 라이브러리의 버전별 공식 문서와 실제 코드 예제를 프롬프트 시점에 즉시 조회해 환각(Hallucination) API 호출을 차단합니다.",
+    repo: "upstash/context7",
+    category: "knowledge",
+    roleSlot: "docs-mcp",
+    roleLabelKo: "최신 라이브러리 공식 문서 실시간 MCP",
+    installFormats: ["MCP", "CLI"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex"],
+    contextTokens: 490,
+    installCommands: {
+      cli: "npx -y @upstash/context7-mcp@latest",
+      npxSkills: "npx skills add upstash/context7",
+    },
+    mediaCandidate: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "AI가 옛날 v3/v13 문법으로 작성 → 컴파일 에러 → 공식 문서 복붙 반복",
+      afterTitle: "코드 작성 전 최신 버전 공식 문서 자동 조회로 1차 성공률 향상",
+      manualSteps: [
+        "구버전 API 환각으로 인한 빌드/타입 에러 확인",
+        "공식 문서 사이트에서 최신 마이그레이션 가이드 검색",
+        "문서 본문 복사해 AI 채팅창에 수동 제공",
+      ],
+      autoStep: "Context7 MCP가 패키지 버전에 맞는 공식 문서·예제를 프롬프트에 자동 주입",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["mcp", "docs", "documentation", "nextjs", "react", "tailwind", "sdk", "api", "library", "release"],
+    skillMdTemplate: `---
+name: context7-docs
+description: 외부 라이브러리·프레임워크 API 사용 전 최신 버전 공식 문서를 먼저 조회해 구버전 환각을 방지하는 MCP 스킬
+source: https://github.com/upstash/context7
+---
+
+# Context7 — 최신 공식 문서 우선 조회 규칙
+
+1. **기억 의존 금지**: 빠르게 변하는 프레임워크(Next.js, Tailwind v4, React 19, SDK 신규 버전) API를 쓸 때는 기억에 의존하지 않고 \`resolve-library-id\` → \`get-library-docs\`로 최신 스펙을 먼저 확인한다.
+2. **설치된 버전 일치**: \`package.json\` 또는 \`pyproject.toml\`의 실제 설치 버전과 일치하는 문서 섹션을 참조한다.
+3. **Deprecated API 차단**: 구버전 설정 옵션이나 폐기된 훅 대신 공식 권장 패턴을 적용한다.`,
+  },
+  {
+    slug: "playwright-mcp",
+    name: "Playwright MCP",
+    koreanAlias: "[AI가 직접 눈으로 보는 브라우저] Playwright MCP",
+    oneLineAnalogy:
+      "AI가 웹페이지를 직접 열고 클릭·스크린샷·콘솔 에러를 확인하게 해주는 ==Microsoft 공식 브라우저 원격 손발==입니다.",
+    summaryKo:
+      "Microsoft 공식 Playwright MCP 서버입니다. 픽셀 추측 대신 접근성 트리(Accessibility Snapshot) 기반으로 DOM을 정밀 제어해 UI 버그 검증, 폼 테스트, 반응형 확인을 코딩 에이전트가 직접 수행합니다.",
+    repo: "microsoft/playwright-mcp",
+    category: "browser",
+    roleSlot: "browser-mcp",
+    roleLabelKo: "브라우저 자동화 · UI 실물 E2E 검증 MCP",
+    installFormats: ["MCP", "CLI"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex"],
+    contextTokens: 610,
+    installCommands: {
+      cli: "npx @playwright/mcp@latest",
+    },
+    mediaCandidate: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "수정할 때마다 사람이 브라우저 새로고침·콘솔 확인·캡처 전달 반복",
+      afterTitle: "AI가 직접 브라우저를 열어 클릭·콘솔 에러·레이아웃 자가 검증",
+      manualSteps: [
+        "로컬 서버 띄우고 브라우저에서 직접 클릭 테스트",
+        "DevTools 콘솔 에러·네트워크 404 복사해서 전달",
+        "모바일/데스크톱 화면 깨짐 스크린샷 촬영 후 재요청",
+      ],
+      autoStep: "Playwright MCP가 접근성 스냅샷·클릭·콘솔 로그를 직접 읽어 1회 루프로 자가 수정",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["playwright", "browser", "e2e", "ui", "frontend", "testing", "mcp", "automation", "microsoft"],
+    skillMdTemplate: `---
+name: playwright-mcp
+description: Microsoft Playwright MCP로 실제 브라우저를 열어 UI 클릭·콘솔 에러·네트워크 응답을 자가 검증하는 스킬
+source: https://github.com/microsoft/playwright-mcp
+---
+
+# Playwright MCP — 실물 브라우저 검증 규칙
+
+1. **접근성 스냅샷 우선**: 취약한 CSS 셀렉터 대신 ARIA role/label 기반 접근성 스냅샷으로 요소를 식별한다.
+2. **콘솔·네트워크 무결성 확인**: 페이지 로드 및 주요 버튼 클릭 후 콘솔 에러와 4xx/5xx 응답이 0건인지 반드시 점검한다.
+3. **핵심 뷰포트 검증**: 데스크톱(1440px)과 모바일(390px)에서 가로 스크롤 깨짐과 겹침이 없는지 확인한다.`,
+  },
+  {
+    slug: "claude-mem",
+    name: "Claude-Mem",
+    koreanAlias: "[세션 넘나드는 장기 기억장치] Claude-Mem",
+    oneLineAnalogy:
+      "어제 나눈 코딩 맥락을 오늘 새 창을 열어도 ==자동 압축·기억해 이어서 작업하게 해주는 에이전트 해마==입니다.",
+    summaryKo:
+      "세션이 끊기면 프로젝트 맥락을 까먹는 코딩 에이전트의 한계를 해결합니다. 작업 중 관찰된 의사결정·버그 원인·아키텍처 변경을 자동 캡처·압축해 다음 세션에 필요한 만큼만 정확히 복원합니다.",
+    repo: "thedotmack/claude-mem",
+    category: "context",
+    roleSlot: "memory",
+    roleLabelKo: "세션 간 영구 장기 기억 · 자동 압축 메모리",
+    installFormats: ["Plugin", "MCP", "CLI"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "codex"],
+    contextTokens: 590,
+    installCommands: {
+      claudePlugin: "/plugin marketplace add thedotmack/claude-mem && /plugin install claude-mem@claude-mem",
+      npxSkills: "npx skills add thedotmack/claude-mem",
+    },
+    mediaCandidate: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "새 세션 열 때마다 어제 결정한 설계·금지사항을 매번 다시 설명",
+      afterTitle: "이전 세션 핵심 의사결정과 실패 원인이 다음 세션에 자동 주입",
+      manualSteps: [
+        "어제 대화 기록 스크롤해 핵심 결정 복사",
+        "새 채팅 시작 시 프로젝트 배경 10줄 재설명",
+        "이미 폐기한 접근법을 AI가 다시 제안해 되돌리기",
+      ],
+      autoStep: "Claude-Mem이 세션 관찰 기록을 자동 압축·인덱싱해 관련 맥락만 즉시 주입",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["memory", "session", "persistent", "context", "claude code", "agent", "compress"],
+    skillMdTemplate: `---
+name: claude-mem
+description: 세션 간 프로젝트 의사결정·버그 원인·제약 조건을 압축 저장해 반복 설명을 없애는 영구 메모리 스킬
+source: https://github.com/thedotmack/claude-mem
+---
+
+# Claude-Mem — 세션 연속성 메모리 규칙
+
+1. **작업 시작 시 선행 맥락 조회**: 같은 기능이나 버그를 이어서 다룰 때 이전 세션의 결정·실패 원인을 먼저 확인한다.
+2. **사실 위주 압축 기록**: 잡담 대신 "무엇을 바꿨고 왜 그 대안을 버렸는지"를 짧은 구조화 메모로 남긴다.
+3. **민감정보 저장 금지**: 토큰·비밀번호·개인정보는 메모리 인덱스에서 무조건 제외한다.`,
+  },
+  {
+    slug: "shadcn-ui",
+    name: "shadcn/ui",
+    koreanAlias: "[복사·소유형 정밀 UI 부품함] shadcn/ui",
+    oneLineAnalogy:
+      "블랙박스 UI 라이브러리 대신 ==접근성과 키보드 조작이 완벽한 컴포넌트 소스를 내 프로젝트에 직접 심어주는 부품함==입니다.",
+    summaryKo:
+      "Radix/Tailwind 기반의 표준 컴포넌트 레지스트리 겸 공식 CLI·MCP 생태계입니다. AI가 UI 컴포넌트를 바닥부터 불안정하게 짜지 않고 검증된 접근성·다크모드 토큰 기반 부품을 일관되게 조립하게 만듭니다.",
+    repo: "shadcn-ui/ui",
+    category: "design",
+    roleSlot: "ui-design",
+    roleLabelKo: "접근성 기반 표준 UI 컴포넌트 레지스트리",
+    installFormats: ["CLI", "MCP", "Rules"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex", "web-builder"],
+    contextTokens: 740,
+    installCommands: {
+      cli: "npx shadcn@latest init",
+    },
+    mediaCandidate: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "모달·탭·드롭다운 포커스 트랩과 접근성을 매번 수동 구현",
+      afterTitle: "검증된 컴포넌트 프리미티브와 CSS 토큰 체계로 즉시 조립",
+      manualSteps: [
+        "ESC 닫기·키보드 탭 이동·ARIA 속성 수동 구현",
+        "다크모드 테두리·포커스 링 색상 불일치 수정",
+        "컴포넌트 간 패딩·radius 규격 통일",
+      ],
+      autoStep: "shadcn/ui 토큰·컴포넌트 규격으로 접근성과 일관된 다크 UI를 한 번에 조립",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["shadcn", "ui", "tailwind", "react", "radix", "design", "component", "v0", "lovable"],
+    skillMdTemplate: `---
+name: shadcn-ui-system
+description: 시맨틱 CSS 토큰과 접근성(ARIA·키보드 내비게이션)을 갖춘 shadcn/ui 컴포넌트 조립 규율
+source: https://github.com/shadcn-ui/ui
+---
+
+# shadcn/ui — 정밀 UI 부품 설계 규율
+
+1. **시맨틱 토큰 일관성**: 배경·표면·경계선·텍스트 색상을 임의의 하드코딩 대신 일관된 디자인 토큰 변수로 관리한다.
+2. **키보드·접근성 기본 탑재**: 모달·탭·토글·버튼에는 명확한 \`aria-label\`, \`role\`, 포커스 링(\`focus-visible\`)을 반드시 포함한다.
+3. **컴포넌트 조합 우선**: 거대한 단일 파일 대신 작고 재사용 가능한 프리미티브 단위로 화면을 구성한다.`,
+  },
+  {
+    slug: "mcp-reference-servers",
+    name: "MCP Reference Servers",
+    koreanAlias: "[Anthropic 공식 MCP 기본 연장통] MCP Servers",
+    oneLineAnalogy:
+      "파일시스템·Git·Fetch·Memory 등 ==AI가 외부 도구와 안전하게 연결되는 공식 표준 어댑터 묶음==입니다.",
+    summaryKo:
+      "Model Context Protocol 공식 레퍼런스 서버 저장소입니다. 안전한 경로 격리 파일시스템 접근, Git 이력 조회, 웹 Fetch, 구조화 추론(Sequential Thinking) 등 모든 코딩 에이전트의 기본 인프라를 제공합니다.",
+    repo: "modelcontextprotocol/servers",
+    category: "workflow",
+    roleSlot: "harness-suite",
+    roleLabelKo: "공식 MCP 표준 레퍼런스 도구 세트",
+    installFormats: ["MCP", "CLI"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex"],
+    contextTokens: 540,
+    installCommands: {
+      cli: "npx -y @modelcontextprotocol/server-sequential-thinking",
+    },
+    mediaCandidate: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "도구마다 제각각인 커스텀 스크립트·플러그인 연동 코드 작성",
+      afterTitle: "단일 MCP JSON 설정으로 모든 AI 툴에 표준 도구 일괄 연결",
+      manualSteps: [
+        "AI 툴별 독자 플러그인 스펙 조사 및 개별 구현",
+        "경로 접근 권한 및 에러 핸들링 수동 래핑",
+        "다른 코딩 툴로 옮길 때 연동 코드 재작성",
+      ],
+      autoStep: "공식 MCP 레퍼런스 서버 1회 설정으로 Claude·Cursor·Gemini·Codex 공통 활용",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["mcp", "protocol", "anthropic", "tool", "server", "filesystem", "git", "agent"],
+    skillMdTemplate: `---
+name: mcp-reference-servers
+description: 공식 MCP 표준 서버(Filesystem·Git·Fetch·Sequential Thinking)를 최소 권한 원칙으로 활용하는 스킬
+source: https://github.com/modelcontextprotocol/servers
+---
+
+# MCP Reference Servers — 안전 도구 연동 규칙
+
+1. **최소 권한 경로 지정**: Filesystem MCP에는 작업 워크스페이스 디렉터리만 허용하고 홈 디렉터리 전체 노출을 피한다.
+2. **단계적 추론 분리**: 복잡한 설계나 트레이드오프 분석 시 순차 추론(Sequential Thinking)으로 가설을 검증한 뒤 코드를 작성한다.
+3. **도구 수 절제**: 현재 작업에 필요한 MCP 서버만 활성화해 도구 스키마 토큰 점유를 최소화한다.`,
+  },
+  {
+    slug: "serena",
+    name: "Serena MCP",
+    koreanAlias: "[LSP 정밀 외과수술 편집기] Serena",
+    oneLineAnalogy:
+      "파일 전체를 통째로 읽고 덮어쓰는 대신 ==IDE 언어 서버(LSP)로 정확한 함수·심볼만 핀셋 수정하는 코딩 에이전트 툴킷==입니다.",
+    summaryKo:
+      "Language Server Protocol(LSP) 기반의 시맨틱 코드 검색·심볼 참조 추적·정밀 심볼 편집을 MCP로 제공합니다. 대형 파일에서 줄 번호 오차나 문맥 유실 없이 필요한 함수 본문만 읽고 수정해 토큰과 실수를 함께 줄입니다.",
+    repo: "oraios/serena",
+    category: "knowledge",
+    roleSlot: "code-graph",
+    roleLabelKo: "LSP 시맨틱 심볼 검색 · 핀셋 코드 편집",
+    installFormats: ["MCP", "CLI"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex"],
+    contextTokens: 690,
+    installCommands: {
+      cli: "uvx --from git+https://github.com/oraios/serena serena start-mcp-server",
+    },
+    mediaCandidate: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "2,000줄 파일 전체를 읽고 덮어쓰다 엉뚱한 함수 훼손",
+      afterTitle: "LSP 심볼 단위 조회·참조 추적·핀셋 치환으로 정밀 편집",
+      manualSteps: [
+        "대형 소스파일 전체 읽기로 대량 토큰 소모",
+        "함수 이름 변경 시 모든 참조 파일 grep 수동 추적",
+        "잘못된 패치로 인한 구문 오류 복구",
+      ],
+      autoStep: "Serena LSP가 심볼 정의·참조 위치만 정확히 추출하고 해당 심볼만 안전하게 수정",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["lsp", "mcp", "semantic", "code", "refactor", "symbol", "ide", "agent", "python", "typescript"],
+    skillMdTemplate: `---
+name: serena-lsp
+description: LSP 기반 심볼 탐색과 참조 추적으로 대형 파일 전체 읽기 없이 정밀하게 코드를 수정하는 스킬
+source: https://github.com/oraios/serena
+---
+
+# Serena — 심볼 단위 정밀 편집 규칙
+
+1. **파일 통읽기 대신 심볼 개요 먼저**: 큰 파일은 전체를 덤프하지 말고 심볼 목록과 대상 함수 본문만 선택적으로 읽는다.
+2. **참조 전수 확인**: 공개 함수·타입 시그니처를 바꿀 때는 모든 참조 위치(Find References)를 확인한 뒤 일괄 갱신한다.
+3. **최소 단위 패치**: 변경 대상 심볼 경계 밖 코드는 그대로 보존한다.`,
+  },
+  {
+    slug: "firecrawl-mcp",
+    name: "Firecrawl MCP",
+    koreanAlias: "[웹페이지 깔끔 마크다운 추출기] Firecrawl MCP",
+    oneLineAnalogy:
+      "지저분한 HTML·광고·JS 렌더링 페이지를 ==AI가 바로 읽을 수 있는 깨끗한 마크다운으로 변환해 주는 웹 수집기==입니다.",
+    summaryKo:
+      "JavaScript로 렌더링되는 문서·경쟁사 제품 페이지·기술 블로그를 깨끗한 마크다운과 구조화 JSON으로 추출해 코딩 에이전트에 넘겨주는 공식 Firecrawl MCP 서버입니다.",
+    repo: "firecrawl/firecrawl-mcp-server",
+    category: "browser",
+    roleSlot: "web-scraper",
+    roleLabelKo: "동적 웹페이지 마크다운 수집 · 리서치 MCP",
+    installFormats: ["MCP", "CLI"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex"],
+    contextTokens: 460,
+    installCommands: {
+      cli: "npx -y firecrawl-mcp",
+    },
+    mediaCandidate: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "웹페이지 HTML 긁어다 태그·광고 지우고 문서 정리",
+      afterTitle: "URL 1개 전달로 본문 마크다운만 깔끔하게 추출해 컨텍스트 절약",
+      manualSteps: [
+        "동적 SPA 문서 페이지 브라우저로 직접 열어 텍스트 복사",
+        "메뉴·푸터·광고 노이즈 수동 제거",
+        "마크다운 표/코드블록 복원 후 AI에 전달",
+      ],
+      autoStep: "Firecrawl MCP가 본문만 마크다운으로 정제해 즉시 AI 컨텍스트로 전달",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["scrape", "crawl", "markdown", "web", "mcp", "search", "research", "rag"],
+    skillMdTemplate: `---
+name: firecrawl-mcp
+description: 동적 웹페이지와 기술 문서를 광고 없는 깨끗한 마크다운으로 추출해 리서치 품질을 높이는 MCP 스킬
+source: https://github.com/firecrawl/firecrawl-mcp-server
+---
+
+# Firecrawl MCP — 웹 본문 정밀 수집 규칙
+
+1. **본문 전용 추출**: 불필요한 내비게이션·배너를 제외한 메인 콘텐츠 마크다운만 수집해 컨텍스트 오염을 막는다.
+2. **출처 URL 필수 병기**: 외부 웹에서 추출한 수치·스펙은 반드시 원문 URL과 확인 시점을 함께 기록한다.
+3. **요청 속도 준수**: 대량 크롤링 대신 필요한 핵심 문서 URL만 선별 조회한다.`,
+  },
+  {
+    slug: "claude-task-master",
+    name: "Task Master AI",
+    koreanAlias: "[기획서→체크리스트 자동 분해기] Task Master",
+    oneLineAnalogy:
+      "길고 막막한 기획서(PRD)를 넣으면 ==의존성 순서가 잡힌 작업 티켓과 하위 체크리스트로 쪼개주는 AI PM==입니다.",
+    summaryKo:
+      "Cursor·Claude Code·Windsurf·Lovable 등 다양한 AI 코딩 도구에 붙여 쓰는 프로젝트 태스크 분해 MCP입니다. PRD 문서에서 작업 간 선후 의존성·복잡도·검증 기준을 자동 추출해 중도 이탈 없이 프로젝트를 완주하게 돕습니다.",
+    repo: "eyaltoledano/claude-task-master",
+    category: "workflow",
+    roleSlot: "task-planner",
+    roleLabelKo: "PRD 기반 작업 분해 · 의존성 관리 MCP",
+    installFormats: ["MCP", "CLI", "Rules"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex", "web-builder"],
+    contextTokens: 760,
+    installCommands: {
+      cli: "npx task-master-ai init",
+    },
+    mediaCandidate: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "큰 기능을 한 번에 던졌다가 절반 구현 후 컨텍스트 붕괴",
+      afterTitle: "PRD를 의존성 기반 소단위 태스크로 분할해 순차 완주",
+      manualSteps: [
+        "기획서를 사람이 직접 10~20개 개발 티켓으로 분리",
+        "선행 작업·후행 작업 순서 수동 관리",
+        "각 단계별 완료 기준과 테스트 항목 별도 작성",
+      ],
+      autoStep: "Task Master가 PRD 파싱→복잡도 분석→의존성 순서 실행 체크리스트를 자동 생성",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["prd", "task", "planning", "cursor", "lovable", "windsurf", "project", "workflow"],
+    skillMdTemplate: `---
+name: task-master
+description: 기획서(PRD)를 의존성이 정렬된 소단위 태스크와 완료 검증 기준으로 분해해 순차 완주하는 프로젝트 관리 스킬
+source: https://github.com/eyaltoledano/claude-task-master
+---
+
+# Task Master — 단계별 프로젝트 완주 규칙
+
+1. **단일 거대 프롬프트 분할**: 큰 요구사항은 독립 검증 가능한 3~8개 단계로 쪼개고 의존성 순서를 먼저 확정한다.
+2. **단계별 완료 기준 명시**: 각 태스크는 "수정 파일 + 검증 명령 + 통과 기준"을 명확히 갖춘 뒤 다음 단계로 넘어간다.
+3. **범위 이탈 차단**: 현재 태스크 범위 밖 개선 아이디어는 즉시 구현하지 않고 후속 백로그로 분리한다.`,
+  },
+  {
+    slug: "superdesign-skill",
+    name: "Superdesign Skill",
+    koreanAlias: "[프로덕트 UI 시안·디테일 교정기] Superdesign",
+    oneLineAnalogy:
+      "초보자가 대충 그려달라고 해도 ==출시 가능한 수준의 제품 인터페이스 레이아웃과 인터랙션으로 끌어올려 주는 디자인 스킬==입니다.",
+    summaryKo:
+      "Claude Code·Cursor 등 코딩 에이전트에서 양산형 템플릿을 피하고, 실제 출시 가능한 웹 앱 레이아웃·정보 밀도·반응형 그리드와 시각 일관성을 유지하도록 돕는 UI 디자인 전문 스킬입니다.",
+    repo: "superdesigndev/superdesign-skill",
+    category: "design",
+    roleSlot: "ui-design",
+    roleLabelKo: "프로덕트 웹 앱 UI 레이아웃 · 시각 시스템",
+    installFormats: ["SKILL.md", "CLI"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex", "web-builder"],
+    contextTokens: 820,
+    installCommands: {
+      npxSkills: "npx skills add superdesigndev/superdesign-skill",
+    },
+    mediaCandidate: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "대시보드·워크벤치 정보 배치가 산만해 여러 번 전면 재설계",
+      afterTitle: "레이아웃 그리드·정보 밀도·시각 계층 규칙으로 1차 완성도 확보",
+      manualSteps: [
+        "여백·컬럼 비율·헤더 높이 수동 조정 반복",
+        "카드 간 폰트 크기 및 색상 대비 통일 요청",
+        "빈 상태·에러 상태·로딩 상태 UI 누락 보완",
+      ],
+      autoStep: "Superdesign 스킬이 레이아웃 격자·상태 UI·대비 기준을 설계 단계부터 자동 적용",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["design", "ui", "frontend", "dashboard", "layout", "cursor", "claude code", "web"],
+    skillMdTemplate: `---
+name: superdesign-skill
+description: 출시 가능한 수준의 웹 앱 정보 밀도·그리드 정렬·상태별 UI 완성도를 보장하는 프로덕트 디자인 스킬
+source: https://github.com/superdesigndev/superdesign-skill
+---
+
+# Superdesign — 프로덕트 UI 완성도 규칙
+
+1. **작업 중심 레이아웃**: 장식용 히어로 배너보다 사용자가 즉시 조작할 핵심 워크벤치와 데이터를 첫 화면에 배치한다.
+2. **모든 상태 설계**: 정상 상태뿐 아니라 빈 상태(Empty), 검색 결과 없음, 오류 상태를 실제 안내 문구와 복구 버튼으로 완결한다.
+3. **정밀 정렬**: 수치·배지·아이콘은 고정폭 숫자와 수직 중앙 정렬을 지켜 프로페셔널한 도구 감각을 유지한다.`,
+  },
+  {
+    slug: "github-mcp-server",
+    name: "GitHub MCP Server",
+    koreanAlias: "[PR · 이슈 · 액션 원격 조종기] GitHub MCP",
+    oneLineAnalogy:
+      "터미널과 웹 브라우저를 오가지 않고 ==AI가 GitHub 이슈·PR·코드 검색·워크플로우 상태를 직접 다루게 하는 공식 MCP==입니다.",
+    summaryKo:
+      "GitHub이 Go로 직접 개발해 공식 유지보수하는 MCP 서버입니다. 이슈 생성, PR diff 리뷰, 커밋 추적, GitHub Actions 실패 로그 분석을 코딩 에이전트 대화창 안에서 안전하게 처리합니다.",
+    repo: "github/github-mcp-server",
+    category: "workflow",
+    roleSlot: "github-mcp",
+    roleLabelKo: "GitHub 공식 PR · 이슈 · Actions 자동화 MCP",
+    installFormats: ["MCP", "CLI"],
+    supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex"],
+    contextTokens: 560,
+    installCommands: {
+      cli: "docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server",
+    },
+    mediaCandidate: null,
+    benchmarks: [],
+    workflowCompression: {
+      beforeTitle: "CI 실패 로그 복사→원인 수정→PR 본문 작성→이슈 연결 수작업",
+      afterTitle: "GitHub MCP로 실패 로그 조회·코드 수정·PR 정리까지 단일 흐름 연결",
+      manualSteps: [
+        "GitHub 웹에서 Actions 실패 로그 직접 찾아 복사",
+        "관련 이슈 번호 및 변경 파일 목록 수동 정리",
+        "PR 설명 작성 및 리뷰 코멘트 일일이 대조",
+      ],
+      autoStep: "GitHub 공식 MCP가 이슈·PR·워크플로우 컨텍스트를 직접 조회해 일괄 처리",
+      stepCountBefore: 3,
+      stepCountAfter: 1,
+    },
+    radarKeywords: ["github", "pr", "issue", "actions", "ci", "mcp", "git", "release", "open-source"],
+    skillMdTemplate: `---
+name: github-mcp-server
+description: GitHub 공식 MCP 서버로 이슈·PR·워크플로우 실패 로그를 직접 조회하고 깔끔한 PR/커밋을 관리하는 스킬
+source: https://github.com/github/github-mcp-server
+---
+
+# GitHub MCP — 저장소 협업·릴리즈 자동화 규칙
+
+1. **실패 로그 직접 확인**: CI/Actions 실패 시 추측하지 말고 실제 실패 스텝 로그를 조회해 원인을 특정한다.
+2. **근거 기반 PR 요약**: 변경 의도, 수정 파일 목록, 실제 실행한 테스트 결과를 PR 설명에 구조화해 기록한다.
+3. **원격 파괴 작업 보호**: \`force push\`나 기본 브랜치 직접 삭제는 사용자 명시 요청 없이 절대 수행하지 않는다.`,
+  },
+];
+
+/**
+ * 6 curated Synergy Preset Decks explaining why combining specific verified tools multiplies utility.
+ */
+const SYNERGY_DECKS = [
+  {
+    slug: "quota-invincible-token-diet",
+    title: "한도 무적 + 토큰 다이어트 풀스택 덱",
+    subtitle: "OmniRoute + Headroom + Ponytail",
+    targetAudience: "Claude Code·Cursor를 매일 쓰며 429 한도 초과와 토큰 과금을 동시에 끝내고 싶은 빌더",
+    synergyNarrative:
+      "==OmniRoute==가 375개 프로바이더 자동 폴백으로 작업 중단을 원천 차단하고, ==Headroom==이 도구 출력·로그 입력 토큰을 21~95% 진공 압축하며, ==Ponytail==이 불필요한 과잉 코드 출력(-53%)과 토큰 소모(-45%)까지 줄여줍니다. 세 도구가 각각 **네트워크 계층(라우팅) → 입력 계층(압축) → 출력 계층(코드 절제)**으로 역할이 단 1도 겹치지 않아 3중 곱셈 효율이 발생합니다.",
+    skillSlugs: ["omniroute", "headroom", "ponytail"],
+    recommendedTools: ["claude-code", "gemini-agy", "cursor", "codex"],
+    highlightMetrics: [
+      "출력 코드 -53% · 토큰 -45% · 시간 -41% (Ponytail 실측)",
+      "입력 토큰 21~57% 절감 / JSON·로그 60~95% 압축 (Headroom 실측)",
+      "375개 프로바이더 자동 폴백 + RTK/Caveman 15~95% 압축 (OmniRoute)",
+    ],
+    installTipKo:
+      "역할 충돌 0건 조합입니다. 총 컨텍스트 무게도 1,940 tokens(보통 초반)로 가벼워 상시 장착에 가장 적합합니다.",
+  },
+  {
+    slug: "zero-slop-highend-web-motion",
+    title: "AI 티 0% 하이엔드 웹 · 모션 덱",
+    subtitle: "Taste-Skill + Hyperframes + Vercel Agent Skills",
+    targetAudience: "양산형 AI 랜딩페이지를 벗어나 실제 런칭급 웹 앱과 모션 홍보영상까지 원샷 제작하려는 메이커",
+    synergyNarrative:
+      "==Taste-Skill==이 뻔한 보라색 슬롭 UI를 교정해 아트 디렉션 기반 화면을 설계하고, ==Vercel Agent Skills==가 React·Next.js 워터폴 제거와 프로덕션 성능을 고정하며, ==Hyperframes==가 완성된 웹 UI를 코드 기반 MP4 제품 런칭 영상으로 바로 렌더링합니다. **디자인 감도 → 코드 성능 → 런칭 영상**이 한 파이프라인으로 이어집니다.",
+    skillSlugs: ["taste-skill", "hyperframes", "vercel-agent-skills"],
+    recommendedTools: ["claude-code", "cursor", "gemini-agy", "web-builder"],
+    highlightMetrics: [
+      "Taste-Skill (★120k+) 안티-슬롭 아트 디렉션 필터",
+      "Hyperframes (★89k+) HTML→MP4 모션 렌더링 29개 스킬",
+      "Vercel 공식 React/Next.js 성능·컴포지션 정석 규칙",
+    ],
+    installTipKo:
+      "웹 화면 구현 후 런칭 영상까지 한 번에 뽑을 때 강력합니다. UI 작업만 할 때는 Hyperframes를 잠시 끄면 더 가볍습니다.",
+  },
+  {
+    slug: "large-repo-compass-live-intel",
+    title: "대형 프로젝트 길찾기 + 실시간 신기술 수혈 덱",
+    subtitle: "Graphify + AI Radar Live + Context7 MCP",
+    targetAudience: "파일이 수백 개 넘는 코드베이스에서 최신 SDK·AI 기술을 오차 없이 붙이려는 풀스택 개발자",
+    synergyNarrative:
+      "==Graphify==가 로컬 tree-sitter AST로 내 프로젝트 코드·문서·스키마 전체 지도를 그려주고(LOCOMO recall@10 0.497), ==Context7==이 외부 라이브러리의 최신 공식 문서를 실시간 주입하며, ==AI Radar Live==가 방금 나온 글로벌·중국 AI 신기술 시그널을 수혈합니다. **내 코드 이해 + 외부 문서 정확도 + 실시간 트렌드** 3박자를 완벽히 채웁니다.",
+    skillSlugs: ["graphify", "ai-radar-live", "context7"],
+    recommendedTools: ["claude-code", "gemini-agy", "cursor", "codex"],
+    highlightMetrics: [
+      "Graphify LOCOMO recall@10 0.497 · ERPNext 커버리지 82.0% 실측",
+      "Context7 최신 버전 공식 문서 실시간 조회로 구버전 환각 차단",
+      "AI Radar 글로벌 + 중국 5대 소스 실시간 JSON 시그널 직결",
+    ],
+    installTipKo:
+      "총 컨텍스트 무게 1,620 tokens(초경량)으로 대형 리포지토리에서도 세션 부담이 거의 없습니다.",
+  },
+  {
+    slug: "hackathon-winner-lean-combat",
+    title: "해커톤 우승자 경량 실전 덱",
+    subtitle: "ECC Core + Ponytail",
+    targetAudience: "거대한 풀셋업의 토큰 낭비 없이 검증된 보안·리서치·최소코드 규율만 빠르게 장착하려는 실전 개발자",
+    synergyNarrative:
+      "30만 스타 ==ECC Core==의 리서치 우선·보안 가드레일·검증 루프에 19만 스타 ==Ponytail==의 과잉 코드 억제 브레이크(-53% 코드, 고위험 테스트 98%)를 결합했습니다. 무거운 전체 플러그인을 다 켜는 대신 **안전한 실행 규율 + 군더더기 없는 최소 구현**만 남겨 속도와 안정성을 동시에 극대화합니다.",
+    skillSlugs: ["ecc-core", "ponytail"],
+    recommendedTools: ["claude-code", "gemini-agy", "cursor", "codex"],
+    highlightMetrics: [
+      "ECC (★309k+) 경량 minimal 프로필: 보안·리서치·검증 게이트",
+      "Ponytail (★197k+) 코드 -53% · 시간 -41% · 테스트 포함률 98%",
+      "서로 다른 역할 슬롯(하네스 + 코드 절제)으로 충돌 0건",
+    ],
+    installTipKo:
+      "ECC는 전체 1,000+ 스킬이 아닌 반드시 `--profile minimal`로 설치해 컨텍스트 비대화를 막으세요.",
+  },
+  {
+    slug: "video-watch-edit-creator",
+    title: "영상 이해 · 자동 편집 크리에이터 덱",
+    subtitle: "Claude Video + Video Toolkit + Hyperframes",
+    targetAudience: "레퍼런스 영상을 AI에게 직접 보여주고 대본·보이스·모션 MP4까지 원스톱 제작하려는 크리에이터",
+    synergyNarrative:
+      "==Claude Video==(`/watch`)가 레퍼런스 영상의 핵심 프레임과 자막을 뽑아 구조를 분석하면, ==Video Toolkit==이 대본·AI 보이스오버·FFmpeg 합성을 준비하고, ==Hyperframes==가 고품질 HTML 모션 그래픽을 MP4로 최종 렌더링합니다. **영상 시청 분석 → 오디오/편집 → 모션 렌더링** 전체 공정이 코딩 에이전트 안에서 완결됩니다.",
+    skillSlugs: ["claude-video", "claude-code-video-toolkit", "hyperframes"],
+    recommendedTools: ["claude-code", "gemini-agy", "codex"],
+    highlightMetrics: [
+      "Claude Video (★21.6k+) 16×16 RGB 중복프레임 제거 + 음성 전사",
+      "Video Toolkit 17개 멀티미디어 SKILL.md + video_mcp 파이프라인",
+      "Hyperframes (★89k+) MP4 실물 렌더링 및 29개 모션 스킬",
+    ],
+    installTipKo:
+      "영상 렌더링 도구 2종이 함께 들어가므로, 실제 작업 시 '실사/음성 편집은 Toolkit, 모션 그래픽은 Hyperframes'로 역할을 나누어 지시하세요.",
+  },
+  {
+    slug: "non-dev-web-builder-oneshot",
+    title: "비개발자 웹 빌더(Lovable · Bolt · v0) 원샷 품질 고정 덱",
+    subtitle: "Taste-Skill + Ponytail + Task Master AI",
+    targetAudience: "터미널 없이 Lovable·Bolt·v0에서 첫 프롬프트부터 프로급 품질의 웹 앱을 뽑고 싶은 기획자·창업자",
+    synergyNarrative:
+      "웹 빌더의 고질병인 '뻔한 디자인·지저분한 코드·중반부 기능 붕괴'를 3가지 규칙으로 한 번에 잡습니다. ==Task Master==가 아이디어를 단계별 체크리스트로 정리하고, ==Taste-Skill==이 깔끔한 디자인 시스템을 고정하며, ==Ponytail==이 불필요한 코드 폭증을 막아 크레딧 소모를 확 줄입니다. 하단 독의 **[Lovable · Bolt · v0 프롬프트 팩 복사]** 버튼으로 1초 만에 붙여넣을 수 있습니다.",
+    skillSlugs: ["taste-skill", "ponytail", "claude-task-master"],
+    recommendedTools: ["web-builder", "cursor", "claude-code"],
+    highlightMetrics: [
+      "웹 빌더 Knowledge / Custom Instructions 글자 수 예산에 자동 압축",
+      "터미널 명령 0줄 · 1클릭 복붙으로 즉시 적용",
+      "기획 분해 + 안티-슬롭 디자인 + 크레딧 절약 최소 코드 3박자",
+    ],
+    installTipKo:
+      "상단 툴 스위치에서 'Lovable / Bolt / v0'를 켜고 하단 독의 [Lovable · Bolt · v0 프롬프트 팩 복사]를 누르세요.",
+  },
+];
+
+async function fetchJsonWithCache(url, headers, etagCache) {
+  const reqHeaders = {
+    "User-Agent": USER_AGENT,
+    Accept: "application/vnd.github+json",
+    ...headers,
+  };
+  const cached = etagCache[url];
+  if (cached?.etag) {
+    reqHeaders["If-Modified-Since"] = cached.lastModified || undefined;
+    reqHeaders["If-None-Match"] = cached.etag;
+  }
+  Object.keys(reqHeaders).forEach((k) => {
+    if (reqHeaders[k] === undefined) delete reqHeaders[k];
+  });
+
+  const res = await fetch(url, { headers: reqHeaders });
+  if (res.status === 304 && cached?.data) {
+    return { status: 304, data: cached.data, rateLimited: false };
+  }
+  if (res.status === 429 || res.status === 403) {
+    const remaining = res.headers.get("x-ratelimit-remaining");
+    if (res.status === 429 || remaining === "0") {
+      return { status: res.status, data: cached?.data ?? null, rateLimited: true };
+    }
+  }
+  if (!res.ok) {
+    return { status: res.status, data: cached?.data ?? null, rateLimited: false };
+  }
+  const data = await res.json();
+  etagCache[url] = {
+    etag: res.headers.get("etag") || null,
+    lastModified: res.headers.get("last-modified") || null,
+    data,
+    fetchedAt: new Date().toISOString(),
+  };
+  return { status: res.status, data, rateLimited: false };
+}
+
+async function verifyMediaUrl(url) {
+  try {
+    const res = await fetch(url, {
+      method: "HEAD",
+      headers: { "User-Agent": USER_AGENT },
+    });
+    if (res.ok) return true;
+    // Some CDNs reject HEAD; try small Range GET
+    const resGet = await fetch(url, {
+      method: "GET",
+      headers: { "User-Agent": USER_AGENT, Range: "bytes=0-64" },
+    });
+    return resGet.ok || resGet.status === 206;
+  } catch {
+    return false;
+  }
+}
+
+function mergeRadar(planningFeed, liveFeed) {
+  const byKey = new Map();
+  const generatedAt =
+    liveFeed?.generated_at || planningFeed?.generated_at || null;
+
+  const ingest = (arr) => {
+    if (!Array.isArray(arr)) return;
+    for (const rec of arr) {
+      const url = (rec.canonical_url || "").trim();
+      const id = (rec.id || url).trim();
+      if (!id || !url) continue;
+      const platformId = (rec.platform_id || "unknown").trim();
+      const titleKo = (rec.title_ko || rec.original_title || "").trim();
+      const originalTitle = (rec.original_title || rec.title_ko || "").trim();
+      const summary = (rec.highlight_summary || rec.what_ko || "").trim();
+      const existing = byKey.get(url);
+      const next = {
+        id,
+        titleKo: titleKo || originalTitle,
+        originalTitle: originalTitle || titleKo,
+        platformId,
+        category: (rec.category || "general").trim(),
+        canonicalUrl: url,
+        publishedAt: rec.published_at || generatedAt || "",
+        highlightSummary: summary,
+        benefitTag: rec.benefit_tag || undefined,
+        importanceScore:
+          typeof rec.importance_score === "number" ? rec.importance_score : 0,
+        isChinaSource: CHINA_PLATFORMS.has(platformId),
+        matchedSkillSlugs: [],
+      };
+      if (!existing || next.highlightSummary.length > existing.highlightSummary.length) {
+        byKey.set(url, next);
+      }
+    }
+  };
+
+  ingest(planningFeed?.signals);
+  ingest(liveFeed?.items);
+
+  const signals = Array.from(byKey.values()).sort(
+    (a, b) => b.importanceScore - a.importanceScore,
+  );
+  return {
+    generatedAt,
+    totalSignals: signals.length,
+    chinaSignals: signals.filter((s) => s.isChinaSource).length,
+    signals,
+  };
+}
+
+function matchRadarToSkills(signals, skills) {
+  const matchedBySkill = {};
+  for (const s of skills) matchedBySkill[s.slug] = [];
+  const matchedSignals = [];
+
+  for (const sig of signals) {
+    const haystack = stripHighlightMarkers(
+      `${sig.titleKo} ${sig.originalTitle} ${sig.highlightSummary} ${sig.platformId} ${sig.category}`,
+    ).toLowerCase();
+
+    const hits = [];
+    for (const skill of skills) {
+      let score = 0;
+      let bestKeyword = "";
+      for (const kw of skill.radarKeywords) {
+        const needle = kw.toLowerCase().trim();
+        if (needle && haystack.includes(needle)) {
+          score += needle.length >= 6 ? 3 : 2;
+          if (!bestKeyword) bestKeyword = kw;
+        }
+      }
+      if (skill.slug === "ai-radar-live" && (sig.category === "dev" || sig.importanceScore >= 80)) {
+        score += 2;
+        if (!bestKeyword) bestKeyword = sig.category === "dev" ? "dev" : "핵심 AI 이슈";
+      }
+      if (score >= 2) {
+        hits.push({ slug: skill.slug, keyword: bestKeyword, score });
+      }
+    }
+
+    if (hits.length > 0) {
+      hits.sort((a, b) => b.score - a.score);
+      const top = hits.slice(0, 3);
+      const enriched = {
+        ...sig,
+        matchedSkillSlugs: top.map((h) => h.slug),
+        matchReason: `키워드 "${top[0].keyword}" 매칭 (${sig.platformId})`,
+      };
+      matchedSignals.push(enriched);
+      for (const h of top) {
+        if (matchedBySkill[h.slug].length < 5) {
+          matchedBySkill[h.slug].push({
+            ...enriched,
+            matchReason: `이슈 키워드 "${h.keyword}"와 직접 연결됨 (${sig.platformId})`,
+          });
+        }
+      }
+    }
+  }
+
+  return { matchedBySkill, matchedSignals };
+}
+
+async function main() {
+  fs.mkdirSync(OUT_DIR, { recursive: true });
+  const etagCache = loadJsonSafe(ETAG_CACHE_PATH, {});
+  const previousCatalog = loadJsonSafe(CATALOG_PATH, { skills: [] });
+  const prevBySlug = new Map(
+    (previousCatalog.skills || []).map((s) => [s.slug, s]),
+  );
+
+  const ghToken = resolveGithubToken();
+  const ghHeaders = ghToken ? { Authorization: `Bearer ${ghToken}` } : {};
+
+  console.log(
+    `[SKILLDOCK sync] Starting sync for ${SKILL_SEEDS.length} repos (GitHub auth: ${ghToken ? "SET" : "UNSET"})`,
+  );
+
+  // 1. Fetch AI Radar planning-feed.json + live-feed.json
+  const planningRes = await fetchJsonWithCache(PLANNING_FEED_URL, {}, etagCache);
+  await sleep(jitterMs());
+  const liveRes = await fetchJsonWithCache(LIVE_FEED_URL, {}, etagCache);
+
+  const radar = mergeRadar(planningRes.data, liveRes.data);
+  console.log(
+    `[SKILLDOCK sync] AI Radar: planning=${planningRes.status}, live=${liveRes.status}, merged=${radar.totalSignals}, china=${radar.chinaSignals}, generated_at=${radar.generatedAt}`,
+  );
+
+  // 2. Sync each GitHub repository with ETag, 1500-2500ms jitter, and 429/403 Circuit Breaker
+  let circuitOpen = false;
+  const nowIso = new Date().toISOString();
+  const builtSkills = [];
+
+  for (let i = 0; i < SKILL_SEEDS.length; i++) {
+    const seed = SKILL_SEEDS[i];
+    const prev = prevBySlug.get(seed.slug);
+    const apiUrl = `https://api.github.com/repos/${seed.repo}`;
+    let meta = null;
+
+    if (!circuitOpen) {
+      await sleep(jitterMs());
+      const res = await fetchJsonWithCache(apiUrl, ghHeaders, etagCache);
+      if (res.rateLimited) {
+        console.warn(
+          `[SKILLDOCK sync] Circuit breaker tripped (HTTP ${res.status}) at ${seed.repo}. Using cached data for remaining repos.`,
+        );
+        circuitOpen = true;
+      }
+      if (res.data && res.data.full_name) {
+        meta = res.data;
+        console.log(
+          `  [${i + 1}/${SKILL_SEEDS.length}] ${meta.full_name} (HTTP ${res.status}) ★${meta.stargazers_count}`,
+        );
+      } else {
+        console.warn(
+          `  [${i + 1}/${SKILL_SEEDS.length}] ${seed.repo} HTTP ${res.status} — falling back to previous snapshot if present`,
+        );
+      }
+    }
+
+    const fullName = meta?.full_name || prev?.repo || seed.repo;
+    const defaultBranch = meta?.default_branch || "main";
+    const stars =
+      typeof meta?.stargazers_count === "number"
+        ? meta.stargazers_count
+        : (prev?.stars ?? 0);
+    const language = meta?.language || prev?.language || "Markdown";
+    const license =
+      (meta?.license && meta.license.spdx_id && meta.license.spdx_id !== "NOASSERTION"
+        ? meta.license.spdx_id
+        : meta?.license?.name) ||
+      prev?.license ||
+      "Open Source";
+    const pushedAt = meta?.pushed_at || prev?.pushedAt || nowIso;
+
+    // Verify demo media URL (HTTP 200 only)
+    let demoMedia = null;
+    if (seed.mediaCandidate) {
+      const candidateUrl = seed.mediaCandidate.relPath.startsWith("http")
+        ? seed.mediaCandidate.relPath
+        : `https://raw.githubusercontent.com/${fullName}/${defaultBranch}/${seed.mediaCandidate.relPath}`;
+      const ok = await verifyMediaUrl(candidateUrl);
+      if (ok) {
+        demoMedia = {
+          type: seed.mediaCandidate.type,
+          url: candidateUrl,
+          caption: seed.mediaCandidate.caption,
+        };
+      } else {
+        console.warn(`    media check non-200 skipped: ${candidateUrl}`);
+      }
+    }
+
+    builtSkills.push({
+      slug: seed.slug,
+      name: seed.name,
+      koreanAlias: seed.koreanAlias,
+      oneLineAnalogy: seed.oneLineAnalogy,
+      summaryKo: seed.summaryKo,
+      repo: fullName,
+      repoUrl: `https://github.com/${fullName}`,
+      stars,
+      language,
+      license,
+      pushedAt,
+      category: seed.category,
+      roleSlot: seed.roleSlot,
+      roleLabelKo: seed.roleLabelKo,
+      installFormats: seed.installFormats,
+      supportedTools: seed.supportedTools,
+      contextTokens: seed.contextTokens,
+      contextTier: classifyContextTier(seed.contextTokens),
+      installCommands: seed.installCommands,
+      skillMdTemplate: seed.skillMdTemplate,
+      demoMedia,
+      benchmarks: seed.benchmarks,
+      workflowCompression: seed.workflowCompression,
+      radarKeywords: seed.radarKeywords,
+      matchedRadar: [],
+      verifiedAt: nowIso,
+    });
+  }
+
+  // 3. Match AI Radar real signals to verified installable skills
+  const { matchedBySkill, matchedSignals } = matchRadarToSkills(
+    radar.signals,
+    builtSkills,
+  );
+  for (const skill of builtSkills) {
+    skill.matchedRadar = matchedBySkill[skill.slug] || [];
+  }
+
+  const catalogPayload = {
+    version: 1,
+    syncedAt: nowIso,
+    radarGeneratedAt: radar.generatedAt,
+    radarTotalSignals: radar.totalSignals,
+    radarChinaSignals: radar.chinaSignals,
+    radarMatchedCount: matchedSignals.length,
+    skills: builtSkills,
+    radarItems: matchedSignals.slice(0, 30),
+  };
+
+  fs.writeFileSync(
+    CATALOG_PATH,
+    JSON.stringify(catalogPayload, null, 2) + "\n",
+    "utf8",
+  );
+  fs.writeFileSync(
+    DECKS_PATH,
+    JSON.stringify({ version: 1, updatedAt: nowIso, decks: SYNERGY_DECKS }, null, 2) + "\n",
+    "utf8",
+  );
+  fs.writeFileSync(ETAG_CACHE_PATH, JSON.stringify(etagCache, null, 2), "utf8");
+
+  console.log(
+    `[SKILLDOCK sync] Done! Wrote ${builtSkills.length} verified skills, ${SYNERGY_DECKS.length} synergy decks, and ${matchedSignals.length} matched AI Radar signals.`,
+  );
+}
+
+main().catch((err) => {
+  console.error("[SKILLDOCK sync] Fatal error:", err);
+  process.exit(1);
+});

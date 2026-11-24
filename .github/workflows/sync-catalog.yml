@@ -1,0 +1,38 @@
+name: Sync SKILLDOCK Catalog & AI Radar
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Sync GitHub catalog and AI Radar live feeds
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/sync-catalog.mjs
+
+      - name: Commit updated data if changed
+        run: |
+          if [ -n "$(git status --porcelain public/data)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add public/data/skills-catalog.json public/data/synergy-decks.json
+            git commit -m "chore(data): sync verified GitHub catalog and AI Radar signals"
+            git push
+          else
+            echo "No catalog changes detected."
+          fi

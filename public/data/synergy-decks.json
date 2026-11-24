@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "updatedAt": "2026-11-24T12:45:14.471Z",
+  "decks": [
+    {
+      "slug": "quota-invincible-token-diet",
+      "title": "한도 무적 + 토큰 다이어트 풀스택 덱",
+      "subtitle": "OmniRoute + Headroom + Ponytail",
+      "targetAudience": "Claude Code·Cursor를 매일 쓰며 429 한도 초과와 토큰 과금을 동시에 끝내고 싶은 빌더",
+      "synergyNarrative": "==OmniRoute==가 375개 프로바이더 자동 폴백으로 작업 중단을 원천 차단하고, ==Headroom==이 도구 출력·로그 입력 토큰을 21~95% 진공 압축하며, ==Ponytail==이 불필요한 과잉 코드 출력(-53%)과 토큰 소모(-45%)까지 줄여줍니다. 세 도구가 각각 **네트워크 계층(라우팅) → 입력 계층(압축) → 출력 계층(코드 절제)**으로 역할이 단 1도 겹치지 않아 3중 곱셈 효율이 발생합니다.",
+      "skillSlugs": [
+        "omniroute",
+        "headroom",
+        "ponytail"
+      ],
+      "recommendedTools": [
+        "claude-code",
+        "gemini-agy",
+        "cursor",
+        "codex"
+      ],
+      "highlightMetrics": [
+        "출력 코드 -53% · 토큰 -45% · 시간 -41% (Ponytail 실측)",
+        "입력 토큰 21~57% 절감 / JSON·로그 60~95% 압축 (Headroom 실측)",
+        "375개 프로바이더 자동 폴백 + RTK/Caveman 15~95% 압축 (OmniRoute)"
+      ],
+      "installTipKo": "역할 충돌 0건 조합입니다. 총 컨텍스트 무게도 1,940 tokens(보통 초반)로 가벼워 상시 장착에 가장 적합합니다."
+    },
+    {
+      "slug": "zero-slop-highend-web-motion",
+      "title": "AI 티 0% 하이엔드 웹 · 모션 덱",
+      "subtitle": "Taste-Skill + Hyperframes + Vercel Agent Skills",
+      "targetAudience": "양산형 AI 랜딩페이지를 벗어나 실제 런칭급 웹 앱과 모션 홍보영상까지 원샷 제작하려는 메이커",
+      "synergyNarrative": "==Taste-Skill==이 뻔한 보라색 슬롭 UI를 교정해 아트 디렉션 기반 화면을 설계하고, ==Vercel Agent Skills==가 React·Next.js 워터폴 제거와 프로덕션 성능을 고정하며, ==Hyperframes==가 완성된 웹 UI를 코드 기반 MP4 제품 런칭 영상으로 바로 렌더링합니다. **디자인 감도 → 코드 성능 → 런칭 영상**이 한 파이프라인으로 이어집니다.",
+      "skillSlugs": [
+        "taste-skill",
+        "hyperframes",
+        "vercel-agent-skills"
+      ],
+      "recommendedTools": [
+        "claude-code",
+        "cursor",
+        "gemini-agy",
+        "web-builder"
+      ],
+      "highlightMetrics": [
+        "Taste-Skill (★120k+) 안티-슬롭 아트 디렉션 필터",
+        "Hyperframes (★89k+) HTML→MP4 모션 렌더링 29개 스킬",
+        "Vercel 공식 React/Next.js 성능·컴포지션 정석 규칙"
+      ],
+      "installTipKo": "웹 화면 구현 후 런칭 영상까지 한 번에 뽑을 때 강력합니다. UI 작업만 할 때는 Hyperframes를 잠시 끄면 더 가볍습니다."
+    },
+    {
+      "slug": "large-repo-compass-live-intel",
+      "title": "대형 프로젝트 길찾기 + 실시간 신기술 수혈 덱",
+      "subtitle": "Graphify + AI Radar Live + Context7 MCP",
+      "targetAudience": "파일이 수백 개 넘는 코드베이스에서 최신 SDK·AI 기술을 오차 없이 붙이려는 풀스택 개발자",
+      "synergyNarrative": "==Graphify==가 로컬 tree-sitter AST로 내 프로젝트 코드·문서·스키마 전체 지도를 그려주고(LOCOMO recall@10 0.497), ==Context7==이 외부 라이브러리의 최신 공식 문서를 실시간 주입하며, ==AI Radar Live==가 방금 나온 글로벌·중국 AI 신기술 시그널을 수혈합니다. **내 코드 이해 + 외부 문서 정확도 + 실시간 트렌드** 3박자를 완벽히 채웁니다.",
+      "skillSlugs": [
+        "graphify",
+        "ai-radar-live",
+        "context7"
+      ],
+      "recommendedTools": [
+        "claude-code",
+        "gemini-agy",
+        "cursor",
+        "codex"
+      ],
+      "highlightMetrics": [
+        "Graphify LOCOMO recall@10 0.497 · ERPNext 커버리지 82.0% 실측",
+        "Context7 최신 버전 공식 문서 실시간 조회로 구버전 환각 차단",
+        "AI Radar 글로벌 + 중국 5대 소스 실시간 JSON 시그널 직결"
+      ],
+      "installTipKo": "총 컨텍스트 무게 1,620 tokens(초경량)으로 대형 리포지토리에서도 세션 부담이 거의 없습니다."
+    },
+    {
+      "slug": "hackathon-winner-lean-combat",
+      "title": "해커톤 우승자 경량 실전 덱",
+      "subtitle": "ECC Core + Ponytail",
+      "targetAudience": "거대한 풀셋업의 토큰 낭비 없이 검증된 보안·리서치·최소코드 규율만 빠르게 장착하려는 실전 개발자",
+      "synergyNarrative": "30만 스타 ==ECC Core==의 리서치 우선·보안 가드레일·검증 루프에 19만 스타 ==Ponytail==의 과잉 코드 억제 브레이크(-53% 코드, 고위험 테스트 98%)를 결합했습니다. 무거운 전체 플러그인을 다 켜는 대신 **안전한 실행 규율 + 군더더기 없는 최소 구현**만 남겨 속도와 안정성을 동시에 극대화합니다.",
+      "skillSlugs": [
+        "ecc-core",
+        "ponytail"
+      ],
+      "recommendedTools": [
+        "claude-code",
+        "gemini-agy",
+        "cursor",
+        "codex"
+      ],
+      "highlightMetrics": [
+        "ECC (★309k+) 경량 minimal 프로필: 보안·리서치·검증 게이트",
+        "Ponytail (★197k+) 코드 -53% · 시간 -41% · 테스트 포함률 98%",
+        "서로 다른 역할 슬롯(하네스 + 코드 절제)으로 충돌 0건"
+      ],
+      "installTipKo": "ECC는 전체 1,000+ 스킬이 아닌 반드시 `--profile minimal`로 설치해 컨텍스트 비대화를 막으세요."
+    },
+    {
+      "slug": "video-watch-edit-creator",
+      "title": "영상 이해 · 자동 편집 크리에이터 덱",
+      "subtitle": "Claude Video + Video Toolkit + Hyperframes",
+      "targetAudience": "레퍼런스 영상을 AI에게 직접 보여주고 대본·보이스·모션 MP4까지 원스톱 제작하려는 크리에이터",
+      "synergyNarrative": "==Claude Video==(`/watch`)가 레퍼런스 영상의 핵심 프레임과 자막을 뽑아 구조를 분석하면, ==Video Toolkit==이 대본·AI 보이스오버·FFmpeg 합성을 준비하고, ==Hyperframes==가 고품질 HTML 모션 그래픽을 MP4로 최종 렌더링합니다. **영상 시청 분석 → 오디오/편집 → 모션 렌더링** 전체 공정이 코딩 에이전트 안에서 완결됩니다.",
+      "skillSlugs": [
+        "claude-video",
+        "claude-code-video-toolkit",
+        "hyperframes"
+      ],
+      "recommendedTools": [
+        "claude-code",
+        "gemini-agy",
+        "codex"
+      ],
+      "highlightMetrics": [
+        "Claude Video (★21.6k+) 16×16 RGB 중복프레임 제거 + 음성 전사",
+        "Video Toolkit 17개 멀티미디어 SKILL.md + video_mcp 파이프라인",
+        "Hyperframes (★89k+) MP4 실물 렌더링 및 29개 모션 스킬"
+      ],
+      "installTipKo": "영상 렌더링 도구 2종이 함께 들어가므로, 실제 작업 시 '실사/음성 편집은 Toolkit, 모션 그래픽은 Hyperframes'로 역할을 나누어 지시하세요."
+    },
+    {
+      "slug": "non-dev-web-builder-oneshot",
+      "title": "비개발자 웹 빌더(Lovable · Bolt · v0) 원샷 품질 고정 덱",
+      "subtitle": "Taste-Skill + Ponytail + Task Master AI",
+      "targetAudience": "터미널 없이 Lovable·Bolt·v0에서 첫 프롬프트부터 프로급 품질의 웹 앱을 뽑고 싶은 기획자·창업자",
+      "synergyNarrative": "웹 빌더의 고질병인 '뻔한 디자인·지저분한 코드·중반부 기능 붕괴'를 3가지 규칙으로 한 번에 잡습니다. ==Task Master==가 아이디어를 단계별 체크리스트로 정리하고, ==Taste-Skill==이 깔끔한 디자인 시스템을 고정하며, ==Ponytail==이 불필요한 코드 폭증을 막아 크레딧 소모를 확 줄입니다. 하단 독의 **[Lovable · Bolt · v0 프롬프트 팩 복사]** 버튼으로 1초 만에 붙여넣을 수 있습니다.",
+      "skillSlugs": [
+        "taste-skill",
+        "ponytail",
+        "claude-task-master"
+      ],
+      "recommendedTools": [
+        "web-builder",
+        "cursor",
+        "claude-code"
+      ],
+      "highlightMetrics": [
+        "웹 빌더 Knowledge / Custom Instructions 글자 수 예산에 자동 압축",
+        "터미널 명령 0줄 · 1클릭 복붙으로 즉시 적용",
+        "기획 분해 + 안티-슬롭 디자인 + 크레딧 절약 최소 코드 3박자"
+      ],
+      "installTipKo": "상단 툴 스위치에서 'Lovable / Bolt / v0'를 켜고 하단 독의 [Lovable · Bolt · v0 프롬프트 팩 복사]를 누르세요."
+    }
+  ]
+}

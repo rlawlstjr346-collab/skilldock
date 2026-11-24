@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+:root {
+  --bg-frame: #0b0e14;
+  --bg-sidebar: #0f131b;
+  --bg-editor: #131822;
+  --bg-card: #161c28;
+  --border-grid: #222938;
+  --text-primary: #f1f5f9;
+  --text-secondary: #c2cddc;
+  --accent-emerald: #10b981;
+  --accent-cyan: #38bdf8;
+  --accent-amber: #f59e0b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background-color: var(--bg-frame);
+  color: var(--text-primary);
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-mono {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Crisp dark carbon scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0e14;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #273145;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #384661;
+}
