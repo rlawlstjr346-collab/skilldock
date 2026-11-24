@@ -3,6 +3,18 @@ import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import {
+  NOISE_REPO_BLACKLIST_RE,
+  isRelevantRadarSignalForSkill,
+  passesGithubQualityGate,
+  passesHfQualityGate,
+} from "./lib/quality-gate.mjs";
+import {
+  CURATED_DECK_ANALOGIES,
+  cleanTranslationese,
+  curateWithGeminiIfAvailable,
+  getBeginnerAnalogy,
+} from "./lib/korean-curator.mjs";
 
 export const MAX_CATALOG_SIZE = 120;
 export const STALE_DAYS_LIMIT = 120;
@@ -66,7 +78,7 @@ function slugifyId(raw) {
 }
 
 function jitterMs() {
-  return 1500 + Math.floor(Math.random() * 700);
+  return 1500 + Math.floor(Math.random() * 1000);
 }
 
 const CHINA_PLATFORMS = new Set([
@@ -182,14 +194,6 @@ const GH_CURATED_DISCOVERY = {
     tryPromptExample: "화면 스크린샷과 문서를 함께 분석해서 UI 버그 원인을 단계별로 추적해 줘",
     keyMetricBadge: "HF 논문 검증 하네스",
   },
-  "morluto/rea": {
-    name: "REA",
-    koreanAlias: "REA — 앱 동작부터 네이티브 바이너리까지 AI 에이전트로 역공학 분석",
-    oneLineAnalogy:
-      "복잡한 앱 동작·네트워크 프로토콜·바이너리 구조를 ==AI 에이전트가 자동으로 리버스 엔지니어링해 분석하는 초인기 오픈소스==입니다.",
-    tryPromptExample: "이 서비스의 API 호출 구조와 핵심 상태 흐름을 단계별로 역추적해서 정리해 줘",
-    keyMetricBadge: "에이전트 자동 역공학",
-  },
   "stablyai/orca": {
     name: "Orca Fleet",
     koreanAlias: "Orca — 내 Claude·Agy·Codex 구독으로 멀티 에이전트 함대를 원격 운영",
@@ -198,13 +202,21 @@ const GH_CURATED_DISCOVERY = {
     tryPromptExample: "프론트엔드·백엔드·테스트 에이전트 3개로 작업을 나눠 병렬 실행 계획을 세워줘",
     keyMetricBadge: "멀티 구독 에이전트 함대",
   },
-  "koala73/worldmonitor": {
-    name: "WorldMonitor",
-    koreanAlias: "WorldMonitor — 글로벌 뉴스·인프라·지정학 시그널을 실시간 추적하는 AI 대시보드",
+  "ruvnet/ruflo": {
+    name: "Ruflo",
+    koreanAlias: "Ruflo — 멀티 에이전트 스웜·자가 학습 메모리를 한 번에 굴리는 오케스트라 하네스",
     oneLineAnalogy:
-      "전 세계 실시간 뉴스·클라우드 인프라·지정학 이벤트를 ==AI가 자동 수집·집계해 한눈에 상황 파악하게 해주는 오픈소스 관제 대시보드==입니다.",
-    tryPromptExample: "오늘 주요 클라우드·AI 인프라 장애 및 글로벌 테크 이슈를 우선순위 순으로 요약해 줘",
-    keyMetricBadge: "실시간 글로벌 AI 관제",
+      "Claude Code·Codex·Hermes와 네이티브 연동해 ==여러 AI 에이전트를 협업 팀(스웜)으로 묶고 자가 학습 메모리와 벡터 검색까지 통합하는 대표 하네스==입니다.",
+    tryPromptExample: "Ruflo 스웜 패턴으로 설계·구현·테스트 역할을 나눠 병렬 워크플로우를 실행해 줘",
+    keyMetricBadge: "멀티 에이전트 스웜 하네스",
+  },
+  "sansan0/TrendRadar": {
+    name: "TrendRadar MCP",
+    koreanAlias: "TrendRadar — 멀티 플랫폼 실시간 화제·RSS를 MCP로 바로 분석하는 AI 레이더",
+    oneLineAnalogy:
+      "여러 플랫폼 트렌드와 RSS·웹 검색을 자동 수집해 ==MCP 대화창에서 자연어로 최신 여론·트렌드를 즉시 분석하게 해주는 AI 레이더==입니다.",
+    tryPromptExample: "TrendRadar MCP로 오늘 개발자 커뮤니티에서 가장 뜨는 AI 키워드 5개만 요약해 줘",
+    keyMetricBadge: "실시간 트렌드 분석 MCP",
   },
 };
 
@@ -400,12 +412,15 @@ ${mcpEndpoint ? `mcp_sse: ${mcpEndpoint}` : ""}
 2. **입출력 경로 명확화**: 생성·변환된 결과물(이미지·영상·분석 결과)은 프로젝트 내 지정 자산 폴더에 저장하고 파일 경로를 보고한다.
 3. **오류 시 원본 Space 폴백**: 원격 큐가 혼잡하면 재시도하거나 원본 Space(${spaceUrl}) 상태를 안내한다.`;
 
+  const beginnerAnalogyKo = getBeginnerAnalogy(slug, name, category);
+
   return {
     slug,
     name,
-    koreanAlias,
-    oneLineAnalogy,
-    summaryKo,
+    koreanAlias: cleanTranslationese(koreanAlias),
+    oneLineAnalogy: cleanTranslationese(oneLineAnalogy),
+    beginnerAnalogyKo,
+    summaryKo: cleanTranslationese(summaryKo),
     repo: spaceId,
     repoUrl: spaceUrl,
     sourcePlatform: "huggingface",
@@ -475,12 +490,6 @@ async function buildDiscoveredGithubSkill(repoMeta, { discoveredVia, nowIso, tra
 
   const curated = GH_CURATED_DISCOVERY[fullName];
   const rawDesc = (repoMeta.description || "").trim();
-  const translatedKo =
-    curated
-      ? stripHighlightMarkers(curated.oneLineAnalogy)
-      : (await translateToKoreanCached(rawDesc, translationCache)) ||
-        `${repoName} 코딩 에이전트 생산성을 높여주는 검증 오픈소스 무기입니다.`;
-
   const inferred = inferCategoryAndRole(`${fullName} ${rawDesc} ${(repoMeta.topics || []).join(" ")}`, "workflow");
   const displayName =
     curated?.name ??
@@ -488,6 +497,23 @@ async function buildDiscoveredGithubSkill(repoMeta, { discoveredVia, nowIso, tra
       .split(/[-_]+/)
       .map((w) => (w.length <= 3 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1)))
       .join(" ");
+
+  const geminiCurated = curated
+    ? null
+    : await curateWithGeminiIfAvailable({
+        name: displayName,
+        repo: fullName,
+        rawDesc,
+        sourcePlatform: "github",
+        category: inferred.category,
+      });
+
+  const translatedKo = curated
+    ? stripHighlightMarkers(curated.oneLineAnalogy)
+    : geminiCurated?.oneLineAnalogy
+      ? stripHighlightMarkers(geminiCurated.oneLineAnalogy)
+      : cleanTranslationese(await translateToKoreanCached(rawDesc, translationCache)) ||
+        `${displayName}로 코딩 에이전트 작업 품질과 속도를 높여주는 검증 오픈소스 무기입니다.`;
 
   const shortKo = translatedKo.replace(/\.$/, "");
   const headlineKo =
@@ -501,7 +527,12 @@ async function buildDiscoveredGithubSkill(repoMeta, { discoveredVia, nowIso, tra
 
   const tryPromptExample =
     curated?.tryPromptExample ??
+    geminiCurated?.tryPromptExample ??
     `${displayName} 규칙을 적용해서 지금 코드베이스의 핵심 문제부터 빠르게 해결해 줘`;
+
+  const beginnerAnalogyKo =
+    geminiCurated?.beginnerAnalogyKo ||
+    getBeginnerAnalogy(slug, displayName, inferred.category);
 
   const skillMdTemplate = `---
 name: ${slug}
@@ -518,11 +549,20 @@ source: https://github.com/${fullName}
   return {
     slug,
     name: displayName,
-    koreanAlias: curated?.koreanAlias ?? `${displayName} — ${headlineKo}`,
-    oneLineAnalogy:
+    koreanAlias: cleanTranslationese(
+      curated?.koreanAlias ??
+        geminiCurated?.koreanAlias ??
+        `${displayName} — ${headlineKo}`,
+    ),
+    oneLineAnalogy: cleanTranslationese(
       curated?.oneLineAnalogy ??
-      `AI 코딩 에이전트에 ==${shortKo}== 능력을 즉시 장착해 주는 최신 검증 오픈소스입니다.`,
-    summaryKo: `${translatedKo} GitHub(${fullName})에서 최근까지 활발히 유지보수 중인 오픈소스 도구로, Claude Code·Cursor·Gemini CLI 워크플로우에 바로 연결할 수 있습니다.`,
+        geminiCurated?.oneLineAnalogy ??
+        `AI 코딩 에이전트에 ==${shortKo}== 능력을 즉시 장착해 주는 최신 검증 오픈소스입니다.`,
+    ),
+    beginnerAnalogyKo: cleanTranslationese(beginnerAnalogyKo),
+    summaryKo: cleanTranslationese(
+      `${translatedKo} GitHub(${fullName})에서 최근까지 활발히 유지보수 중인 오픈소스 도구로, Claude Code·Cursor·Gemini CLI 워크플로우에 바로 연결할 수 있습니다.`,
+    ),
     repo: fullName,
     repoUrl: `https://github.com/${fullName}`,
     sourcePlatform: "github",
@@ -1891,49 +1931,49 @@ source: https://github.com/firecrawl/firecrawl-mcp-server
 3. **요청 속도 준수**: 대량 크롤링 대신 필요한 핵심 문서 URL만 선별 조회한다.`,
   },
   {
-    slug: "claude-task-master",
-    name: "Task Master AI",
-    koreanAlias: "[기획서→체크리스트 자동 분해기] Task Master",
+    slug: "awesome-design-md",
+    name: "Awesome DESIGN.md",
+    koreanAlias: "Awesome DESIGN.md — 유명 브랜드 디자인 시스템을 내 앱에 바로 입히는 규칙집",
     oneLineAnalogy:
-      "길고 막막한 기획서(PRD)를 넣으면 ==의존성 순서가 잡힌 작업 티켓과 하위 체크리스트로 쪼개주는 AI PM==입니다.",
+      "Apple·Linear·Stripe·Vercel 등 유명 서비스의 색상·여백·타이포 규칙을 ==AI가 그대로 읽는 표준 DESIGN.md 파일로 모아둔 실전 디자인 시스템 모음==입니다.",
     summaryKo:
-      "Cursor·Claude Code·Windsurf·Lovable 등 다양한 AI 코딩 도구에 붙여 쓰는 프로젝트 태스크 분해 MCP입니다. PRD 문서에서 작업 간 선후 의존성·복잡도·검증 기준을 자동 추출해 중도 이탈 없이 프로젝트를 완주하게 돕습니다.",
-    repo: "eyaltoledano/claude-task-master",
-    category: "workflow",
-    roleSlot: "task-planner",
-    roleLabelKo: "PRD 기반 작업 분해 · 의존성 관리 MCP",
-    installFormats: ["MCP", "CLI", "Rules"],
+      "VoltAgent가 공개한 대표 `DESIGN.md` 큐레이션 저장소입니다. 코딩 에이전트 프로젝트 루트에 원하는 브랜드 스타일의 `DESIGN.md`를 넣어두기만 하면, 뻔한 기본 템플릿 없이 일관된 프로덕트 UI와 디자인 토큰으로 화면을 생성합니다.",
+    repo: "VoltAgent/awesome-design-md",
+    category: "design",
+    roleSlot: "ui-design",
+    roleLabelKo: "유명 브랜드 DESIGN.md 디자인 시스템 룰",
+    installFormats: ["Rules", "SKILL.md"],
     supportedTools: ["claude-code", "gemini-agy", "cursor", "windsurf", "codex", "web-builder"],
-    contextTokens: 760,
+    contextTokens: 780,
     installCommands: {
-      cli: "npx task-master-ai init",
+      npxSkills: "npx skills add VoltAgent/awesome-design-md",
     },
     mediaCandidate: null,
     benchmarks: [],
     workflowCompression: {
-      beforeTitle: "큰 기능을 한 번에 던졌다가 절반 구현 후 컨텍스트 붕괴",
-      afterTitle: "PRD를 의존성 기반 소단위 태스크로 분할해 순차 완주",
+      beforeTitle: "색상 코드·폰트 위계·카드 간격을 매번 말로 길게 설명하며 수정 반복",
+      afterTitle: "검증된 DESIGN.md 1개 장착으로 첫 화면부터 브랜드급 일관성 고정",
       manualSteps: [
-        "기획서를 사람이 직접 10~20개 개발 티켓으로 분리",
-        "선행 작업·후행 작업 순서 수동 관리",
-        "각 단계별 완료 기준과 테스트 항목 별도 작성",
+        "레퍼런스 사이트의 여백·보더·폰트 크기를 수동으로 메모",
+        "AI가 페이지마다 제각각 만든 색감과 버튼 모양 일일이 교정",
+        "다크/라이트 대비와 간격 불균형 반복 수정 요청",
       ],
-      autoStep: "Task Master가 PRD 파싱→복잡도 분석→의존성 순서 실행 체크리스트를 자동 생성",
+      autoStep: "DESIGN.md 디자인 토큰과 컴포넌트 규격을 AI에 주입해 첫 시안부터 프로덕트 품질 고정",
       stepCountBefore: 3,
       stepCountAfter: 1,
     },
-    radarKeywords: ["prd", "task", "planning", "cursor", "lovable", "windsurf", "project", "workflow"],
+    radarKeywords: ["design.md", "design system", "ui", "frontend", "tailwind", "cursor", "lovable", "v0"],
     skillMdTemplate: `---
-name: task-master
-description: 기획서(PRD)를 의존성이 정렬된 소단위 태스크와 완료 검증 기준으로 분해해 순차 완주하는 프로젝트 관리 스킬
-source: https://github.com/eyaltoledano/claude-task-master
+name: awesome-design-md
+description: 검증된 유명 서비스 DESIGN.md 디자인 시스템 토큰(색상·타이포·여백·보더)을 프로젝트에 즉시 이식하는 UI 스킬
+source: https://github.com/VoltAgent/awesome-design-md
 ---
 
-# Task Master — 단계별 프로젝트 완주 규칙
+# Awesome DESIGN.md — 브랜드급 디자인 시스템 적용 규칙
 
-1. **단일 거대 프롬프트 분할**: 큰 요구사항은 독립 검증 가능한 3~8개 단계로 쪼개고 의존성 순서를 먼저 확정한다.
-2. **단계별 완료 기준 명시**: 각 태스크는 "수정 파일 + 검증 명령 + 통과 기준"을 명확히 갖춘 뒤 다음 단계로 넘어간다.
-3. **범위 이탈 차단**: 현재 태스크 범위 밖 개선 아이디어는 즉시 구현하지 않고 후속 백로그로 분리한다.`,
+1. **DESIGN.md 단일 기준 준수**: 배경·표면·경계선·텍스트 색상과 간격 스케일을 임의의 색상 대신 DESIGN.md 토큰 기준으로 통일한다.
+2. **시각 위계 우선**: 장식용 그라데이션이나 과한 그림자 대신 1px 경계선, 명확한 폰트 굵기 대비, 여백 리듬으로 고급감을 만든다.
+3. **컴포넌트 일관성**: 버튼·카드·입력창의 radius와 패딩 규격을 전 페이지에 동일하게 적용한다.`,
   },
   {
     slug: "superdesign-skill",
@@ -2247,42 +2287,32 @@ function matchRadarToSkills(signals, skills) {
   for (const s of skills) matchedBySkill[s.slug] = [];
   const matchedSignals = [];
 
-  for (const sig of signals) {
-    const haystack = stripHighlightMarkers(
-      `${sig.titleKo} ${sig.originalTitle} ${sig.highlightSummary} ${sig.platformId} ${sig.category}`,
-    ).toLowerCase();
+  for (const rawSig of signals) {
+    const sig = {
+      ...rawSig,
+      titleKo: cleanTranslationese(rawSig.titleKo),
+      highlightSummary: cleanTranslationese(rawSig.highlightSummary),
+    };
 
     const hits = [];
     for (const skill of skills) {
-      let score = 0;
-      let bestKeyword = "";
-      for (const kw of skill.radarKeywords) {
-        const needle = kw.toLowerCase().trim();
-        if (needle && haystack.includes(needle)) {
-          score += needle.length >= 6 ? 3 : 2;
-          if (!bestKeyword) bestKeyword = kw;
-        }
-      }
-      if (skill.slug === "ai-radar-live" && (sig.category === "dev" || sig.importanceScore >= 80)) {
-        score += 2;
-        if (!bestKeyword) bestKeyword = sig.category === "dev" ? "dev" : "핵심 AI 이슈";
-      }
-      if (score >= 2) {
-        hits.push({ slug: skill.slug, keyword: bestKeyword, score });
+      const check = isRelevantRadarSignalForSkill(sig, skill);
+      if (check.matched) {
+        hits.push({ slug: skill.slug, keyword: check.keyword, score: check.score });
       }
     }
 
     if (hits.length > 0) {
       hits.sort((a, b) => b.score - a.score);
-      const top = hits.slice(0, 3);
+      const top = hits.slice(0, 2);
       const enriched = {
         ...sig,
         matchedSkillSlugs: top.map((h) => h.slug),
-        matchReason: `키워드 "${top[0].keyword}" 매칭 (${sig.platformId})`,
+        matchReason: `키워드 "${top[0].keyword}" 직접 매칭 (${sig.platformId})`,
       };
       matchedSignals.push(enriched);
       for (const h of top) {
-        if (matchedBySkill[h.slug].length < 5) {
+        if (matchedBySkill[h.slug].length < 3) {
           matchedBySkill[h.slug].push({
             ...enriched,
             matchReason: `이슈 키워드 "${h.keyword}"와 직접 연결됨 (${sig.platformId})`,
@@ -2400,9 +2430,10 @@ async function main() {
     builtSkills.push({
       slug: seed.slug,
       name: seed.name,
-      koreanAlias: seed.koreanAlias,
-      oneLineAnalogy: seed.oneLineAnalogy,
-      summaryKo: seed.summaryKo,
+      koreanAlias: cleanTranslationese(seed.koreanAlias),
+      oneLineAnalogy: cleanTranslationese(seed.oneLineAnalogy),
+      beginnerAnalogyKo: getBeginnerAnalogy(seed.slug, seed.name, seed.category),
+      summaryKo: cleanTranslationese(seed.summaryKo),
       repo: fullName,
       repoUrl: `https://github.com/${fullName}`,
       sourcePlatform: seed.slug === "ai-radar-live" ? "skilldock" : "github",
@@ -2445,7 +2476,7 @@ async function main() {
   if (Array.isArray(hfMcpRes.data)) {
     console.log(`[SKILLDOCK sync] Hugging Face MCP Spaces: HTTP ${hfMcpRes.status}, count=${hfMcpRes.data.length}`);
     for (const sp of hfMcpRes.data) {
-      if (!sp?.id || sp.private || sp.disabled) continue;
+      if (!passesHfQualityGate(sp)) continue;
       if (hfSeenIds.has(sp.id.toLowerCase())) continue;
       hfSeenIds.add(sp.id.toLowerCase());
       hfCandidates.push({ space: sp, discoveredVia: "hf-mcp" });
@@ -2470,10 +2501,10 @@ async function main() {
         isMcp,
         url: `https://huggingface.co/spaces/${sp.id}`,
       });
-      // Include trending Spaces that are MCP servers or high-utility AI creator/agent tools
       if (
         !hfSeenIds.has(sp.id.toLowerCase()) &&
-        (isMcp || HF_CURATED_META[sp.id] || (sp.sdk === "gradio" && (sp.likes ?? 0) >= 200))
+        passesHfQualityGate(sp) &&
+        (isMcp || HF_CURATED_META[sp.id] || sp.sdk === "gradio")
       ) {
         hfSeenIds.add(sp.id.toLowerCase());
         hfCandidates.push({ space: sp, discoveredVia: "hf-trending" });
@@ -2568,10 +2599,15 @@ async function main() {
     console.log(`[SKILLDOCK sync] GitHub Search HTTP ${res.status}, candidates=${items.length}`);
     for (const repoMeta of items) {
       if (ghDiscoveredAdded >= 10) break;
-      if (!repoMeta?.full_name || repoMeta.archived || repoMeta.fork) continue;
+      if (!repoMeta?.full_name) continue;
       if (seenRepos.has(repoMeta.full_name.toLowerCase())) continue;
-      const blob = `${repoMeta.full_name} ${repoMeta.description || ""} ${(repoMeta.topics || []).join(" ")}`;
-      if (!repoMeta.description || GH_NOISE_RE.test(blob) || !GH_RELEVANT_RE.test(blob)) continue;
+      if (
+        !passesGithubQualityGate(repoMeta, {
+          hasInstallSpec: Boolean(GH_CURATED_DISCOVERY[repoMeta.full_name]),
+        })
+      ) {
+        continue;
+      }
 
       const built = await buildDiscoveredGithubSkill(repoMeta, {
         discoveredVia: "gh-search",
@@ -2580,6 +2616,7 @@ async function main() {
         prev: prevBySlug.get(slugifyId(repoMeta.name)),
       });
       if (!built || seenSlugs.has(built.slug)) continue;
+      if (NOISE_REPO_BLACKLIST_RE.test(`${built.slug} ${built.repo} ${built.summaryKo}`)) continue;
       seenSlugs.add(built.slug);
       seenRepos.add(built.repo.toLowerCase());
       builtSkills.push(built);
@@ -2636,6 +2673,13 @@ async function main() {
     radarItems: matchedSignals.slice(0, 30),
   };
 
+  const enrichedDecks = SYNERGY_DECKS.map((deck) => ({
+    ...deck,
+    beginnerAnalogyKo:
+      CURATED_DECK_ANALOGIES[deck.slug] ||
+      `비유하자면, ${deck.subtitle} 조합을 한 팀으로 묶어 번거로운 반복 작업을 한 번에 끝내주는 실전 세트예요.`,
+  }));
+
   fs.writeFileSync(
     CATALOG_PATH,
     JSON.stringify(catalogPayload, null, 2) + "\n",
@@ -2643,7 +2687,7 @@ async function main() {
   );
   fs.writeFileSync(
     DECKS_PATH,
-    JSON.stringify({ version: 1, updatedAt: nowIso, decks: SYNERGY_DECKS }, null, 2) + "\n",
+    JSON.stringify({ version: 2, updatedAt: nowIso, decks: enrichedDecks }, null, 2) + "\n",
     "utf8",
   );
   fs.writeFileSync(ETAG_CACHE_PATH, JSON.stringify(etagCache, null, 2), "utf8");

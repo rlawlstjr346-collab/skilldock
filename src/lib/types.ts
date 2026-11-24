@@ -105,6 +105,7 @@ export interface SkillItem {
   name: string;
   koreanAlias: string;
   oneLineAnalogy: string;
+  beginnerAnalogyKo: string;
   summaryKo: string;
   repo: string;
   repoUrl: string;
@@ -150,6 +151,7 @@ export interface SynergyDeck {
   subtitle: string;
   targetAudience: string;
   synergyNarrative: string;
+  beginnerAnalogyKo: string;
   skillSlugs: string[];
   recommendedTools: ToolTargetId[];
   highlightMetrics: string[];

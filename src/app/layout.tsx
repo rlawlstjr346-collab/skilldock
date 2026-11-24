@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://skilldock.vercel.app";
+const SITE_URL = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -11,16 +11,18 @@ export const metadata: Metadata = {
     template: "%s | SkillDock",
   },
   description:
-    "어려운 깃허브 설치법 없이 검증된 오픈소스 AI 스킬과 해커톤 우승 세트를 골라 담고, Claude Code·Gemini CLI·Cursor·Windsurf·Lovable·Bolt·v0에 한 번에 적용하세요.",
+    "어려운 깃허브 설치법 없이 검증된 GitHub·Hugging Face 오픈소스 AI 스킬과 프리셋 세트를 골라 담고, Claude Code·Gemini CLI·Cursor·Windsurf·Codex·Lovable·Bolt·v0에 한 번에 적용하세요.",
   openGraph: {
     title: "SkillDock — 초보자도 10초 만에 장착하는 AI 코딩 스킬 장비창",
     description:
-      "실제 GitHub 검증 오픈소스 스킬 24종, 6대 케미 프리셋 세트, 실측 효용 그래프, 무터미널 한글 자동 설치.",
+      "실제 GitHub·Hugging Face 검증 오픈소스 무기, 6대 케미 프리셋 세트, 실측 효용 그래프, 무터미널 한글 자동 설치.",
+    url: SITE_URL,
     type: "website",
     locale: "ko_KR",
     siteName: "SkillDock",
   },
   alternates: {
+    canonical: SITE_URL,
     types: {
       "application/rss+xml": `${SITE_URL}/rss.xml`,
     },
@@ -44,7 +46,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
         />
       </head>
-      <body className="min-h-screen bg-[#F5F6F8] text-[#111827] selection:bg-[#FEF08A] selection:text-[#111827]">
+      <body className="min-h-screen bg-[#FBFBFD] text-[#1D1D1F] selection:bg-[#FEF08A] selection:text-[#1D1D1F]">
         {children}
       </body>
     </html>

@@ -1,0 +1,23 @@
+{
+  "ignoreCommand": "git rev-parse --verify HEAD^ >/dev/null 2>&1 && git diff --quiet HEAD^ HEAD -- . ':!public/data' ':!src/data/translation-cache.json'",
+  "headers": [
+    {
+      "source": "/api/live-sync",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=180, stale-while-revalidate=360"
+        }
+      ]
+    },
+    {
+      "source": "/(sitemap\\.xml|rss\\.xml|robots\\.txt)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=1800, stale-while-revalidate=3600"
+        }
+      ]
+    }
+  ]
+}

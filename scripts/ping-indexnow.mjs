@@ -1,13 +1,32 @@
 #!/usr/bin/env node
 /**
- * SKILLDOCK IndexNow Ping Script
- * Submits key catalog, skill, and deck URLs to IndexNow endpoints when INDEXNOW_KEY is configured.
+ * SKILLDOCK IndexNow Ping Script (Naver Search Advisor + Global IndexNow)
+ * Auto-detects Vercel / custom production domain without extra setup.
  */
 import fs from "node:fs";
 import path from "node:path";
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://skilldock.vercel.app").replace(/\/$/, "");
+const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "https://skilldock.vercel.app")
+).replace(/\/$/, "");
 const INDEXNOW_KEY = process.env.INDEXNOW_KEY || "";
+
+const DISCOVER_SLUGS = [
+  "claude-code-skills",
+  "gemini-cli-setup",
+  "cursor-rules-presets",
+  "vibe-coding-starter",
+  "mcp-server-list",
+  "lovable-bolt-prompts",
+];
+
+const ENDPOINTS = [
+  "https://searchadvisor.naver.com/indexnow",
+  "https://api.indexnow.org/indexnow",
+];
 
 async function main() {
   const catalogPath = path.join(process.cwd(), "public", "data", "skills-catalog.json");
@@ -18,13 +37,14 @@ async function main() {
 
   const urls = [
     `${SITE_URL}/`,
-    ...(catalog.skills || []).map((s) => `${SITE_URL}/skill/${s.slug}`),
+    ...DISCOVER_SLUGS.map((slug) => `${SITE_URL}/discover/${slug}`),
     ...(decks.decks || []).map((d) => `${SITE_URL}/deck/${d.slug}`),
+    ...(catalog.skills || []).map((s) => `${SITE_URL}/skill/${s.slug}`),
   ];
 
   if (!INDEXNOW_KEY) {
     console.log(
-      `[IndexNow] Prepared ${urls.length} URLs for ${SITE_URL}. Set INDEXNOW_KEY to submit live pings.`,
+      `[IndexNow] Prepared ${urls.length} URLs for ${SITE_URL} (Naver + Global). Set INDEXNOW_KEY to submit live pings.`,
     );
     return;
   }
@@ -37,12 +57,18 @@ async function main() {
     urlList: urls,
   };
 
-  const res = await fetch("https://api.indexnow.org/indexnow", {
-    method: "POST",
-    headers: { "Content-Type": "application/json; charset=utf-8" },
-    body: JSON.stringify(payload),
-  });
-  console.log(`[IndexNow] Submitted ${urls.length} URLs -> HTTP ${res.status}`);
+  for (const endpoint of ENDPOINTS) {
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify(payload),
+      });
+      console.log(`[IndexNow] ${endpoint} -> HTTP ${res.status}`);
+    } catch (err) {
+      console.warn(`[IndexNow] ${endpoint} failed:`, err.message);
+    }
+  }
 }
 
 main().catch((err) => {

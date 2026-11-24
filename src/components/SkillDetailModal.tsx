@@ -784,6 +784,22 @@ export function SkillDetailModal({
                 )}
               </p>
 
+              {/* Beginner Everyday Analogy Callout (preserves exact typography scale) */}
+              {(isSkill ? target.skill.beginnerAnalogyKo : isDeck ? target.deck.beginnerAnalogyKo : "") && (
+                <div className="rounded-xl bg-[#F8FAFC] border border-[#E5E5EA] px-4 py-3 text-[clamp(15px,0.96vw,19.5px)] leading-[1.68] text-[#334155]">
+                  <span className="font-bold text-[#1D1D1F] mr-1.5">
+                    쉬운 비유:
+                  </span>
+                  <span>
+                    {isSkill
+                      ? target.skill.beginnerAnalogyKo
+                      : isDeck
+                        ? target.deck.beginnerAnalogyKo
+                        : ""}
+                  </span>
+                </div>
+              )}
+
               {isSkill && target.skill.hfMcpEndpoint && (
                 <div className="rounded-xl bg-[#FFFBEB] border border-[#FDE68A] px-4 py-2.5 text-[clamp(13.5px,0.86vw,17.5px)] text-[#92400E] flex flex-wrap items-center justify-between gap-2">
                   <span className="font-bold">

@@ -1,30 +1,35 @@
 import type { MetadataRoute } from "next";
 import { loadCatalogData, loadSynergyDecks } from "@/lib/catalog";
-
-const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL || "https://skilldock.vercel.app"
-).replace(/\/$/, "");
+import { DISCOVER_HUBS } from "@/lib/discover";
+import { getSiteUrl } from "@/lib/site-url";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const siteUrl = getSiteUrl();
   const catalog = loadCatalogData();
   const decks = loadSynergyDecks();
   const lastModified = new Date(catalog.syncedAt);
 
   return [
     {
-      url: `${SITE_URL}/`,
+      url: `${siteUrl}/`,
       lastModified,
       changeFrequency: "hourly",
       priority: 1,
     },
+    ...DISCOVER_HUBS.map((hub) => ({
+      url: `${siteUrl}/discover/${hub.slug}`,
+      lastModified,
+      changeFrequency: "daily" as const,
+      priority: 0.92,
+    })),
     ...decks.map((deck) => ({
-      url: `${SITE_URL}/deck/${deck.slug}`,
+      url: `${siteUrl}/deck/${deck.slug}`,
       lastModified,
       changeFrequency: "daily" as const,
       priority: 0.9,
     })),
     ...catalog.skills.map((skill) => ({
-      url: `${SITE_URL}/skill/${skill.slug}`,
+      url: `${siteUrl}/skill/${skill.slug}`,
       lastModified: new Date(skill.pushedAt || catalog.syncedAt),
       changeFrequency: "daily" as const,
       priority: 0.85,

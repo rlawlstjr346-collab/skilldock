@@ -410,7 +410,7 @@ const FRIENDLY_SKILL_TITLES: Record<string, string> = {
   "mcp-reference-servers": "공식 MCP 기본 연장통 — 파일·Git·단계별 추론을 모든 코딩 툴에 안전하게 연결하는 표준 도구",
   serena: "Serena — 파일 전체를 건드리지 않고 딱 고칠 함수만 정밀하게 찾아 수정하는 외과수술 편집기",
   "firecrawl-mcp": "Firecrawl MCP — 광고·잡음 가득한 웹페이지를 AI가 읽기 좋은 깔끔한 문서로 정제",
-  "claude-task-master": "Task Master — 막막한 기획서를 순서가 잡힌 체크리스트로 쪼개 끝까지 완주시키는 AI PM",
+  "awesome-design-md": "Awesome DESIGN.md — Apple·Linear·Stripe 스타일 디자인 시스템을 내 앱에 바로 입히는 규칙집",
   "superdesign-skill": "Superdesign — 초보자가 대충 요청해도 출시 가능한 수준의 정돈된 앱 화면으로 교정",
   "github-mcp-server": "GitHub 공식 MCP — 브라우저를 오가지 않고 대화창 안에서 이슈·PR·빌드 오류를 바로 해결",
 };
@@ -531,7 +531,19 @@ export function getEverydayProblemGuide(skill: SkillItem): string {
  * Filters AI Radar matches so cards & modals NEVER show raw untranslated English tweets
  * (`@OpenAI: We're...`) or off-topic science snippets. Only clean Korean dev/AI titles pass.
  */
-const OFF_TOPIC_RE = /양자 컴퓨터|핵융합|의약화학|MedChemBench|신약 개발|앨런 튜링/i;
+const OFF_TOPIC_RE =
+  /openworks|중소기업|자금\s*지원|대출|보조금|양자\s*컴퓨터|핵융합|의약화학|medchembench|신약\s*개발|앨런\s*튜링|동물\s*재식별|기후\s*변화|부동산|지정학/i;
+
+export function cleanKoreanCopy(text: string): string {
+  return text
+    .replace(/^당사는\s*/g, "")
+    .replace(/당사의\s*/g, "공식 ")
+    .replace(/당사는\s*/g, "")
+    .replace(/이는\s*우리\s*개척지의\s*/g, "최신 프론티어 ")
+    .replace(/^@[A-Za-z0-9_]+\s*[:·-]\s*/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 export function getCleanKoreanRadarMatches(skill: SkillItem): RadarSignal[] {
   const raw = skill.matchedRadar ?? [];
@@ -540,16 +552,14 @@ export function getCleanKoreanRadarMatches(skill: SkillItem): RadarSignal[] {
       const title = (sig.titleKo || "").trim();
       if (!/[가-힣]/.test(title)) return false;
       if (/^@[A-Za-z0-9_]+:/i.test(title)) return false;
-      if (OFF_TOPIC_RE.test(title)) return false;
+      if (OFF_TOPIC_RE.test(`${title} ${sig.originalTitle || ""} ${sig.highlightSummary || ""}`)) {
+        return false;
+      }
       return true;
     })
-    .map((sig) => {
-      const cleanTitle = sig.titleKo
-        .replace(/^@[A-Za-z0-9_]+\s*[:·-]\s*/i, "")
-        .trim();
-      return {
-        ...sig,
-        titleKo: cleanTitle,
-      };
-    });
+    .map((sig) => ({
+      ...sig,
+      titleKo: cleanKoreanCopy(sig.titleKo),
+      highlightSummary: cleanKoreanCopy(sig.highlightSummary || ""),
+    }));
 }

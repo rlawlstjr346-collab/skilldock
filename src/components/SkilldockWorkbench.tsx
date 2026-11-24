@@ -111,11 +111,15 @@ function VisitDivider({ info }: { info: VisitDividerInfo }) {
   );
 }
 
-export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
+export function SkilldockWorkbench({
+  initialCatalog,
+  decks: initialDecks,
+}: WorkbenchProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [catalog, setCatalog] = useState<CatalogData>(initialCatalog);
+  const [decks, setDecks] = useState<SynergyDeck[]>(initialDecks);
   const [nowMs, setNowMs] = useState<number>(() =>
     Date.parse(initialCatalog.syncedAt) || Date.now(),
   );
@@ -225,13 +229,16 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
     setRankReadIds(readIdsRef.current);
   }, [activeTab, activeDomain, sourceFilter, quickFilter]);
 
-  // Quiet background live-sync refresh on mount (AI Radar + Hugging Face trending)
+  // Quiet background live-sync refresh on mount (3-min remote GitHub catalog + AI Radar + HF trending)
   useEffect(() => {
     fetch("/api/live-sync")
       .then((res) => (res.ok ? res.json() : null))
-      .then((fresh: CatalogData | null) => {
+      .then((fresh: (CatalogData & { decks?: SynergyDeck[] }) | null) => {
         if (fresh && Array.isArray(fresh.skills) && fresh.skills.length >= 20) {
           setCatalog(fresh);
+          if (Array.isArray(fresh.decks) && fresh.decks.length >= 6) {
+            setDecks(fresh.decks);
+          }
         }
       })
       .catch(() => {

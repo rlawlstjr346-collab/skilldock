@@ -23,6 +23,7 @@ jobs:
       - name: Harvest GitHub, Hugging Face MCP/Trending, and AI Radar live feeds
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: node scripts/sync-catalog.mjs
 
       - name: Commit updated data if changed
