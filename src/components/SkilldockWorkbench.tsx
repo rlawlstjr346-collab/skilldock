@@ -1,120 +1,117 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  CATEGORY_LABELS,
+  analyzeDockSkills,
+  deserializeDockParam,
+  serializeDockParam,
+} from "@/lib/dock";
+import {
+  DOMAIN_LIST,
+  deckMatchesDomain,
+  getCleanKoreanRadarMatches,
+  getFriendlySkillTitle,
+  getFriendlyWeightLabel,
+  skillMatchesDomain,
+  type DomainFilterId,
+} from "@/lib/editorial";
+import {
   TOOL_TARGETS,
   type CatalogData,
   type InstallScope,
-  type SkillCategory,
   type SkillItem,
   type SynergyDeck,
   type ToolTargetId,
 } from "@/lib/types";
+import { DeckFeedCard, SkillFeedCard } from "./FeedCards";
+import { FloatingDockBar } from "./FloatingDockBar";
 import {
-  analyzeDockSkills,
-  deserializeDockParam,
-  formatStars,
-  serializeDockParam,
-} from "@/lib/dock";
-import {
-  buildBeginnerAutoInstallPrompt,
-  buildToolFilePreview,
-  buildWebBuilderPromptPack,
-} from "@/lib/converters";
-import { HighlightText } from "./HighlightText";
-import {
-  AlertTriangleIcon,
-  BridgePlugIcon,
-  CheckIcon,
+  AlertIcon,
+  ArrowRightIcon,
   CloseIcon,
+  CompassIcon,
   CopyIcon,
-  ExternalLinkIcon,
-  FileCodeIcon,
-  FolderIcon,
+  DockBagIcon,
   LayersIcon,
-  PlusIcon,
-  RadarPulseIcon,
+  RadarIcon,
   SearchIcon,
-  SkilldockLogo,
-  StarIcon,
+  SkillDockLogo,
   ToolIcon,
 } from "./Icons";
-import { MediaDemoViewer } from "./MediaDemoViewer";
-import { UtilityInspector } from "./UtilityInspector";
 import {
-  InstallModal,
+  SkillDetailModal,
   type BridgeInstalledEntry,
-  type InstallModalMode,
-} from "./InstallModal";
+  type ModalTarget,
+} from "./SkillDetailModal";
 
 interface WorkbenchProps {
   initialCatalog: CatalogData;
   decks: SynergyDeck[];
 }
 
-type Selection =
-  | { kind: "deck"; slug: string }
-  | { kind: "skill"; slug: string };
-
-type SkillEditorTab = "anatomy" | "radar" | "preview";
-type DeckEditorTab = "synergy" | "combined" | `skill:${string}`;
+type NavTab = "presets" | "issues" | "catalog" | "dock";
 
 const STORAGE_TOOLS_KEY = "skilldock:selected-tools:v1";
-const STORAGE_READ_RADAR_KEY = "skilldock:read-radar:v1";
 const BRIDGE_BASE = "http://127.0.0.1:4789";
+
+const NAV_META: Record<
+  NavTab,
+  { title: string; subtitle: string }
+> = {
+  presets: {
+    title: "추천 프리셋 세트",
+    subtitle:
+      "어려운 깃허브 설치법을 몰라도 괜찮아요. 검증된 AI 스킬이나 해커톤 우승 세트를 골라 담고, 내가 쓰는 코딩 툴에 버튼 하나로 적용해 보세요.",
+  },
+  issues: {
+    title: "최신 이슈 맞춤 무기",
+    subtitle:
+      "요즘 AI 코딩하면서 자주 겪는 답답함과 최신 AI Radar 동향을 바로 해결해 주는 검증 오픈소스 스킬만 골라 연결했어요.",
+  },
+  catalog: {
+    title: "전체 스킬 도감",
+    subtitle:
+      "GitHub에서 실존과 효용을 직접 확인한 24개 오픈소스 스킬을 분야별로 둘러보고 필요한 무기만 가볍게 담아보세요.",
+  },
+  dock: {
+    title: "내 장착 독",
+    subtitle:
+      "담아둔 스킬의 기억용량 부담과 역할 중복을 확인하고, AI 채팅창 한글 자동설치나 웹 빌더 팩으로 한 번에 적용하세요.",
+  },
+};
 
 export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [catalog, setCatalog] = useState<CatalogData>(initialCatalog);
-  const [syncingLive, setSyncingLive] = useState(false);
+  const [activeTab, setActiveTab] = useState<NavTab>("presets");
+  const [activeDomain, setActiveDomain] = useState<DomainFilterId>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<SkillCategory | "all">(
-    "all",
-  );
+  const [scope, setScope] = useState<InstallScope>("project");
 
-  // Collapsible Explorer tree folders
-  const [openRadarFolder, setOpenRadarFolder] = useState(true);
-  const [openDecksFolder, setOpenDecksFolder] = useState(true);
-  const [openSkillsFolder, setOpenSkillsFolder] = useState(true);
-
-  // Selected Vibe-coding tools (multi-select, persisted in localStorage)
+  // Multi-select coding tools (persisted in localStorage)
   const [selectedTools, setSelectedTools] = useState<ToolTargetId[]>([
     "claude-code",
     "gemini-agy",
   ]);
-  const [readRadarIds, setReadRadarIds] = useState<string[]>([]);
 
-  // Active editor selection & tabs
-  const [selection, setSelection] = useState<Selection>({
-    kind: "deck",
-    slug: decks[0]?.slug ?? "quota-invincible-token-diet",
-  });
-  const [deckTab, setDeckTab] = useState<DeckEditorTab>("synergy");
-  const [skillTab, setSkillTab] = useState<SkillEditorTab>("anatomy");
-  const [previewTool, setPreviewTool] = useState<ToolTargetId>("claude-code");
-
-  // Dock Cart (bidirectional with ?dock=slug1,slug2)
+  // Docked skill slugs (bidirectional with ?dock=)
   const validSlugs = useMemo(
     () => new Set(catalog.skills.map((s) => s.slug)),
     [catalog.skills],
   );
   const [dockSlugs, setDockSlugs] = useState<string[]>(() => {
     const fromUrl = deserializeDockParam(searchParams.get("dock"), validSlugs);
-    return fromUrl.length > 0 ? fromUrl : ["omniroute", "headroom", "ponytail"];
+    return fromUrl;
   });
-  const [scope, setScope] = useState<InstallScope>("project");
 
-  // Modal & copy feedback
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<InstallModalMode>("beginner-chat");
+  // Modal & Toast
+  const [modalTarget, setModalTarget] = useState<ModalTarget | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  // Live Bridge status
+  // Local Live Bridge state
   const [bridgeConnected, setBridgeConnected] = useState(false);
   const [bridgeDetectedTools, setBridgeDetectedTools] = useState<
     Record<string, boolean>
@@ -126,31 +123,39 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
 
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 2400);
+    setTimeout(() => setToastMsg(null), 2600);
   }, []);
 
-  // Load persisted tools & read radar IDs from localStorage
+  // Load saved tools from localStorage
   useEffect(() => {
     try {
-      const savedTools = localStorage.getItem(STORAGE_TOOLS_KEY);
-      if (savedTools) {
-        const parsed = JSON.parse(savedTools) as ToolTargetId[];
+      const saved = localStorage.getItem(STORAGE_TOOLS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as ToolTargetId[];
         if (Array.isArray(parsed) && parsed.length > 0) {
           setSelectedTools(parsed);
-          setPreviewTool(parsed[0]);
         }
-      }
-      const savedRead = localStorage.getItem(STORAGE_READ_RADAR_KEY);
-      if (savedRead) {
-        const parsed = JSON.parse(savedRead) as string[];
-        if (Array.isArray(parsed)) setReadRadarIds(parsed);
       }
     } catch {
       // ignore storage errors
     }
   }, []);
 
-  // Sync URL ?dock= parameter when dockSlugs changes
+  // Quiet background live-sync refresh on mount
+  useEffect(() => {
+    fetch("/api/live-sync")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((fresh: CatalogData | null) => {
+        if (fresh && Array.isArray(fresh.skills) && fresh.skills.length >= 20) {
+          setCatalog(fresh);
+        }
+      })
+      .catch(() => {
+        // keep SSR snapshot
+      });
+  }, []);
+
+  // Bidirectional ?dock= URL synchronization
   useEffect(() => {
     const serialized = serializeDockParam(dockSlugs);
     const current = searchParams.get("dock") ?? "";
@@ -166,13 +171,13 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
     }
   }, [dockSlugs, router, searchParams]);
 
-  // Check Live Bridge health safely on mount
+  // Check Live Bridge health on mount
   const refreshBridge = useCallback(async () => {
     try {
       const res = await fetch(`${BRIDGE_BASE}/health`, {
         signal: AbortSignal.timeout(1200),
       });
-      if (!res.ok) throw new Error("bridge offline");
+      if (!res.ok) throw new Error("offline");
       const json = await res.json();
       setBridgeConnected(Boolean(json.ok));
       setBridgeDetectedTools(json.detectedTools || {});
@@ -195,24 +200,6 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
     refreshBridge();
   }, [refreshBridge]);
 
-  const handleLiveRadarSync = async () => {
-    setSyncingLive(true);
-    try {
-      const res = await fetch("/api/live-sync");
-      if (res.ok) {
-        const fresh = (await res.json()) as CatalogData;
-        setCatalog(fresh);
-        showToast(
-          `AI Radar 실시간 동기화 완료 (${fresh.radarMatchedCount}건 스킬 매칭)`,
-        );
-      }
-    } catch {
-      showToast("실시간 피드 재조회 실패 — 기존 검증 스냅샷 유지");
-    } finally {
-      setSyncingLive(false);
-    }
-  };
-
   const toggleTool = (id: ToolTargetId) => {
     setSelectedTools((prev) => {
       const next = prev.includes(id)
@@ -225,33 +212,44 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
       } catch {
         // ignore
       }
-      setPreviewTool(next[0]);
       return next;
     });
   };
 
   const toggleDockSkill = (slug: string) => {
-    setDockSlugs((prev) =>
-      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
-    );
-  };
-
-  const loadDeckIntoDock = (deck: SynergyDeck) => {
-    setDockSlugs(deck.skillSlugs);
-    showToast(`"${deck.title}" 구성 ${deck.skillSlugs.length}종을 하단 독에 장착했습니다.`);
-  };
-
-  const markRadarRead = (id: string) => {
-    setReadRadarIds((prev) => {
-      if (prev.includes(id)) return prev;
-      const next = [...prev, id];
-      try {
-        localStorage.setItem(STORAGE_READ_RADAR_KEY, JSON.stringify(next));
-      } catch {
-        // ignore
+    setDockSlugs((prev) => {
+      const exists = prev.includes(slug);
+      const next = exists ? prev.filter((s) => s !== slug) : [...prev, slug];
+      const sk = skillsBySlug.get(slug);
+      if (sk) {
+        showToast(
+          exists
+            ? `${sk.name} 스킬을 내 독에서 뺐어요.`
+            : `${sk.name} 스킬을 내 독에 담았어요.`,
+        );
       }
       return next;
     });
+  };
+
+  const loadDeckToDock = (deck: SynergyDeck) => {
+    const allPresent = deck.skillSlugs.every((s) => dockSlugs.includes(s));
+    if (allPresent) {
+      setDockSlugs((prev) => prev.filter((s) => !deck.skillSlugs.includes(s)));
+      showToast(`"${deck.title}" 구성을 내 독에서 뺐어요.`);
+    } else {
+      setDockSlugs((prev) => Array.from(new Set([...prev, ...deck.skillSlugs])));
+      showToast(`"${deck.title}" ${deck.skillSlugs.length}개 스킬을 내 독에 담았어요.`);
+    }
+  };
+
+  const handleCopyShareUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      showToast("현재 담은 스킬 조합 공유 링크를 복사했어요.");
+    } catch {
+      showToast("링크 복사에 실패했어요.");
+    }
   };
 
   const skillsBySlug = useMemo(() => {
@@ -272,1128 +270,621 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
     [dockSkills],
   );
 
-  // Filtered lists for Explorer search
+  // Skills that have clean Korean AI Radar issue matches
+  const issueMatchedSkills = useMemo(() => {
+    return catalog.skills
+      .filter((s) => getCleanKoreanRadarMatches(s).length > 0)
+      .sort(
+        (a, b) =>
+          getCleanKoreanRadarMatches(b).length -
+            getCleanKoreanRadarMatches(a).length || b.stars - a.stars,
+      );
+  }, [catalog.skills]);
+
   const q = searchQuery.trim().toLowerCase();
-  const filteredSkills = useMemo(() => {
-    return catalog.skills.filter((s) => {
-      if (activeCategory !== "all" && s.category !== activeCategory) {
-        return false;
-      }
+
+  const visibleDecks = useMemo(() => {
+    return decks.filter((deck) => {
+      if (!deckMatchesDomain(deck, activeDomain, skillsBySlug)) return false;
       if (!q) return true;
       return (
-        s.name.toLowerCase().includes(q) ||
-        s.koreanAlias.toLowerCase().includes(q) ||
-        s.repo.toLowerCase().includes(q) ||
-        s.roleLabelKo.toLowerCase().includes(q) ||
-        s.summaryKo.toLowerCase().includes(q)
+        deck.title.toLowerCase().includes(q) ||
+        deck.subtitle.toLowerCase().includes(q) ||
+        deck.synergyNarrative.toLowerCase().includes(q)
       );
     });
-  }, [catalog.skills, activeCategory, q]);
+  }, [decks, activeDomain, skillsBySlug, q]);
 
-  const filteredDecks = useMemo(() => {
-    if (!q) return decks;
-    return decks.filter(
-      (d) =>
-        d.title.toLowerCase().includes(q) ||
-        d.subtitle.toLowerCase().includes(q) ||
-        d.synergyNarrative.toLowerCase().includes(q),
-    );
-  }, [decks, q]);
+  const visibleIssueSkills = useMemo(() => {
+    return issueMatchedSkills.filter((skill) => {
+      if (!skillMatchesDomain(skill, activeDomain)) return false;
+      if (!q) return true;
+      return (
+        skill.name.toLowerCase().includes(q) ||
+        getFriendlySkillTitle(skill).toLowerCase().includes(q) ||
+        skill.summaryKo.toLowerCase().includes(q)
+      );
+    });
+  }, [issueMatchedSkills, activeDomain, q]);
 
-  const filteredRadar = useMemo(() => {
-    const base = catalog.radarItems.slice(0, 12);
-    if (!q) return base;
-    return catalog.radarItems
-      .filter(
-        (r) =>
-          r.titleKo.toLowerCase().includes(q) ||
-          r.originalTitle.toLowerCase().includes(q) ||
-          r.platformId.toLowerCase().includes(q),
-      )
-      .slice(0, 12);
-  }, [catalog.radarItems, q]);
+  const visibleCatalogSkills = useMemo(() => {
+    return catalog.skills.filter((skill) => {
+      if (!skillMatchesDomain(skill, activeDomain)) return false;
+      if (!q) return true;
+      return (
+        skill.name.toLowerCase().includes(q) ||
+        getFriendlySkillTitle(skill).toLowerCase().includes(q) ||
+        skill.repo.toLowerCase().includes(q) ||
+        skill.summaryKo.toLowerCase().includes(q)
+      );
+    });
+  }, [catalog.skills, activeDomain, q]);
 
-  // Active Deck / Active Skill resolution for Central Editor & Right Inspector
-  const activeDeck =
-    selection.kind === "deck"
-      ? decks.find((d) => d.slug === selection.slug) ?? decks[0] ?? null
-      : null;
-
-  const activeDeckSubSkill =
-    activeDeck && deckTab.startsWith("skill:")
-      ? skillsBySlug.get(deckTab.replace("skill:", "")) ?? null
-      : null;
-
-  const activeSkill =
-    selection.kind === "skill"
-      ? skillsBySlug.get(selection.slug) ?? catalog.skills[0] ?? null
-      : activeDeckSubSkill;
-
-  const handleCopyUrl = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      showToast("현재 독 조합 URL(?dock=...)을 복사했습니다.");
-    } catch {
-      showToast("URL 복사에 실패했습니다.");
+  // Domain counts for left sidebar
+  const domainCounts = useMemo(() => {
+    const counts: Record<DomainFilterId, number> = {
+      all: 0,
+      savings: 0,
+      design: 0,
+      architecture: 0,
+      quality: 0,
+      video: 0,
+      live: 0,
+    };
+    if (activeTab === "presets") {
+      counts.all = decks.length;
+      for (const dom of DOMAIN_LIST) {
+        if (dom.id === "all") continue;
+        counts[dom.id] = decks.filter((d) =>
+          deckMatchesDomain(d, dom.id, skillsBySlug),
+        ).length;
+      }
+    } else {
+      const pool =
+        activeTab === "issues" ? issueMatchedSkills : catalog.skills;
+      counts.all = pool.length;
+      for (const dom of DOMAIN_LIST) {
+        if (dom.id === "all") continue;
+        counts[dom.id] = pool.filter((s) =>
+          skillMatchesDomain(s, dom.id),
+        ).length;
+      }
     }
-  };
+    return counts;
+  }, [activeTab, decks, issueMatchedSkills, catalog.skills, skillsBySlug]);
 
-  const openActionModal = (mode: InstallModalMode) => {
-    if (dockSkills.length === 0) {
-      showToast("먼저 하단 독에 스킬을 1개 이상 담아주세요.");
-      return;
-    }
-    setModalMode(mode);
-    setModalOpen(true);
-  };
+  const detectedShortList = useMemo(() => {
+    const labels: string[] = [];
+    if (bridgeDetectedTools.claude) labels.push("Claude");
+    if (bridgeDetectedTools.gemini || bridgeDetectedTools.agy)
+      labels.push("Gemini");
+    if (bridgeDetectedTools.cursor) labels.push("Cursor");
+    if (bridgeDetectedTools.codex) labels.push("Codex");
+    return labels.slice(0, 2).join(" · ");
+  }, [bridgeDetectedTools]);
 
-  const renderSkillAnatomy = (skill: SkillItem) => (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#222938] pb-4">
-        <div className="space-y-1.5 max-w-2xl">
-          <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
-            <span className="px-1.5 py-0.5 border border-[#10B981]/45 bg-[#10B981]/12 text-[#10B981]">
-              {CATEGORY_LABELS[skill.category]}
-            </span>
-            <span className="px-1.5 py-0.5 border border-[#222938] bg-[#161C28] text-[#C2CDDC]">
-              {skill.repo}
-            </span>
-            <span className="inline-flex items-center gap-1 text-[#F59E0B] font-semibold">
-              <StarIcon className="w-3 h-3" />
-              {skill.stars.toLocaleString("en-US")}
-            </span>
-            <span className="text-[#C2CDDC]">{skill.license}</span>
-          </div>
-          <h1 className="text-[22px] sm:text-[25px] font-bold tracking-tight text-[#F1F5F9] leading-snug">
-            {skill.koreanAlias}
-          </h1>
-          <p className="text-[14px] leading-relaxed text-[#F1F5F9]">
-            <HighlightText text={skill.oneLineAnalogy} tone="emerald" />
+  // Helper to render AI Radar 1-lead + 2-feature + 1-stream rhythm
+  const renderDeckFeed = (list: SynergyDeck[]) => {
+    if (list.length === 0) {
+      return (
+        <div className="editorial-card p-10 text-center space-y-3">
+          <p className="text-[15.5px] text-[#4B5563]">
+            조건에 맞는 추천 세트가 없어요. 분야를 전체로 바꾸거나 검색어를 비워보세요.
           </p>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
-            onClick={() => toggleDockSkill(skill.slug)}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-[12.5px] font-bold border ${
-              dockSlugs.includes(skill.slug)
-                ? "border-[#10B981] bg-[#10B981]/15 text-[#10B981]"
-                : "border-[#10B981] bg-[#10B981] text-[#0B0E14]"
-            }`}
+            onClick={() => {
+              setActiveDomain("all");
+              setSearchQuery("");
+            }}
+            className="rounded-full bg-[#111827] text-white px-5 py-2 text-[14px] font-semibold"
           >
-            {dockSlugs.includes(skill.slug) ? (
-              <>
-                <CheckIcon className="w-3.5 h-3.5" />
-                독에 담김
-              </>
-            ) : (
-              <>
-                <PlusIcon className="w-3.5 h-3.5" />
-                하단 독에 담기
-              </>
-            )}
+            전체 세트 보기
           </button>
-          <Link
-            href={`/skill/${skill.slug}`}
-            className="inline-flex items-center gap-1 px-3 py-2 text-[12px] font-mono border border-[#222938] bg-[#161C28] text-[#C2CDDC] hover:text-[#F1F5F9]"
+        </div>
+      );
+    }
+
+    const lead = list[0];
+    const features = list.slice(1, 3);
+    const stream = list.slice(3);
+
+    return (
+      <div className="space-y-4">
+        <DeckFeedCard
+          deck={lead}
+          skillsBySlug={skillsBySlug}
+          variant="lead"
+          isAllDocked={lead.skillSlugs.every((s) => dockSlugs.includes(s))}
+          onOpen={() => setModalTarget({ kind: "deck", deck: lead })}
+          onToggleDeck={() => loadDeckToDock(lead)}
+        />
+
+        {features.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {features.map((deck) => (
+              <DeckFeedCard
+                key={deck.slug}
+                deck={deck}
+                skillsBySlug={skillsBySlug}
+                variant="feature"
+                isAllDocked={deck.skillSlugs.every((s) => dockSlugs.includes(s))}
+                onOpen={() => setModalTarget({ kind: "deck", deck })}
+                onToggleDeck={() => loadDeckToDock(deck)}
+              />
+            ))}
+          </div>
+        )}
+
+        {stream.length > 0 && (
+          <div className="space-y-3.5">
+            {stream.map((deck) => (
+              <DeckFeedCard
+                key={deck.slug}
+                deck={deck}
+                skillsBySlug={skillsBySlug}
+                variant="stream"
+                isAllDocked={deck.skillSlugs.every((s) => dockSlugs.includes(s))}
+                onOpen={() => setModalTarget({ kind: "deck", deck })}
+                onToggleDeck={() => loadDeckToDock(deck)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderSkillFeed = (list: SkillItem[], showRadarBadge: boolean) => {
+    if (list.length === 0) {
+      return (
+        <div className="editorial-card p-10 text-center space-y-3">
+          <p className="text-[15.5px] text-[#4B5563]">
+            선택한 조건에 맞는 스킬이 아직 없어요. 분야를 전체로 전환해 둘러보세요.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveDomain("all");
+              setSearchQuery("");
+            }}
+            className="rounded-full bg-[#111827] text-white px-5 py-2 text-[14px] font-semibold"
           >
-            상세 페이지
-            <ExternalLinkIcon className="w-3 h-3" />
-          </Link>
+            전체 스킬 보기
+          </button>
         </div>
+      );
+    }
+
+    const lead = list[0];
+    const features = list.slice(1, 3);
+    const stream = list.slice(3);
+
+    return (
+      <div className="space-y-4">
+        <SkillFeedCard
+          skill={lead}
+          variant="lead"
+          docked={dockSlugs.includes(lead.slug)}
+          showRadarBadge={showRadarBadge}
+          onOpen={() => setModalTarget({ kind: "skill", skill: lead })}
+          onToggleDock={() => toggleDockSkill(lead.slug)}
+        />
+
+        {features.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {features.map((skill) => (
+              <SkillFeedCard
+                key={skill.slug}
+                skill={skill}
+                variant="feature"
+                docked={dockSlugs.includes(skill.slug)}
+                showRadarBadge={showRadarBadge}
+                onOpen={() => setModalTarget({ kind: "skill", skill })}
+                onToggleDock={() => toggleDockSkill(skill.slug)}
+              />
+            ))}
+          </div>
+        )}
+
+        {stream.length > 0 && (
+          <div className="space-y-3.5">
+            {stream.map((skill) => (
+              <SkillFeedCard
+                key={skill.slug}
+                skill={skill}
+                variant="stream"
+                docked={dockSlugs.includes(skill.slug)}
+                showRadarBadge={showRadarBadge}
+                onOpen={() => setModalTarget({ kind: "skill", skill })}
+                onToggleDock={() => toggleDockSkill(skill.slug)}
+              />
+            ))}
+          </div>
+        )}
       </div>
+    );
+  };
 
-      <div className="border border-[#222938] bg-[#161C28] p-3.5">
-        <div className="font-mono text-[11px] text-[#38BDF8] uppercase tracking-wider mb-1.5">
-          PLAIN EXPLANATION · 왜 이 스킬을 까는가
-        </div>
-        <p className="text-[13.5px] leading-relaxed text-[#C2CDDC]">
-          <HighlightText text={skill.summaryKo} tone="cyan" />
-        </p>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {skill.installFormats.map((fmt) => (
-            <span
-              key={fmt}
-              className="font-mono text-[11px] px-2 py-0.5 bg-[#0B0E14] border border-[#222938] text-[#F1F5F9]"
-            >
-              {fmt}
-            </span>
-          ))}
-        </div>
-      </div>
+  const navItems: Array<{
+    id: NavTab;
+    label: string;
+    count: number;
+    Icon: typeof LayersIcon;
+  }> = [
+    { id: "presets", label: "추천 프리셋 세트", count: decks.length, Icon: LayersIcon },
+    {
+      id: "issues",
+      label: "최신 이슈 맞춤 무기",
+      count: issueMatchedSkills.length,
+      Icon: RadarIcon,
+    },
+    {
+      id: "catalog",
+      label: "전체 스킬 도감",
+      count: catalog.skills.length,
+      Icon: CompassIcon,
+    },
+    {
+      id: "dock",
+      label: "내 장착 독",
+      count: dockSkills.length,
+      Icon: DockBagIcon,
+    },
+  ];
 
-      <MediaDemoViewer skill={skill} />
+  const weightInfo = getFriendlyWeightLabel(dockAnalysis.weightTier);
 
-      {skill.matchedRadar.length > 0 && (
-        <div className="border border-[#38BDF8]/35 bg-[#0F131B] p-3.5">
-          <div className="flex items-center justify-between mb-2">
-            <span className="inline-flex items-center gap-1.5 font-mono text-[11px] font-semibold text-[#38BDF8]">
-              <RadarPulseIcon className="w-3.5 h-3.5" />
-              AI RADAR 실시간 설치 근거 ({skill.matchedRadar.length}건 연결됨)
-            </span>
+  return (
+    <div className="min-h-screen bg-[#F5F6F8] text-[#111827] pb-28">
+      <div className="max-w-[1120px] mx-auto px-5 sm:px-8 py-8 sm:py-10 flex flex-col lg:flex-row gap-8">
+        {/* LEFT SLIM SIDEBAR (AI Radar proportions) */}
+        <aside className="w-full lg:w-[220px] shrink-0 flex flex-col justify-between gap-7 lg:sticky lg:top-8 lg:self-start">
+          <div className="flex flex-col gap-6">
+            {/* Brand Logo */}
             <button
               type="button"
               onClick={() => {
-                setSelection({ kind: "skill", slug: skill.slug });
-                setSkillTab("radar");
+                setActiveTab("presets");
+                setActiveDomain("all");
+                setSearchQuery("");
               }}
-              className="font-mono text-[11px] text-[#38BDF8] hover:underline"
+              className="text-left focus-visible:outline-none"
+              aria-label="SkillDock 첫 화면으로 이동"
             >
-              전체 이슈 탭 보기 →
-            </button>
-          </div>
-          <div className="space-y-2">
-            {skill.matchedRadar.slice(0, 2).map((item) => (
-              <a
-                key={item.id}
-                href={item.canonicalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block border border-[#222938] bg-[#161C28] p-2.5 hover:border-[#38BDF8]"
-              >
-                <div className="flex items-center justify-between gap-2 mb-1 font-mono text-[10.5px]">
-                  <span className="text-[#38BDF8]">
-                    {item.platformId}
-                    {item.isChinaSource ? " · CN" : ""}
-                  </span>
-                  <span className="text-[#C2CDDC]">
-                    {item.publishedAt.slice(0, 10)}
-                  </span>
-                </div>
-                <div className="text-[12.5px] font-semibold text-[#F1F5F9]">
-                  {item.titleKo}
-                </div>
-                {item.highlightSummary && (
-                  <p className="mt-1 text-[11.5px] text-[#C2CDDC] leading-relaxed">
-                    <HighlightText text={item.highlightSummary} tone="cyan" />
-                  </p>
-                )}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  const renderSkillFilePreview = (skill: SkillItem) => {
-    const artifact = buildToolFilePreview(skill, previewTool, scope);
-    return (
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap gap-1">
-            {TOOL_TARGETS.map((tool) => (
-              <button
-                key={tool.id}
-                type="button"
-                onClick={() => setPreviewTool(tool.id)}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11.5px] border font-mono ${
-                  previewTool === tool.id
-                    ? "border-[#38BDF8] bg-[#38BDF8]/15 text-[#F1F5F9]"
-                    : "border-[#222938] bg-[#0F131B] text-[#C2CDDC] hover:text-[#F1F5F9]"
-                }`}
-              >
-                <ToolIcon tool={tool.id} className="w-3 h-3" />
-                {tool.shortLabel}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={async () => {
-              await navigator.clipboard.writeText(artifact.content);
-              showToast(`${artifact.filePath} 본문을 복사했습니다.`);
-            }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#10B981] text-[#0B0E14] font-semibold text-[11.5px]"
-          >
-            <CopyIcon className="w-3.5 h-3.5" />
-            파일 본문 복사
-          </button>
-        </div>
-
-        <div className="border border-[#222938] bg-[#0B0E14]">
-          <div className="px-3 py-2 border-b border-[#222938] bg-[#161C28] font-mono text-[11.5px] text-[#10B981] flex items-center justify-between">
-            <span>{artifact.filePath}</span>
-            <span className="text-[#C2CDDC]">
-              범위: {scope === "project" ? "프로젝트 격리" : "전역"}
-            </span>
-          </div>
-          <pre className="p-3.5 font-mono text-[12px] leading-relaxed text-[#F1F5F9] overflow-x-auto whitespace-pre-wrap">
-            {artifact.content}
-          </pre>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="min-h-screen flex flex-col bg-[#0B0E14] text-[#F1F5F9]">
-      {/* TOP IDE BAR */}
-      <header className="sticky top-0 z-30 bg-[#0B0E14] border-b border-[#222938] px-3 py-2 flex flex-wrap items-center justify-between gap-2.5">
-        <div className="flex items-center gap-3">
-          <Link href="/" aria-label="SKILLDOCK 홈">
-            <SkilldockLogo />
-          </Link>
-
-          <button
-            type="button"
-            onClick={handleLiveRadarSync}
-            disabled={syncingLive}
-            className="inline-flex items-center gap-1.5 px-2 py-1 border border-[#38BDF8]/40 bg-[#38BDF8]/10 font-mono text-[11px] text-[#38BDF8] hover:bg-[#38BDF8]/18"
-            title="AI Radar 최신 JSON 피드 다시 불러오기"
-          >
-            <RadarPulseIcon className="w-3.5 h-3.5" />
-            <span>
-              {syncingLive
-                ? "SYNCING..."
-                : `AI RADAR ${catalog.radarTotalSignals}건 (CN ${catalog.radarChinaSignals})`}
-            </span>
-            {catalog.radarGeneratedAt && (
-              <span className="hidden xl:inline text-[#C2CDDC]">
-                · {catalog.radarGeneratedAt.slice(0, 16).replace("T", " ")}Z
-              </span>
-            )}
-          </button>
-        </div>
-
-        {/* Multi-select Vibe-coding Tool Switcher */}
-        <div
-          className="flex flex-wrap items-center gap-1"
-          role="group"
-          aria-label="내 바이브코딩 툴 멀티 선택"
-        >
-          {TOOL_TARGETS.map((tool) => {
-            const active = selectedTools.includes(tool.id);
-            return (
-              <button
-                key={tool.id}
-                type="button"
-                onClick={() => toggleTool(tool.id)}
-                aria-pressed={active}
-                className={`inline-flex items-center gap-1.5 px-2 py-1 text-[11.5px] border font-medium ${
-                  active
-                    ? "border-[#10B981] bg-[#10B981]/15 text-[#F1F5F9]"
-                    : "border-[#222938] bg-[#131822] text-[#C2CDDC] hover:text-[#F1F5F9]"
-                }`}
-              >
-                <ToolIcon tool={tool.id} className="w-3.5 h-3.5" />
-                <span>{tool.shortLabel}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Quick Search + Bridge Status */}
-        <div className="flex items-center gap-2 ml-auto">
-          <div className="relative">
-            <SearchIcon className="w-3.5 h-3.5 text-[#C2CDDC] absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="스킬·이슈·덱 빠른 검색..."
-              aria-label="스킬 빠른 검색"
-              className="w-44 sm:w-56 pl-8 pr-2.5 py-1 bg-[#131822] border border-[#222938] text-[12px] text-[#F1F5F9] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#38BDF8]"
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={() => openActionModal("live-bridge")}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 border font-mono text-[11px] font-semibold ${
-              bridgeConnected
-                ? "border-[#10B981]/50 bg-[#10B981]/12 text-[#10B981]"
-                : "border-[#38BDF8]/40 bg-[#131822] text-[#38BDF8]"
-            }`}
-          >
-            <span
-              className={`inline-block w-2 h-2 rounded-full ${
-                bridgeConnected ? "bg-[#10B981]" : "bg-[#38BDF8]"
-              }`}
-            />
-            {bridgeConnected ? "BRIDGE CONNECTED" : "무터미널 복사 모드"}
-          </button>
-        </div>
-      </header>
-
-      {/* MAIN 3-COLUMN IDE WORKBENCH */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[295px_minmax(0,1fr)_315px] min-h-0 pb-36 lg:pb-24">
-        {/* ① LEFT EXPLORER TREE */}
-        <nav
-          aria-label="SKILLDOCK 탐색기"
-          className="bg-[#0F131B] border-r border-[#222938] flex flex-col overflow-y-auto max-h-[60vh] lg:max-h-[calc(100vh-140px)]"
-        >
-          <div className="px-3 py-2 border-b border-[#222938] flex items-center justify-between font-mono text-[11px] text-[#C2CDDC]">
-            <span>EXPLORER</span>
-            <span>{catalog.skills.length} VERIFIED</span>
-          </div>
-
-          {/* 01_실시간 이슈 추천 */}
-          <div className="border-b border-[#222938]">
-            <button
-              type="button"
-              onClick={() => setOpenRadarFolder((v) => !v)}
-              className="w-full px-3 py-2 flex items-center justify-between text-left bg-[#131822]/60 hover:bg-[#161C28]"
-            >
-              <span className="inline-flex items-center gap-1.5 font-mono text-[11.5px] font-bold text-[#38BDF8]">
-                <FolderIcon open={openRadarFolder} />
-                01_실시간 이슈 추천
-              </span>
-              <span className="font-mono text-[10.5px] text-[#C2CDDC]">
-                {filteredRadar.length}
-              </span>
-            </button>
-            {openRadarFolder && (
-              <div className="divide-y divide-[#222938]/60">
-                {filteredRadar.map((sig) => {
-                  const primarySlug = sig.matchedSkillSlugs[0];
-                  const targetSkill = primarySlug
-                    ? skillsBySlug.get(primarySlug)
-                    : undefined;
-                  const unread = !readRadarIds.includes(sig.id);
-                  return (
-                    <div
-                      key={sig.id}
-                      className="px-3 py-2 hover:bg-[#161C28] flex items-start justify-between gap-2"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          markRadarRead(sig.id);
-                          if (targetSkill) {
-                            setSelection({
-                              kind: "skill",
-                              slug: targetSkill.slug,
-                            });
-                            setSkillTab("radar");
-                          }
-                        }}
-                        className="text-left min-w-0 flex-1"
-                      >
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          {unread && (
-                            <span className="font-mono text-[9.5px] font-bold px-1 bg-[#38BDF8] text-[#0B0E14]">
-                              NEW
-                            </span>
-                          )}
-                          <span className="font-mono text-[10px] text-[#38BDF8]">
-                            {sig.platformId}
-                            {sig.isChinaSource ? "·CN" : ""}
-                          </span>
-                          {targetSkill && (
-                            <span className="font-mono text-[10px] text-[#10B981] truncate">
-                              → {targetSkill.name}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[12px] font-medium text-[#F1F5F9] line-clamp-2 leading-snug">
-                          {sig.titleKo}
-                        </div>
-                      </button>
-                      {targetSkill && (
-                        <button
-                          type="button"
-                          onClick={() => toggleDockSkill(targetSkill.slug)}
-                          className={`shrink-0 px-1.5 py-0.5 font-mono text-[10.5px] border ${
-                            dockSlugs.includes(targetSkill.slug)
-                              ? "border-[#10B981] text-[#10B981] bg-[#10B981]/10"
-                              : "border-[#222938] text-[#C2CDDC] hover:border-[#10B981] hover:text-[#F1F5F9]"
-                          }`}
-                        >
-                          {dockSlugs.includes(targetSkill.slug)
-                            ? "담김"
-                            : "+ 담기"}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* 02_케미 프리셋 덱 (6) */}
-          <div className="border-b border-[#222938]">
-            <button
-              type="button"
-              onClick={() => setOpenDecksFolder((v) => !v)}
-              className="w-full px-3 py-2 flex items-center justify-between text-left bg-[#131822]/60 hover:bg-[#161C28]"
-            >
-              <span className="inline-flex items-center gap-1.5 font-mono text-[11.5px] font-bold text-[#10B981]">
-                <LayersIcon />
-                02_케미 프리셋 덱 ({filteredDecks.length})
-              </span>
-            </button>
-            {openDecksFolder && (
-              <div className="divide-y divide-[#222938]/60">
-                {filteredDecks.map((deck) => {
-                  const isSelected =
-                    selection.kind === "deck" && selection.slug === deck.slug;
-                  return (
-                    <div
-                      key={deck.slug}
-                      className={`px-3 py-2 flex items-start justify-between gap-2 ${
-                        isSelected
-                          ? "bg-[#161C28] border-l-2 border-l-[#10B981]"
-                          : "hover:bg-[#161C28]/70"
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelection({ kind: "deck", slug: deck.slug });
-                          setDeckTab("synergy");
-                        }}
-                        className="text-left min-w-0 flex-1"
-                      >
-                        <div className="text-[12.5px] font-bold text-[#F1F5F9] leading-snug">
-                          {deck.title}
-                        </div>
-                        <div className="font-mono text-[10.5px] text-[#C2CDDC] mt-0.5 truncate">
-                          {deck.subtitle}
-                        </div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => loadDeckIntoDock(deck)}
-                        className="shrink-0 px-1.5 py-0.5 font-mono text-[10.5px] border border-[#10B981]/50 bg-[#10B981]/12 text-[#10B981] hover:bg-[#10B981] hover:text-[#0B0E14]"
-                      >
-                        + 덱
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* 03_전체 스킬 도감 */}
-          <div>
-            <button
-              type="button"
-              onClick={() => setOpenSkillsFolder((v) => !v)}
-              className="w-full px-3 py-2 flex items-center justify-between text-left bg-[#131822]/60 hover:bg-[#161C28]"
-            >
-              <span className="inline-flex items-center gap-1.5 font-mono text-[11.5px] font-bold text-[#F1F5F9]">
-                <FolderIcon open={openSkillsFolder} />
-                03_전체 스킬 도감
-              </span>
-              <span className="font-mono text-[10.5px] text-[#C2CDDC]">
-                {filteredSkills.length}
-              </span>
+              <SkillDockLogo />
             </button>
 
-            {openSkillsFolder && (
-              <>
-                {/* Category Filter Tabs */}
-                <div className="p-2 flex flex-wrap gap-1 border-b border-[#222938] bg-[#0B0E14]">
+            {/* Primary 4 Navigation Menus */}
+            <nav aria-label="주요 탐색 메뉴" className="flex flex-col gap-1">
+              {navItems.map(({ id, label, count, Icon }) => {
+                const active = activeTab === id;
+                return (
                   <button
+                    key={id}
                     type="button"
-                    onClick={() => setActiveCategory("all")}
-                    className={`px-1.5 py-0.5 font-mono text-[10.5px] border ${
-                      activeCategory === "all"
-                        ? "border-[#38BDF8] bg-[#38BDF8]/15 text-[#F1F5F9]"
-                        : "border-[#222938] text-[#C2CDDC]"
+                    onClick={() => setActiveTab(id)}
+                    aria-current={active ? "page" : undefined}
+                    className={`flex w-full items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-left text-[15px] transition-colors ${
+                      active
+                        ? "bg-white shadow-sm border border-[#E5E7EB] font-bold text-[#111827]"
+                        : "border border-transparent font-medium text-[#4B5563] hover:bg-white/60 hover:text-[#111827]"
                     }`}
                   >
-                    전체
+                    <span className="flex items-center gap-2.5 min-w-0">
+                      <Icon
+                        className={`w-[17px] h-[17px] shrink-0 ${
+                          active ? "text-[#111827]" : "text-[#6B7280]"
+                        }`}
+                      />
+                      <span className="truncate">{label}</span>
+                    </span>
+                    <span
+                      className={`tnum shrink-0 text-[13px] ${
+                        id === "dock" && count > 0
+                          ? "rounded-full bg-[#10B981] text-white px-2 py-0.5 text-[11.5px] font-bold"
+                          : active
+                            ? "font-semibold text-[#374151]"
+                            : "text-[#6B7280]"
+                      }`}
+                    >
+                      {count}
+                    </span>
                   </button>
-                  {(Object.keys(CATEGORY_LABELS) as SkillCategory[]).map(
-                    (cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => setActiveCategory(cat)}
-                        className={`px-1.5 py-0.5 text-[10.5px] border ${
-                          activeCategory === cat
-                            ? "border-[#38BDF8] bg-[#38BDF8]/15 text-[#F1F5F9]"
-                            : "border-[#222938] text-[#C2CDDC]"
-                        }`}
-                      >
-                        {CATEGORY_LABELS[cat].split("·")[0]}
-                      </button>
-                    ),
-                  )}
-                </div>
+                );
+              })}
+            </nav>
 
-                <div className="divide-y divide-[#222938]/60">
-                  {filteredSkills.map((skill) => {
-                    const isSelected =
-                      selection.kind === "skill" &&
-                      selection.slug === skill.slug;
-                    const inDock = dockSlugs.includes(skill.slug);
+            {/* Domain Filters (AI Radar colored dot list) */}
+            {activeTab !== "dock" && (
+              <section aria-labelledby="sidebar-domain-heading">
+                <h2
+                  id="sidebar-domain-heading"
+                  className="border-b-[1.5px] border-[#111827] pb-2 text-[14px] font-bold text-[#111827]"
+                >
+                  분야
+                </h2>
+                <div className="flex flex-row lg:flex-col gap-1 pt-2.5 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0">
+                  {DOMAIN_LIST.map((dom) => {
+                    const active = activeDomain === dom.id;
                     return (
-                      <div
-                        key={skill.slug}
-                        className={`px-3 py-2 flex items-center justify-between gap-2 ${
-                          isSelected
-                            ? "bg-[#161C28] border-l-2 border-l-[#38BDF8]"
-                            : "hover:bg-[#161C28]/70"
+                      <button
+                        key={dom.id}
+                        type="button"
+                        onClick={() => setActiveDomain(dom.id)}
+                        className={`flex shrink-0 lg:w-full items-center justify-between gap-2 rounded-xl px-3 py-1.5 text-left text-[14px] transition-colors ${
+                          active
+                            ? "bg-white border border-[#E5E7EB] shadow-xs font-bold text-[#111827]"
+                            : "border border-transparent font-medium text-[#4B5563] hover:bg-white/60 hover:text-[#111827]"
                         }`}
                       >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelection({ kind: "skill", slug: skill.slug });
-                            setSkillTab("anatomy");
-                          }}
-                          className="text-left min-w-0 flex-1"
-                        >
-                          <div className="text-[12.5px] font-bold text-[#F1F5F9] truncate">
-                            {skill.koreanAlias}
-                          </div>
-                          <div className="flex items-center gap-2 font-mono text-[10.5px] text-[#C2CDDC] mt-0.5">
-                            <span className="inline-flex items-center gap-0.5 text-[#F59E0B]">
-                              <StarIcon className="w-2.5 h-2.5" />
-                              {formatStars(skill.stars)}
-                            </span>
-                            <span>{skill.contextTier}</span>
-                            {skill.benchmarks.length > 0 && (
-                              <span className="text-[#10B981]">BENCH</span>
-                            )}
-                          </div>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => toggleDockSkill(skill.slug)}
-                          className={`shrink-0 px-1.5 py-0.5 font-mono text-[10.5px] border ${
-                            inDock
-                              ? "border-[#10B981] bg-[#10B981]/15 text-[#10B981]"
-                              : "border-[#222938] text-[#C2CDDC] hover:border-[#10B981] hover:text-[#F1F5F9]"
-                          }`}
-                        >
-                          {inDock ? "담김" : "+ 담기"}
-                        </button>
-                      </div>
+                        <span className="flex items-center gap-2.5 min-w-0">
+                          <span
+                            className="h-2.5 w-2.5 rounded-full shrink-0"
+                            style={{ backgroundColor: dom.dotColor }}
+                            aria-hidden="true"
+                          />
+                          <span className="whitespace-nowrap lg:truncate">
+                            {dom.label}
+                          </span>
+                        </span>
+                        <span className="tnum text-[12.5px] text-[#6B7280] hidden lg:inline">
+                          {domainCounts[dom.id]}
+                        </span>
+                      </button>
                     );
                   })}
                 </div>
-              </>
+              </section>
             )}
           </div>
-        </nav>
 
-        {/* ② CENTRAL MAIN EDITOR */}
-        <main className="bg-[#131822] flex flex-col min-w-0 overflow-y-auto lg:max-h-[calc(100vh-140px)]">
-          {/* Open Editor File Tabs */}
-          <div className="flex items-center overflow-x-auto border-b border-[#222938] bg-[#0B0E14] shrink-0">
-            {selection.kind === "deck" && activeDeck ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setDeckTab("synergy")}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 font-mono text-[12px] border-r border-[#222938] shrink-0 ${
-                    deckTab === "synergy"
-                      ? "bg-[#131822] text-[#F1F5F9] border-t-2 border-t-[#10B981]"
-                      : "text-[#C2CDDC] hover:text-[#F1F5F9]"
-                  }`}
-                >
-                  <FileCodeIcon className="w-3.5 h-3.5 text-[#10B981]" />
-                  케미_해설.md
-                </button>
-                {activeDeck.skillSlugs.map((slug) => {
-                  const sk = skillsBySlug.get(slug);
-                  if (!sk) return null;
-                  const tabId: DeckEditorTab = `skill:${slug}`;
+          {/* Bottom-left subtle Bridge status chip */}
+          <div className="pt-2 border-t border-[#E5E7EB]">
+            <button
+              type="button"
+              onClick={() => setModalTarget({ kind: "dock-bulk" })}
+              className="w-full flex items-center gap-2 rounded-xl bg-white border border-[#E5E7EB] px-3 py-2 text-left text-[12.5px] text-[#374151] hover:border-[#CBD5E1]"
+            >
+              <span
+                className="h-2 w-2 rounded-full shrink-0"
+                style={{
+                  backgroundColor: bridgeConnected ? "#10B981" : "#0284C7",
+                }}
+                aria-hidden="true"
+              />
+              <span className="truncate font-medium">
+                {bridgeConnected
+                  ? `내 PC 자동설치 연결됨${detectedShortList ? ` (${detectedShortList})` : ""}`
+                  : "클릭 복사 설치 모드"}
+              </span>
+            </button>
+          </div>
+        </aside>
+
+        {/* CENTER MAIN FEED AREA */}
+        <main className="flex-1 min-w-0 max-w-[820px] space-y-5">
+          {/* Friendly Header */}
+          <header className="space-y-2">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h1 className="text-[24px] sm:text-[26px] font-extrabold tracking-[-0.025em] text-[#111827]">
+                {NAV_META[activeTab].title}
+              </h1>
+              {catalog.radarGeneratedAt && (
+                <span className="text-[12.5px] text-[#6B7280] tnum">
+                  최신 데이터 기준 {catalog.radarGeneratedAt.slice(0, 10)}
+                </span>
+              )}
+            </div>
+            <p className="text-[15px] text-[#4B5563] leading-[1.68]">
+              {NAV_META[activeTab].subtitle}
+            </p>
+          </header>
+
+          {/* Clean White Tool Selector + Search Bar */}
+          <section
+            aria-label="내 코딩 툴 선택 및 검색"
+            className="rounded-2xl bg-white border border-[#E5E7EB] shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-3.5 sm:p-4 flex flex-col gap-3"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[13px] font-bold text-[#374151] mr-1">
+                  내가 쓰는 코딩 툴:
+                </span>
+                {TOOL_TARGETS.filter((t) => t.id !== "codex").map((tool) => {
+                  const active = selectedTools.includes(tool.id);
                   return (
                     <button
-                      key={slug}
+                      key={tool.id}
                       type="button"
-                      onClick={() => setDeckTab(tabId)}
-                      className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 font-mono text-[12px] border-r border-[#222938] shrink-0 ${
-                        deckTab === tabId
-                          ? "bg-[#131822] text-[#F1F5F9] border-t-2 border-t-[#38BDF8]"
-                          : "text-[#C2CDDC] hover:text-[#F1F5F9]"
+                      onClick={() => toggleTool(tool.id)}
+                      aria-pressed={active}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold border transition-colors ${
+                        active
+                          ? "bg-[#111827] text-white border-[#111827]"
+                          : "bg-[#F9FAFB] text-[#4B5563] border-[#E5E7EB] hover:bg-[#F3F4F6] hover:text-[#111827]"
                       }`}
                     >
-                      <FileCodeIcon className="w-3.5 h-3.5 text-[#38BDF8]" />
-                      {sk.name}.skill
+                      <ToolIcon tool={tool.id} className="w-3.5 h-3.5" />
+                      <span>
+                        {tool.id === "gemini-agy"
+                          ? "Gemini CLI"
+                          : tool.label}
+                      </span>
                     </button>
                   );
                 })}
-                <button
-                  type="button"
-                  onClick={() => setDeckTab("combined")}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 font-mono text-[12px] border-r border-[#222938] shrink-0 ${
-                    deckTab === "combined"
-                      ? "bg-[#131822] text-[#F1F5F9] border-t-2 border-t-[#F59E0B]"
-                      : "text-[#C2CDDC] hover:text-[#F1F5F9]"
-                  }`}
-                >
-                  <FileCodeIcon className="w-3.5 h-3.5 text-[#F59E0B]" />
-                  통합_변환코드_미리보기.md
-                </button>
-              </>
-            ) : activeSkill ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setSkillTab("anatomy")}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 font-mono text-[12px] border-r border-[#222938] shrink-0 ${
-                    skillTab === "anatomy"
-                      ? "bg-[#131822] text-[#F1F5F9] border-t-2 border-t-[#10B981]"
-                      : "text-[#C2CDDC] hover:text-[#F1F5F9]"
-                  }`}
-                >
-                  <FileCodeIcon className="w-3.5 h-3.5 text-[#10B981]" />
-                  쉬운_해부.md
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSkillTab("radar")}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 font-mono text-[12px] border-r border-[#222938] shrink-0 ${
-                    skillTab === "radar"
-                      ? "bg-[#131822] text-[#F1F5F9] border-t-2 border-t-[#38BDF8]"
-                      : "text-[#C2CDDC] hover:text-[#F1F5F9]"
-                  }`}
-                >
-                  <RadarPulseIcon className="w-3.5 h-3.5 text-[#38BDF8]" />
-                  연결된_최신이슈.radar ({activeSkill.matchedRadar.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSkillTab("preview")}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 font-mono text-[12px] border-r border-[#222938] shrink-0 ${
-                    skillTab === "preview"
-                      ? "bg-[#131822] text-[#F1F5F9] border-t-2 border-t-[#F59E0B]"
-                      : "text-[#C2CDDC] hover:text-[#F1F5F9]"
-                  }`}
-                >
-                  <FileCodeIcon className="w-3.5 h-3.5 text-[#F59E0B]" />
-                  실제_장착파일_미리보기.skill
-                </button>
-              </>
-            ) : null}
-          </div>
-
-          {/* Editor Content */}
-          <div className="p-5 flex-1">
-            {selection.kind === "deck" && activeDeck && (
-              <>
-                {deckTab === "synergy" && (
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#222938] pb-4">
-                      <div className="space-y-1.5 max-w-2xl">
-                        <div className="font-mono text-[11px] text-[#10B981] font-semibold uppercase tracking-wider">
-                          CURATED SYNERGY PRESET DECK · {activeDeck.skillSlugs.length}종 직교 조합
-                        </div>
-                        <h1 className="text-[23px] sm:text-[26px] font-bold tracking-tight text-[#F1F5F9]">
-                          {activeDeck.title}
-                        </h1>
-                        <p className="font-mono text-[12.5px] text-[#38BDF8]">
-                          {activeDeck.subtitle}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => loadDeckIntoDock(activeDeck)}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#10B981] text-[#0B0E14] font-bold text-[12.5px]"
-                        >
-                          <PlusIcon className="w-3.5 h-3.5" />
-                          이 덱 통째로 하단 독에 장착
-                        </button>
-                        <Link
-                          href={`/deck/${activeDeck.slug}`}
-                          className="inline-flex items-center gap-1 px-3 py-2 border border-[#222938] bg-[#161C28] font-mono text-[12px] text-[#C2CDDC] hover:text-[#F1F5F9]"
-                        >
-                          덱 상세
-                          <ExternalLinkIcon className="w-3 h-3" />
-                        </Link>
-                      </div>
-                    </div>
-
-                    <div className="border border-[#222938] bg-[#161C28] p-4 space-y-2.5">
-                      <div className="font-mono text-[11px] text-[#10B981] uppercase tracking-wider">
-                        WHY THIS COMBO · 왜 묶었을 때 시너지가 폭발하는가
-                      </div>
-                      <p className="text-[14.5px] leading-relaxed text-[#F1F5F9]">
-                        <HighlightText
-                          text={activeDeck.synergyNarrative}
-                          tone="emerald"
-                        />
-                      </p>
-                      <div className="pt-2 border-t border-[#222938] text-[12.5px] text-[#C2CDDC]">
-                        <strong className="text-[#38BDF8]">추천 대상:</strong>{" "}
-                        {activeDeck.targetAudience}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {activeDeck.skillSlugs.map((slug, idx) => {
-                        const member = skillsBySlug.get(slug);
-                        if (!member) return null;
-                        return (
-                          <div
-                            key={slug}
-                            className="border border-[#222938] bg-[#161C28] p-3.5 flex flex-col justify-between gap-2.5"
-                          >
-                            <div>
-                              <div className="flex items-center justify-between font-mono text-[11px] mb-1">
-                                <span className="text-[#10B981] font-bold">
-                                  PART 0{idx + 1}
-                                </span>
-                                <span className="text-[#F59E0B]">
-                                  ★{formatStars(member.stars)}
-                                </span>
-                              </div>
-                              <h2 className="text-[14px] font-bold text-[#F1F5F9]">
-                                {member.koreanAlias}
-                              </h2>
-                              <p className="mt-1.5 text-[12px] leading-relaxed text-[#C2CDDC]">
-                                <HighlightText
-                                  text={member.oneLineAnalogy}
-                                  tone="cyan"
-                                />
-                              </p>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setDeckTab(`skill:${member.slug}`)}
-                              className="w-full py-1.5 border border-[#222938] bg-[#0B0E14] font-mono text-[11px] text-[#38BDF8] hover:border-[#38BDF8]"
-                            >
-                              [{member.name}.skill] 탭에서 해부 보기 →
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="border border-[#38BDF8]/40 bg-[#38BDF8]/8 p-3.5 text-[12.5px] text-[#F1F5F9]">
-                      <span className="font-mono text-[11px] font-bold text-[#38BDF8] mr-2">
-                        INSTALL TIP
-                      </span>
-                      {activeDeck.installTipKo}
-                    </div>
-                  </div>
-                )}
-
-                {deckTab.startsWith("skill:") && activeDeckSubSkill && (
-                  <>{renderSkillAnatomy(activeDeckSubSkill)}</>
-                )}
-
-                {deckTab === "combined" && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-[12px] text-[#F59E0B]">
-                        덱 통합 변환 미리보기 ({activeDeck.title})
-                      </span>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          const members = activeDeck.skillSlugs
-                            .map((s) => skillsBySlug.get(s))
-                            .filter((x): x is SkillItem => Boolean(x));
-                          const txt = selectedTools.includes("web-builder")
-                            ? buildWebBuilderPromptPack(members)
-                            : buildBeginnerAutoInstallPrompt(
-                                members,
-                                selectedTools,
-                                scope,
-                              );
-                          await navigator.clipboard.writeText(txt);
-                          showToast("덱 통합 설치 코드를 복사했습니다.");
-                        }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#10B981] text-[#0B0E14] font-semibold text-[12px]"
-                      >
-                        <CopyIcon className="w-3.5 h-3.5" />
-                        통합 코드 복사
-                      </button>
-                    </div>
-                    <pre className="p-3.5 bg-[#0B0E14] border border-[#222938] font-mono text-[11.5px] leading-relaxed text-[#F1F5F9] overflow-x-auto whitespace-pre-wrap">
-                      {(() => {
-                        const members = activeDeck.skillSlugs
-                          .map((s) => skillsBySlug.get(s))
-                          .filter((x): x is SkillItem => Boolean(x));
-                        return selectedTools.includes("web-builder") &&
-                          selectedTools.length === 1
-                          ? buildWebBuilderPromptPack(members)
-                          : buildBeginnerAutoInstallPrompt(
-                              members,
-                              selectedTools,
-                              scope,
-                            );
-                      })()}
-                    </pre>
-                  </div>
-                )}
-              </>
-            )}
-
-            {selection.kind === "skill" && activeSkill && (
-              <>
-                {skillTab === "anatomy" && renderSkillAnatomy(activeSkill)}
-
-                {skillTab === "radar" && (
-                  <div className="space-y-3">
-                    <div className="border-b border-[#222938] pb-3">
-                      <h2 className="text-[18px] font-bold text-[#F1F5F9]">
-                        {activeSkill.koreanAlias} — 연결된 실시간 AI Radar 이슈
-                      </h2>
-                      <p className="text-[12.5px] text-[#C2CDDC] mt-1">
-                        실제 글로벌·중국 AI 개발 피드에서 이 스킬이 지금 필요한
-                        근거 시그널만 자동 매칭했습니다.
-                      </p>
-                    </div>
-                    {activeSkill.matchedRadar.length === 0 ? (
-                      <div className="border border-[#222938] bg-[#161C28] p-4 text-[13px] text-[#C2CDDC]">
-                        현재 스냅샷({catalog.radarGeneratedAt?.slice(0, 10)})에서는
-                        직접 매칭된 최신 기사가 없습니다. 우측 상단{" "}
-                        <strong className="text-[#38BDF8]">AI RADAR</strong>{" "}
-                        버튼으로 최신 피드를 갱신하거나 좌측{" "}
-                        <strong className="text-[#F1F5F9]">
-                          01_실시간 이슈 추천
-                        </strong>
-                        에서 오늘 매칭된 스킬을 확인하세요.
-                      </div>
-                    ) : (
-                      <div className="space-y-2.5">
-                        {activeSkill.matchedRadar.map((sig) => (
-                          <article
-                            key={sig.id}
-                            className="border border-[#222938] bg-[#161C28] p-3.5 space-y-1.5"
-                          >
-                            <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px]">
-                              <div className="flex items-center gap-2">
-                                <span className="px-1.5 py-0.5 bg-[#38BDF8]/15 border border-[#38BDF8]/40 text-[#38BDF8]">
-                                  {sig.platformId}
-                                  {sig.isChinaSource ? " · 중국 테크 소스" : ""}
-                                </span>
-                                {sig.matchReason && (
-                                  <span className="text-[#10B981]">
-                                    {sig.matchReason}
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-[#C2CDDC]">
-                                {sig.publishedAt.slice(0, 10)}
-                              </span>
-                            </div>
-                            <h3 className="text-[14.5px] font-bold text-[#F1F5F9]">
-                              {sig.titleKo}
-                            </h3>
-                            {sig.originalTitle !== sig.titleKo && (
-                              <div className="font-mono text-[11.5px] text-[#C2CDDC]">
-                                {sig.originalTitle}
-                              </div>
-                            )}
-                            {sig.highlightSummary && (
-                              <p className="text-[13px] leading-relaxed text-[#C2CDDC]">
-                                <HighlightText
-                                  text={sig.highlightSummary}
-                                  tone="cyan"
-                                />
-                              </p>
-                            )}
-                            <a
-                              href={sig.canonicalUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 pt-1 font-mono text-[11.5px] text-[#38BDF8] hover:underline"
-                            >
-                              원문 기사 바로가기
-                              <ExternalLinkIcon className="w-3 h-3" />
-                            </a>
-                          </article>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {skillTab === "preview" && renderSkillFilePreview(activeSkill)}
-              </>
-            )}
-          </div>
-        </main>
-
-        {/* ③ RIGHT UTILITY INSPECTOR */}
-        <UtilityInspector
-          skill={activeSkill}
-          deck={activeDeck}
-          allSkills={catalog.skills}
-        />
-      </div>
-
-      {/* ④ BOTTOM FIXED MY SKILL DOCK */}
-      <footer className="fixed bottom-0 inset-x-0 z-40 bg-[#0B0E14] border-t border-[#222938] px-3 py-2.5">
-        <div className="max-w-[1920px] mx-auto flex flex-col gap-2">
-          {/* Top Row: Loaded Chips + Weight Gauge + Conflicts */}
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-              <span className="font-mono text-[11px] font-bold text-[#10B981] uppercase mr-1">
-                MY SKILL DOCK ({dockSkills.length})
-              </span>
-              {dockSkills.length === 0 ? (
-                <span className="text-[12px] text-[#C2CDDC]">
-                  좌측 탐색기에서 [+ 담기]를 눌러 장비를 적재하세요.
-                </span>
-              ) : (
-                dockSkills.map((sk) => (
-                  <span
-                    key={sk.slug}
-                    className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#161C28] border border-[#222938] text-[11.5px] text-[#F1F5F9]"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelection({ kind: "skill", slug: sk.slug });
-                        setSkillTab("anatomy");
-                      }}
-                      className="font-medium hover:text-[#38BDF8]"
-                    >
-                      {sk.name}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => toggleDockSkill(sk.slug)}
-                      aria-label={`${sk.name} 독에서 제거`}
-                      className="text-[#C2CDDC] hover:text-[#F59E0B]"
-                    >
-                      <CloseIcon className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))
-              )}
-
-              {dockSkills.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleCopyUrl}
-                  className="px-2 py-0.5 border border-[#222938] bg-[#131822] font-mono text-[10.5px] text-[#38BDF8] hover:border-[#38BDF8]"
-                >
-                  ?dock 공유 URL 복사
-                </button>
-              )}
-            </div>
-
-            {/* Combined Weight Gauge & Warnings */}
-            <div className="flex flex-wrap items-center gap-2.5 font-mono text-[11px]">
-              <div className="flex items-center gap-2">
-                <span className="text-[#C2CDDC]">합산 무게</span>
-                <span
-                  className={
-                    dockAnalysis.weightTier === "무거움"
-                      ? "text-[#F59E0B] font-bold"
-                      : dockAnalysis.weightTier === "보통"
-                        ? "text-[#38BDF8] font-bold"
-                        : "text-[#10B981] font-bold"
-                  }
-                >
-                  {dockAnalysis.totalTokens.toLocaleString("en-US")}t (
-                  {dockAnalysis.weightTier})
-                </span>
-                <div className="w-20 h-2 bg-[#161C28] border border-[#222938]">
-                  <div
-                    className="h-full"
-                    style={{
-                      width: `${dockAnalysis.percentOfBudget}%`,
-                      backgroundColor:
-                        dockAnalysis.weightTier === "무거움"
-                          ? "#F59E0B"
-                          : dockAnalysis.weightTier === "보통"
-                            ? "#38BDF8"
-                            : "#10B981",
-                    }}
-                  />
-                </div>
               </div>
 
-              {(dockAnalysis.conflicts.length > 0 ||
-                dockAnalysis.isHeavyWarning) && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 border border-[#F59E0B]/50 bg-[#F59E0B]/12 text-[#F59E0B]">
-                  <AlertTriangleIcon className="w-3 h-3" />
-                  {dockAnalysis.conflicts.length > 0
-                    ? `역할 중복 ${dockAnalysis.conflicts.length}건 (${dockAnalysis.conflicts[0].roleLabelKo})`
-                    : "컨텍스트 무거움 주의 (4,500t 초과)"}
-                </span>
+              {activeTab !== "dock" && (
+                <div className="relative w-full sm:w-56 ml-auto">
+                  <SearchIcon className="w-4 h-4 text-[#6B7280] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="스킬 이름이나 기능 검색..."
+                    aria-label="스킬 검색"
+                    className="w-full rounded-full bg-[#F8FAFC] border border-[#E5E7EB] pl-9 pr-3.5 py-1.5 text-[13.5px] text-[#111827] placeholder:text-[#6B7280] focus:outline-none focus:border-[#0284C7] focus:bg-white"
+                  />
+                </div>
               )}
             </div>
-          </div>
+          </section>
 
-          {/* Bottom Row: Scope Switch + 3 One-Click Install Action Buttons */}
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="inline-flex border border-[#222938] bg-[#131822] text-[11.5px]">
-              <button
-                type="button"
-                onClick={() => setScope("project")}
-                className={`px-2.5 py-1.5 font-semibold ${
-                  scope === "project"
-                    ? "bg-[#161C28] text-[#10B981] border-r border-[#222938]"
-                    : "text-[#C2CDDC] border-r border-[#222938]"
-                }`}
-              >
-                이 프로젝트 폴더만 (격리·추천)
-              </button>
-              <button
-                type="button"
-                onClick={() => setScope("global")}
-                className={`px-2.5 py-1.5 font-semibold ${
-                  scope === "global"
-                    ? "bg-[#161C28] text-[#F59E0B]"
-                    : "text-[#C2CDDC]"
-                }`}
-              >
-                내 컴퓨터 전체 (전역)
-              </button>
-            </div>
+          {/* Feed / Dock View Content */}
+          {activeTab === "presets" && renderDeckFeed(visibleDecks)}
+          {activeTab === "issues" && renderSkillFeed(visibleIssueSkills, true)}
+          {activeTab === "catalog" &&
+            renderSkillFeed(visibleCatalogSkills, false)}
 
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => openActionModal("beginner-chat")}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#10B981] text-[#0B0E14] font-bold text-[12px]"
-              >
-                <CopyIcon className="w-3.5 h-3.5" />
-                AI 채팅창에 붙여넣어 자동 설치
-              </button>
-              <button
-                type="button"
-                onClick={() => openActionModal("web-builder")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#38BDF8] bg-[#38BDF8]/15 text-[#F1F5F9] font-semibold text-[12px]"
-              >
-                <CopyIcon className="w-3.5 h-3.5 text-[#38BDF8]" />
-                Lovable · Bolt · v0 프롬프트 팩 복사
-              </button>
-              <button
-                type="button"
-                onClick={() => openActionModal("live-bridge")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#222938] bg-[#161C28] text-[#F1F5F9] hover:border-[#10B981] font-semibold text-[12px]"
-              >
-                <BridgePlugIcon className="w-3.5 h-3.5 text-[#10B981]" />
-                내 PC 실시간 직결 장착 (Live Bridge)
-              </button>
-            </div>
-          </div>
-        </div>
-      </footer>
+          {activeTab === "dock" && (
+            <section className="space-y-4">
+              {dockSkills.length === 0 ? (
+                <div className="editorial-card p-10 text-center space-y-3">
+                  <p className="text-[16px] font-bold text-[#111827]">
+                    아직 내 장착 독이 비어 있어요.
+                  </p>
+                  <p className="text-[14.5px] text-[#4B5563]">
+                    추천 프리셋 세트에서 마음에 드는 조합의 [+ 세트 담기]를 누르면 한 번에 채워져요.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("presets")}
+                    className="rounded-full bg-[#111827] text-white px-5 py-2.5 text-[14px] font-bold"
+                  >
+                    추천 프리셋 세트 보러가기
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="editorial-card p-6 space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-[18px] font-bold text-[#111827]">
+                          담아둔 스킬 {dockSkills.length}개
+                        </h2>
+                        <p className="text-[13.5px] text-[#6B7280] mt-0.5">
+                          예상 상시 기억 점유량 약{" "}
+                          <strong className="text-[#111827] tnum">
+                            {dockAnalysis.totalTokens.toLocaleString("en-US")} tokens
+                          </strong>{" "}
+                          ({weightInfo.detail})
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleCopyShareUrl}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-[#D1D5DB] bg-white px-3.5 py-2 text-[13px] font-semibold text-[#374151] hover:bg-[#F9FAFB]"
+                        >
+                          <CopyIcon className="w-3.5 h-3.5" />
+                          <span>공유 링크 복사</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setModalTarget({ kind: "dock-bulk" })}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-[#059669] px-4 py-2 text-[13.5px] font-bold text-white hover:bg-[#047857]"
+                        >
+                          <span>한 번에 설치 창 열기</span>
+                          <ArrowRightIcon className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
 
-      {/* Toast Notification */}
-      {toastMsg && (
-        <div
-          role="status"
-          className="fixed top-14 right-4 z-50 border border-[#10B981] bg-[#0F131B] px-3.5 py-2 text-[12px] font-semibold text-[#F1F5F9]"
-        >
-          {toastMsg}
-        </div>
-      )}
+                    <div className="w-full h-2.5 rounded-full bg-[#F1F5F9] overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${Math.max(10, dockAnalysis.percentOfBudget)}%`,
+                          backgroundColor: weightInfo.barColor,
+                        }}
+                      />
+                    </div>
 
-      {/* Install Modal */}
-      <InstallModal
-        open={modalOpen}
-        mode={modalMode}
-        onClose={() => setModalOpen(false)}
-        onSwitchMode={setModalMode}
+                    {dockAnalysis.conflicts.length > 0 && (
+                      <div className="rounded-xl bg-[#FFFBEB] border border-[#FDE68A] p-3.5 text-[13.5px] text-[#92400E] flex items-start gap-2">
+                        <AlertIcon className="w-4 h-4 shrink-0 mt-0.5 text-[#D97706]" />
+                        <span>{dockAnalysis.conflicts[0].messageKo}</span>
+                      </div>
+                    )}
+
+                    <div className="divide-y divide-[#F1F5F9]">
+                      {dockSkills.map((sk) => (
+                        <div
+                          key={sk.slug}
+                          className="py-3 flex items-center justify-between gap-3"
+                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setModalTarget({ kind: "skill", skill: sk })
+                            }
+                            className="text-left min-w-0 flex-1"
+                          >
+                            <div className="text-[15px] font-bold text-[#111827] hover:underline truncate">
+                              {getFriendlySkillTitle(sk)}
+                            </div>
+                            <div className="text-[13px] text-[#6B7280] mt-0.5">
+                              {sk.roleLabelKo} · 약 {sk.contextTokens} tokens
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleDockSkill(sk.slug)}
+                            aria-label={`${sk.name} 빼기`}
+                            className="rounded-full p-2 text-[#6B7280] hover:bg-[#FEF2F2] hover:text-[#B91C1C]"
+                          >
+                            <CloseIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </section>
+          )}
+        </main>
+      </div>
+
+      {/* Floating Bottom Dock Bar */}
+      <FloatingDockBar
         dockSkills={dockSkills}
+        onCopyShareUrl={handleCopyShareUrl}
+        onOpenBulkInstall={() => setModalTarget({ kind: "dock-bulk" })}
+      />
+
+      {/* Centered White Focus Detail & Install Modal */}
+      <SkillDetailModal
+        target={modalTarget}
+        onClose={() => setModalTarget(null)}
+        onChangeTarget={setModalTarget}
+        skillsBySlug={skillsBySlug}
+        dockSlugs={dockSlugs}
+        onToggleDockSkill={toggleDockSkill}
+        onLoadDeckToDock={loadDeckToDock}
         selectedTools={selectedTools}
+        onToggleTool={toggleTool}
         scope={scope}
+        onChangeScope={setScope}
         bridgeConnected={bridgeConnected}
         bridgeDetectedTools={bridgeDetectedTools}
         bridgeCwd={bridgeCwd}
         bridgeInstalled={bridgeInstalled}
         onRefreshBridge={refreshBridge}
+        onToast={showToast}
       />
+
+      {/* Crisp Floating Toast */}
+      {toastMsg && (
+        <div
+          role="status"
+          className="fixed top-5 left-1/2 -translate-x-1/2 z-50 rounded-full bg-[#111827] text-white px-5 py-2.5 text-[13.5px] font-semibold shadow-xl"
+        >
+          {toastMsg}
+        </div>
+      )}
     </div>
   );
 }

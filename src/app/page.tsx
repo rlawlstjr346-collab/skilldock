@@ -4,8 +4,8 @@ import { SkilldockWorkbench } from "@/components/SkilldockWorkbench";
 
 function WorkbenchFallback() {
   return (
-    <div className="min-h-screen bg-[#0B0E14] text-[#F1F5F9] flex items-center justify-center font-mono text-[13px]">
-      SKILLDOCK WORKBENCH INITIALIZING...
+    <div className="min-h-screen bg-[#F5F6F8] text-[#111827] flex items-center justify-center text-[15px] font-semibold">
+      SkillDock 데이터를 불러오고 있어요...
     </div>
   );
 }

@@ -14,10 +14,9 @@ export default function OpengraphImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          backgroundColor: "#0B0E14",
-          color: "#F1F5F9",
+          backgroundColor: "#F5F6F8",
+          color: "#111827",
           padding: "56px 64px",
-          border: "2px solid #222938",
           fontFamily: "sans-serif",
         }}
       >
@@ -35,13 +34,13 @@ export default function OpengraphImage() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: "44px",
-                height: "44px",
-                backgroundColor: "#131822",
-                border: "2px solid #10B981",
-                color: "#10B981",
+                width: "48px",
+                height: "48px",
+                borderRadius: "12px",
+                backgroundColor: "#111827",
+                color: "#FFFFFF",
                 fontSize: "24px",
-                fontWeight: 700,
+                fontWeight: 800,
               }}
             >
               [=]
@@ -49,27 +48,29 @@ export default function OpengraphImage() {
             <div
               style={{
                 display: "flex",
-                fontSize: "30px",
+                fontSize: "34px",
                 fontWeight: 800,
-                letterSpacing: "4px",
-                color: "#F1F5F9",
+                letterSpacing: "-1px",
+                color: "#111827",
               }}
             >
-              SKILLDOCK
+              SkillDock
             </div>
           </div>
+
           <div
             style={{
               display: "flex",
-              padding: "8px 16px",
-              border: "1px solid #38BDF8",
-              backgroundColor: "#131822",
-              color: "#38BDF8",
+              padding: "10px 18px",
+              borderRadius: "9999px",
+              border: "1px solid #A7F3D0",
+              backgroundColor: "#ECFDF5",
+              color: "#047857",
               fontSize: "18px",
-              fontWeight: 600,
+              fontWeight: 700,
             }}
           >
-            LIVE AI RADAR + VERIFIED OPEN-SOURCE
+            24 Verified Open-Source Skills + 6 Preset Sets
           </div>
         </div>
 
@@ -77,29 +78,29 @@ export default function OpengraphImage() {
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: "18px",
+            gap: "16px",
           }}
         >
           <div
             style={{
               display: "flex",
-              fontSize: "52px",
+              fontSize: "50px",
               fontWeight: 800,
               lineHeight: 1.2,
-              color: "#F1F5F9",
+              color: "#111827",
             }}
           >
-            Vibe-Coding Skill Workbench
+            1-Click AI Coding Skill Library
           </div>
           <div
             style={{
               display: "flex",
-              fontSize: "26px",
-              color: "#C2CDDC",
-              lineHeight: 1.4,
+              fontSize: "25px",
+              color: "#4B5563",
+              lineHeight: 1.45,
             }}
           >
-            Claude Code · Gemini CLI / agy · Cursor · Windsurf · Codex · Lovable / Bolt / v0
+            Claude Code · Gemini CLI · Cursor · Windsurf · Lovable · Bolt · v0
           </div>
         </div>
 
@@ -115,24 +116,25 @@ export default function OpengraphImage() {
               display: "flex",
               flexDirection: "column",
               flex: 1,
-              backgroundColor: "#161C28",
-              border: "1px solid #222938",
-              padding: "20px 24px",
+              backgroundColor: "#FFFFFF",
+              border: "1px solid #E5E7EB",
+              borderRadius: "20px",
+              padding: "22px 26px",
             }}
           >
-            <div style={{ display: "flex", fontSize: "16px", color: "#C2CDDC" }}>
-              VERIFIED REPOS
+            <div style={{ display: "flex", fontSize: "16px", color: "#6B7280" }}>
+              PONYTAIL / HEADROOM
             </div>
             <div
               style={{
                 display: "flex",
-                fontSize: "34px",
-                fontWeight: 700,
-                color: "#10B981",
+                fontSize: "32px",
+                fontWeight: 800,
+                color: "#059669",
                 marginTop: "6px",
               }}
             >
-              24+ OSS Skills
+              -53% Code / -88% Logs
             </div>
           </div>
 
@@ -141,50 +143,25 @@ export default function OpengraphImage() {
               display: "flex",
               flexDirection: "column",
               flex: 1,
-              backgroundColor: "#161C28",
-              border: "1px solid #222938",
-              padding: "20px 24px",
+              backgroundColor: "#FFFFFF",
+              border: "1px solid #E5E7EB",
+              borderRadius: "20px",
+              padding: "22px 26px",
             }}
           >
-            <div style={{ display: "flex", fontSize: "16px", color: "#C2CDDC" }}>
-              SYNERGY PRESETS
+            <div style={{ display: "flex", fontSize: "16px", color: "#6B7280" }}>
+              NO TERMINAL NEEDED
             </div>
             <div
               style={{
                 display: "flex",
-                fontSize: "34px",
-                fontWeight: 700,
-                color: "#38BDF8",
+                fontSize: "32px",
+                fontWeight: 800,
+                color: "#0284C7",
                 marginTop: "6px",
               }}
             >
-              6 Curated Decks
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              flex: 1,
-              backgroundColor: "#161C28",
-              border: "1px solid #222938",
-              padding: "20px 24px",
-            }}
-          >
-            <div style={{ display: "flex", fontSize: "16px", color: "#C2CDDC" }}>
-              ZERO-TERMINAL + BRIDGE
-            </div>
-            <div
-              style={{
-                display: "flex",
-                fontSize: "34px",
-                fontWeight: 700,
-                color: "#F59E0B",
-                marginTop: "6px",
-              }}
-            >
-              1-Click Deploy
+              1-Click Copy & Bridge
             </div>
           </div>
         </div>

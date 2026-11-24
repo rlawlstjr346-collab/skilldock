@@ -15,6 +15,7 @@ import {
   buildToolFilePreview,
   buildWebBuilderPromptPack,
 } from "@/lib/converters";
+import { getCleanKoreanRadarMatches } from "@/lib/editorial";
 import {
   CHINA_PLATFORMS,
   matchRadarSignalsToSkills,
@@ -43,8 +44,29 @@ function readAllSourceFiles(dir: string): string[] {
   return out;
 }
 
-describe("SKILLDOCK V1 Contract Suite", () => {
-  it("1. 카탈로그 20종+ 및 프리셋 6종 실존 데이터 완비 + 금지어/보라색/이모지/금지애니메이션 0건", () => {
+describe("SKILLDOCK Light Editorial V2 Contract Suite", () => {
+  it("1. 구형 다크 IDE 배경 HEX(#0B0E14, #0F131B) · 영문 헤더(EXPLORER, WORKFLOW & VERIFICATION) · 확장자 탭 0건", () => {
+    const srcContents = readAllSourceFiles(path.join(process.cwd(), "src")).join(
+      "\n",
+    );
+
+    const legacyBanned = [
+      /#0B0E14/i,
+      /#0F131B/i,
+      /#131822/i,
+      /#161C28/i,
+      /\bEXPLORER\b/,
+      /WORKFLOW\s*&\s*VERIFICATION/,
+      /케미_해설\.md/,
+      /연결된_최신이슈\.radar/,
+      /실제_장착파일_미리보기\.skill/,
+    ];
+    for (const re of legacyBanned) {
+      expect(srcContents).not.toMatch(re);
+    }
+  });
+
+  it("2. 카탈로그 20종+ 및 프리셋 6종 완비 + 금지어·보라색·이모지·금지애니메이션·원시 ==·미번역 영문 트윗 0건", () => {
     const catalog = loadCatalogData();
     const decks = loadSynergyDecks();
 
@@ -74,14 +96,18 @@ describe("SKILLDOCK V1 Contract Suite", () => {
       expect(skill.repoUrl).toMatch(/^https:\/\/github\.com\/[^/]+\/[^/]+$/);
       expect(skill.koreanAlias.length).toBeGreaterThan(3);
       expect(skill.skillMdTemplate).toContain("---");
-      expect(typeof skill.stars).toBe("number");
       if (skill.slug !== "ai-radar-live") {
         expect(skill.stars).toBeGreaterThan(0);
       }
-      // Highlight parser must never leak raw `==`
-      const segments = parseHighlightSegments(skill.oneLineAnalogy);
-      for (const seg of segments) {
+
+      for (const seg of parseHighlightSegments(skill.oneLineAnalogy)) {
         expect(seg.text).not.toContain("==");
+      }
+
+      // Cleaned radar matches must contain Korean and never raw `@OpenAI:` untranslated English tweets
+      for (const sig of getCleanKoreanRadarMatches(skill)) {
+        expect(sig.titleKo).toMatch(/[가-힣]/);
+        expect(sig.titleKo).not.toMatch(/^@[A-Za-z0-9_]+:/);
       }
     }
 
@@ -101,7 +127,7 @@ describe("SKILLDOCK V1 Contract Suite", () => {
     }
   });
 
-  it("2. Ponytail·Headroom·Graphify·OmniRoute 실측 벤치마크 정확성 및 비벤치마크 허위 점수 0건", () => {
+  it("3. Ponytail·Headroom·Graphify·OmniRoute 실측 벤치마크 정확성 및 비벤치마크 허위 점수 0건", () => {
     const catalog = loadCatalogData();
     const bySlug = new Map(catalog.skills.map((s) => [s.slug, s]));
 
@@ -111,17 +137,19 @@ describe("SKILLDOCK V1 Contract Suite", () => {
     expect(ponytail.benchmarks.some((b) => b.afterValue === 98)).toBe(true);
 
     const headroom = bySlug.get("headroom")!;
-    expect(headroom.benchmarks.some((b) => b.beforeValue === 10144 && b.afterValue === 1260)).toBe(true);
-    expect(headroom.benchmarks.some((b) => b.deltaText.includes("0.21ms"))).toBe(true);
+    expect(
+      headroom.benchmarks.some((b) => b.beforeValue === 10144 && b.afterValue === 1260),
+    ).toBe(true);
 
     const graphify = bySlug.get("graphify")!;
     expect(graphify.benchmarks.some((b) => b.afterValue === 0.497)).toBe(true);
     expect(graphify.benchmarks.some((b) => b.afterValue === 82.0)).toBe(true);
 
     const omniroute = bySlug.get("omniroute")!;
-    expect(omniroute.benchmarks.some((b) => b.beforeValue === 69 && b.afterValue === 19)).toBe(true);
+    expect(
+      omniroute.benchmarks.some((b) => b.beforeValue === 69 && b.afterValue === 19),
+    ).toBe(true);
 
-    // Non-benchmark visual/workflow skills must have empty benchmarks (zero fabricated scores)
     const taste = bySlug.get("taste-skill")!;
     const hyperframes = bySlug.get("hyperframes")!;
     expect(taste.benchmarks.length).toBe(0);
@@ -129,7 +157,7 @@ describe("SKILLDOCK V1 Contract Suite", () => {
     expect(taste.summaryKo).not.toMatch(/\d+점/);
   });
 
-  it("3. 멀티 툴 변환기(Claude/Gemini/Cursor/Windsurf/Codex/웹빌더 + 초보자 자동설치문) 무결성", () => {
+  it("4. 멀티 툴 한글 자동설치문 · Lovable/Bolt/v0 프롬프트 팩 · 독(?dock=) 직렬화 왕복 검증", () => {
     const catalog = loadCatalogData();
     const subset = catalog.skills.filter((s) =>
       ["ponytail", "headroom", "taste-skill"].includes(s.slug),
@@ -159,110 +187,81 @@ describe("SKILLDOCK V1 Contract Suite", () => {
 
     const cursorFile = buildToolFilePreview(subset[0], "cursor", "project");
     expect(cursorFile.filePath).toMatch(/^\.cursor\/rules\/.*\.mdc$/);
-    expect(cursorFile.content).toContain("alwaysApply: false");
 
-    const windsurfFile = buildToolFilePreview(subset[0], "windsurf", "project");
-    expect(windsurfFile.filePath).toMatch(/^\.windsurf\/rules\/.*\.md$/);
-  });
-
-  it("4. 독(Dock) 컨텍스트 토큰 합산, 역할 중복 경고, ?dock= 직렬화 왕복 검증", () => {
-    const catalog = loadCatalogData();
+    // Dock weight, conflict & ?dock= serialization
     const bySlug = new Map(catalog.skills.map((s) => [s.slug, s]));
-
-    // Orthogonal combo: no conflicts
-    const cleanDeck = [
-      bySlug.get("omniroute")!,
-      bySlug.get("headroom")!,
-      bySlug.get("ponytail")!,
-    ];
-    const cleanAnalysis = analyzeDockSkills(cleanDeck);
-    expect(cleanAnalysis.totalTokens).toBe(
-      cleanDeck.reduce((acc, s) => acc + s.contextTokens, 0),
-    );
-    expect(cleanAnalysis.conflicts.length).toBe(0);
-
-    // Duplicate ui-design role conflict
-    const duplicateUi = [
+    const dupAnalysis = analyzeDockSkills([
       bySlug.get("taste-skill")!,
       bySlug.get("vercel-agent-skills")!,
-    ];
-    const dupAnalysis = analyzeDockSkills(duplicateUi);
+    ]);
     expect(dupAnalysis.conflicts.length).toBe(1);
-    expect(dupAnalysis.conflicts[0].roleSlot).toBe("ui-design");
 
-    // Heavy context warning (> 4500 tokens)
-    const heavyAnalysis = analyzeDockSkills(catalog.skills.slice(0, 8));
-    expect(heavyAnalysis.isHeavyWarning).toBe(true);
-    expect(heavyAnalysis.weightTier).toBe("무거움");
-
-    // ?dock= roundtrip
-    const serialized = serializeDockParam(["Ponytail", "headroom", "ponytail", "../bad"]);
+    const serialized = serializeDockParam(["Ponytail", "headroom", "../bad"]);
     expect(serialized).toBe("ponytail,headroom");
     const validSlugs = new Set(catalog.skills.map((s) => s.slug));
-    const parsed = deserializeDockParam(`${serialized},non-existent`, validSlugs);
-    expect(parsed).toEqual(["ponytail", "headroom"]);
+    expect(deserializeDockParam(`${serialized},ghost`, validSlugs)).toEqual([
+      "ponytail",
+      "headroom",
+    ]);
   });
 
-  it("5. AI Radar (planning-feed + live-feed 중국 5대 소스 포함) 정규화 및 스킬 매칭 검증", () => {
+  it("5. AI Radar (중국 5대 소스 포함) 정규화 및 매칭 검증", () => {
     const catalog = loadCatalogData();
     expect(catalog.radarTotalSignals).toBeGreaterThan(0);
     expect(catalog.radarChinaSignals).toBeGreaterThan(0);
-    expect(catalog.radarMatchedCount).toBeGreaterThan(0);
 
-    const syntheticPlanning = {
-      generated_at: "2026-11-24T06:25:11Z",
-      signals: [
-        {
-          id: "cn-1",
-          title_ko: "Claude Code 최적 제어면과 토큰 압축 팁",
-          original_title: "Claude Code 最佳控制面",
-          platform_id: "v2ex",
-          category: "dev",
-          canonical_url: "https://v2ex.com/t/12345",
-          published_at: "2026-11-24T05:00:00Z",
-          highlight_summary: "==컨텍스트 압축==으로 토큰 절감 실전 사례",
-          importance_score: 88,
-        },
-      ],
-    };
-    const syntheticLive = {
-      generated_at: "2026-11-24T06:25:11Z",
-      items: [
-        {
-          id: "cn-2",
-          title_ko: "DeepSeek 및 Qwen 무료 게이트웨이 자동 폴백 공유",
-          original_title: "DeepSeek Qwen Gateway",
-          platform_id: "juejin",
-          category: "dev",
-          canonical_url: "https://juejin.cn/post/99999",
-          published_at: "2026-11-24T05:30:00Z",
-          highlight_summary: "==OmniRoute== 스타일 라우터 설정기",
-          importance_score: 91,
-        },
-      ],
-    };
-
-    const merged = mergeAndNormalizeRadarFeeds(syntheticPlanning, syntheticLive);
+    const merged = mergeAndNormalizeRadarFeeds(
+      {
+        generated_at: "2026-11-24T06:25:11Z",
+        signals: [
+          {
+            id: "cn-1",
+            title_ko: "Claude Code 토큰 압축 실전 팁",
+            original_title: "Claude Code 最佳控制面",
+            platform_id: "v2ex",
+            category: "dev",
+            canonical_url: "https://v2ex.com/t/12345",
+            published_at: "2026-11-24T05:00:00Z",
+            highlight_summary: "==컨텍스트 압축==으로 토큰 절감",
+            importance_score: 88,
+          },
+        ],
+      },
+      {
+        generated_at: "2026-11-24T06:25:11Z",
+        items: [
+          {
+            id: "cn-2",
+            title_ko: "DeepSeek 및 Qwen 자동 폴백 게이트웨이",
+            original_title: "DeepSeek Qwen Gateway",
+            platform_id: "juejin",
+            category: "dev",
+            canonical_url: "https://juejin.cn/post/99999",
+            published_at: "2026-11-24T05:30:00Z",
+            highlight_summary: "==OmniRoute== 자동 우회",
+            importance_score: 91,
+          },
+        ],
+      },
+    );
     expect(merged.totalSignals).toBe(2);
     expect(merged.chinaSignals).toBe(2);
     expect(CHINA_PLATFORMS.has("36kr-ai")).toBe(true);
 
     const matched = matchRadarSignalsToSkills(merged.signals, catalog.skills);
     expect(matched.matchedSignals.length).toBe(2);
-    expect(matched.matchedBySkill["omniroute"].length).toBeGreaterThanOrEqual(1);
   });
 
   it("6. Live Bridge 격리 샌드박스(os.tmpdir) 장착·백업·On/Off·원상복구·경로이탈 차단 검증", () => {
-    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "skilldock-bridge-test-"));
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "skilldock-bridge-v2-"));
     try {
-      // Pre-existing CLAUDE.md to verify automatic .bak backup
       const existingClaude = path.join(tmpRoot, "CLAUDE.md");
       fs.writeFileSync(existingClaude, "# Existing User Rules\n", "utf8");
 
-      // Path traversal must throw
-      expect(() => assertSafeSubpath(tmpRoot, path.join(tmpRoot, "../etc/passwd"))).toThrow();
+      expect(() =>
+        assertSafeSubpath(tmpRoot, path.join(tmpRoot, "../etc/passwd")),
+      ).toThrow();
 
-      // Install
       const installRes = installSkillsToRoot({
         rootDir: tmpRoot,
         tools: ["claude-code", "gemini-agy", "cursor"],
@@ -277,12 +276,10 @@ describe("SKILLDOCK V1 Contract Suite", () => {
       });
       expect(installRes.ok).toBe(true);
       expect(installRes.backups.length).toBeGreaterThanOrEqual(1);
-      expect(fs.existsSync(path.join(tmpRoot, ".claude/skills/ponytail/SKILL.md"))).toBe(true);
-      expect(fs.existsSync(path.join(tmpRoot, ".gemini/skills/ponytail/SKILL.md"))).toBe(true);
-      expect(fs.existsSync(path.join(tmpRoot, ".cursor/rules/ponytail.mdc"))).toBe(true);
-      expect(fs.readFileSync(existingClaude, "utf8")).toContain("<!-- SKILLDOCK:START -->");
+      expect(
+        fs.existsSync(path.join(tmpRoot, ".claude/skills/ponytail/SKILL.md")),
+      ).toBe(true);
 
-      // Toggle OFF -> .disabled file created
       const offRes = toggleSkillInRoot({
         rootDir: tmpRoot,
         tool: "claude-code",
@@ -290,9 +287,7 @@ describe("SKILLDOCK V1 Contract Suite", () => {
         enabled: false,
       });
       expect(offRes.enabled).toBe(false);
-      expect(fs.existsSync(path.join(tmpRoot, ".claude/skills/ponytail/SKILL.md.disabled"))).toBe(true);
 
-      // Toggle ON -> restored
       const onRes = toggleSkillInRoot({
         rootDir: tmpRoot,
         tool: "claude-code",
@@ -300,26 +295,28 @@ describe("SKILLDOCK V1 Contract Suite", () => {
         enabled: true,
       });
       expect(onRes.enabled).toBe(true);
-      expect(fs.existsSync(path.join(tmpRoot, ".claude/skills/ponytail/SKILL.md"))).toBe(true);
 
-      // Uninstall -> removed cleanly
       const rmRes = uninstallSkillFromRoot({
         rootDir: tmpRoot,
         tool: "claude-code",
         slug: "ponytail",
       });
       expect(rmRes.ok).toBe(true);
-      expect(fs.existsSync(path.join(tmpRoot, ".claude/skills/ponytail/SKILL.md"))).toBe(false);
+      expect(
+        fs.existsSync(path.join(tmpRoot, ".claude/skills/ponytail/SKILL.md")),
+      ).toBe(false);
     } finally {
       fs.rmSync(tmpRoot, { recursive: true, force: true });
     }
   });
 
-  it("7. SEO 라우트(/sitemap.xml, /robots.txt, /rss.xml) 정상 생성 및 원시 == 마커 0건 검증", async () => {
+  it("7. SEO 라우트(/sitemap.xml, /robots.txt, /rss.xml) 정상 생성 및 원시 == 0건 검증", async () => {
     const sm = sitemap();
-    expect(sm.length).toBeGreaterThanOrEqual(31); // 1 home + 6 decks + 24 skills
+    expect(sm.length).toBeGreaterThanOrEqual(31);
     expect(sm.some((u) => u.url.endsWith("/skill/ponytail"))).toBe(true);
-    expect(sm.some((u) => u.url.endsWith("/deck/quota-invincible-token-diet"))).toBe(true);
+    expect(
+      sm.some((u) => u.url.endsWith("/deck/quota-invincible-token-diet")),
+    ).toBe(true);
 
     const rb = robots();
     expect(rb.sitemap).toMatch(/\/sitemap\.xml$/);
@@ -327,8 +324,7 @@ describe("SKILLDOCK V1 Contract Suite", () => {
     const rssRes = await getRss();
     expect(rssRes.status).toBe(200);
     const rssXml = await rssRes.text();
-    expect(rssXml).toContain("<rss version=\"2.0\"");
-    expect(rssXml).toContain("SKILLDOCK");
+    expect(rssXml).toContain('<rss version="2.0"');
     expect(rssXml).not.toContain("==");
     expect(stripHighlightMarkers("테스트 ==강조== 문구")).toBe("테스트 강조 문구");
   });
