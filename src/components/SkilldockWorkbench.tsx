@@ -54,6 +54,7 @@ import { FlyToCartLayer, type FlyParticle } from "./FlyToCartLayer";
 import {
   ArchiveDockIcon,
   ArrowRightIcon,
+  CheckIcon,
   GitHubIcon,
   HistoryReadIcon,
   HomeGridIcon,
@@ -966,11 +967,11 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
               className="rounded-[20px] bg-white border border-[#E5E5EA] px-4 py-3 flex flex-col gap-2.5"
             >
               <div className="flex flex-wrap items-center justify-between gap-2.5">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[12.5px] font-bold text-[#515154] mr-0.5">
-                    내 툴:
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[clamp(13.5px,0.88vw,17px)] font-extrabold text-[#0F172A] mr-0.5">
+                    내 코딩 툴:
                   </span>
-                  {TOOL_TARGETS.filter((t) => t.id !== "codex").map((tool) => {
+                  {TOOL_TARGETS.map((tool) => {
                     const active = selectedTools.includes(tool.id);
                     return (
                       <button
@@ -978,13 +979,23 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
                         type="button"
                         onClick={() => toggleTool(tool.id)}
                         aria-pressed={active}
-                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[12.5px] font-semibold transition-colors ${
+                        className={`inline-flex items-center gap-2 h-[clamp(38px,2.35vw,48px)] px-[clamp(12px,0.95vw,18px)] rounded-xl text-[clamp(14px,0.88vw,18px)] font-bold transition-all whitespace-nowrap ${
                           active
-                            ? "bg-[#1D1D1F] text-[#FBFBFD]"
-                            : "bg-[#F2F2F7] text-[#515154] hover:text-[#1D1D1F]"
+                            ? "bg-[#1D1D1F] text-white border-2 border-[#1D1D1F] shadow-sm"
+                            : "bg-white text-[#1E293B] border-[1.5px] border-[#CBD5E1] hover:border-[#64748B]"
                         }`}
                       >
-                        <ToolIcon tool={tool.id} className="w-3.5 h-3.5" />
+                        {active ? (
+                          <CheckIcon
+                            className="w-4 h-4 shrink-0 text-[#34D399]"
+                            strokeWidth={2.8}
+                          />
+                        ) : (
+                          <ToolIcon
+                            tool={tool.id}
+                            className="w-4 h-4 shrink-0 text-[#475569]"
+                          />
+                        )}
                         <span>
                           {tool.id === "gemini-agy"
                             ? "Gemini CLI"

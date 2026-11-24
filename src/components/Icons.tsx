@@ -169,10 +169,22 @@ export function PlusIcon({ className = "w-3.5 h-3.5" }: { className?: string }) 
   );
 }
 
-export function CheckIcon({ className = "w-3.5 h-3.5" }: { className?: string }) {
+export function CheckIcon({
+  className = "w-3.5 h-3.5",
+  strokeWidth = 1.9,
+}: {
+  className?: string;
+  strokeWidth?: number;
+}) {
   return (
     <svg className={className} viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M3 8.5L6.5 12L13 4.5"
+        stroke="currentColor"
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

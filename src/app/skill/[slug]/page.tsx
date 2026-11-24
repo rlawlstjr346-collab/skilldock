@@ -84,50 +84,52 @@ export default async function SkillDetailPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div className="max-w-[780px] mx-auto px-5 sm:px-8 py-8 space-y-6">
+      <div className="w-[min(90vw,clamp(860px,56vw,1360px))] mx-auto px-5 sm:px-8 py-8 space-y-6">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/" className="inline-flex items-center gap-3">
             <SkillDockLogo compact />
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white border border-[#E5E5EA] px-3.5 py-2 text-[13.5px] font-semibold text-[#515154] hover:bg-[#F2F2F7]"
+              className="inline-flex items-center gap-1.5 rounded-full bg-white border border-[#CBD5E1] h-[clamp(40px,2.5vw,52px)] px-4 text-[clamp(14px,0.88vw,18px)] font-semibold text-[#334155] hover:bg-[#F2F2F7]"
             >
-              <ArrowLeftIcon className="w-3.5 h-3.5" />
+              <ArrowLeftIcon className="w-4 h-4" />
               <span>목록으로</span>
             </Link>
             <Link
               href={`/?dock=${skill.slug}`}
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-[#1D1D1F] px-5 py-2 text-[13.5px] font-bold text-[#FBFBFD] hover:opacity-90"
+              className="inline-flex items-center gap-2 rounded-2xl bg-[#1D1D1F] h-[clamp(42px,2.6vw,54px)] px-6 text-[clamp(14.5px,0.92vw,18.5px)] font-bold text-[#FBFBFD] hover:opacity-90"
             >
               <span>장바구니에 담아 적용하기</span>
             </Link>
           </div>
         </header>
 
-        <article className="rounded-[24px] bg-white border border-[#E5E7EB] shadow-sm p-6 sm:p-8 space-y-5">
-          <div className="space-y-3 pb-5 border-b border-[#EAEEF4]">
-            <div className="flex flex-wrap items-center gap-2 text-[13px]">
+        <article className="rounded-[28px] bg-white border border-[#E5E5EA] shadow-sm p-[clamp(24px,2.2vw,44px)] space-y-6">
+          <div className="space-y-4 pb-6 border-b border-[#EAEEF4]">
+            <div className="flex flex-wrap items-center gap-2.5 text-[clamp(13.5px,0.85vw,17.5px)]">
               <span
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-semibold ${domain.badgeClass}`}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-semibold ${domain.badgeClass}`}
               >
                 <span
-                  className="h-1.5 w-1.5 rounded-full"
+                  className="h-2 w-2 rounded-full"
                   style={{ backgroundColor: domain.dotColor }}
                   aria-hidden="true"
                 />
                 {domain.label}
               </span>
               <span className="tnum inline-flex items-center gap-1 font-semibold text-[#374151]">
-                <StarIcon className="w-3.5 h-3.5 text-[#D97706]" />
-                GitHub {skill.stars.toLocaleString("en-US")}
+                <StarIcon className="w-4 h-4 text-[#D97706]" />
+                {skill.sourcePlatform === "huggingface"
+                  ? `HF ♥ ${(skill.likes ?? skill.stars).toLocaleString("en-US")}`
+                  : `GitHub ${skill.stars.toLocaleString("en-US")}`}
               </span>
               <span className="text-[#6B7280]">· {skill.license}</span>
               <span className="text-[#6B7280]">· AI 기억 부담: {weight.short}</span>
             </div>
 
-            <h1 className="text-[24px] sm:text-[28px] font-extrabold tracking-[-0.025em] text-[#111827] leading-[1.35]">
+            <h1 className="text-[clamp(23px,1.75vw,36px)] font-extrabold tracking-[-0.025em] text-[#1D1D1F] leading-[1.32]">
               {getFriendlySkillTitle(skill)}
             </h1>
 
@@ -136,9 +138,9 @@ export default async function SkillDetailPage({
                 (t) => (
                   <span
                     key={t.id}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-[#F8FAFC] border border-[#E5E7EB] px-3 py-1 text-[12.5px] font-semibold text-[#374151]"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#F8FAFC] border border-[#CBD5E1] px-3.5 py-1.5 text-[clamp(13.5px,0.85vw,17px)] font-bold text-[#1E293B]"
                   >
-                    <ToolIcon tool={t.id} className="w-3.5 h-3.5 text-[#059669]" />
+                    <ToolIcon tool={t.id} className="w-4 h-4 text-[#059669]" />
                     <span>{t.label}</span>
                   </span>
                 ),
@@ -147,24 +149,24 @@ export default async function SkillDetailPage({
                 href={skill.repoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-full bg-[#F0F9FF] border border-[#BAE6FD] px-3 py-1 text-[12.5px] font-semibold text-[#0369A1] hover:underline"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] px-3.5 py-1.5 text-[clamp(13.5px,0.85vw,17px)] font-semibold text-[#0369A1] hover:underline"
               >
                 <span>{skill.repo}</span>
-                <ExternalLinkIcon className="w-3 h-3" />
+                <ExternalLinkIcon className="w-3.5 h-3.5" />
               </a>
             </div>
           </div>
 
           {/* 박스 1 */}
-          <section className="modal-section-box p-5 space-y-2.5">
-            <h2 className="flex items-center gap-2 text-[14.5px] font-bold text-[#D97706]">
-              <LightbulbIcon className="w-4 h-4" />
+          <section className="modal-section-box p-[clamp(22px,1.75vw,36px)] space-y-3">
+            <h2 className="flex items-center gap-2 text-[clamp(14.5px,0.9vw,18.5px)] font-bold text-[#D97706]">
+              <LightbulbIcon className="w-5 h-5" />
               <span>한줄 핵심 요약 · 어떤 도구인가요?</span>
             </h2>
-            <p className="text-[16px] font-medium leading-[1.72] text-[#111827]">
+            <p className="text-[clamp(17px,1.12vw,23px)] font-medium leading-[1.74] text-[#1D1D1F]">
               <HighlightText text={skill.oneLineAnalogy} tone="yellow" />
             </p>
-            <p className="text-[15px] leading-[1.72] text-[#374151]">
+            <p className="text-[clamp(15.5px,1vw,20px)] leading-[1.72] text-[#374151]">
               <HighlightText text={skill.summaryKo} tone="sky" />
             </p>
           </section>
