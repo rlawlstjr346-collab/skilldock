@@ -52,6 +52,32 @@ body {
   border-radius: 16px;
 }
 
+/* Purposeful 260ms elastic catch feedback when a flying skill lands in the floating cart */
+@keyframes cart-catch-pop {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.2);
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.cart-catch-pop {
+  animation: cart-catch-pop 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-catch-pop {
+    animation: none;
+  }
+}
+
 /* Crisp light scrollbars */
 ::-webkit-scrollbar {
   width: 7px;

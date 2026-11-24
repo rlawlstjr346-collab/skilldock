@@ -16,10 +16,12 @@ import {
   getFriendlyDeckTitle,
   getFriendlySkillTitle,
   getFriendlyWeightLabel,
+  getLifecycleBadgeMeta,
 } from "@/lib/editorial";
 import {
   TOOL_TARGETS,
   type BenchmarkMetric,
+  type InstallMethod,
   type InstallScope,
   type SkillItem,
   type SynergyDeck,
@@ -63,8 +65,17 @@ interface SkillDetailModalProps {
   onChangeTarget: (next: ModalTarget) => void;
   skillsBySlug: Map<string, SkillItem>;
   dockSlugs: string[];
-  onToggleDockSkill: (slug: string) => void;
-  onLoadDeckToDock: (deck: SynergyDeck) => void;
+  installedIds: Set<string>;
+  onToggleDockSkill: (slug: string, originRect?: DOMRect) => void;
+  onLoadDeckToDock: (deck: SynergyDeck, originRect?: DOMRect) => void;
+  onRecordInstall: (payload: {
+    slugs: string[];
+    presetSlug?: string;
+    presetTitle?: string;
+    method: InstallMethod;
+    clearCartAfter?: boolean;
+    toastMessage: string;
+  }) => void;
   selectedTools: ToolTargetId[];
   onToggleTool: (id: ToolTargetId) => void;
   scope: InstallScope;
@@ -294,8 +305,10 @@ export function SkillDetailModal({
   onChangeTarget,
   skillsBySlug,
   dockSlugs,
+  installedIds,
   onToggleDockSkill,
   onLoadDeckToDock,
+  onRecordInstall,
   selectedTools,
   onToggleTool,
   scope,
@@ -361,11 +374,27 @@ export function SkillDetailModal({
   const effectiveLocalTools: ToolTargetId[] =
     localTools.length > 0 ? localTools : ["claude-code", "gemini-agy"];
 
-  async function handleCopy(text: string, key: string, toastLabel: string) {
+  async function handleCopy(
+    text: string,
+    key: string,
+    toastLabel: string,
+    installMethod?: InstallMethod,
+  ) {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedKey(key);
-      onToast(toastLabel);
+      if (installMethod && activeSkills.length > 0) {
+        onRecordInstall({
+          slugs: activeSkills.map((s) => s.slug),
+          presetSlug: target?.kind === "deck" ? target.deck.slug : undefined,
+          presetTitle: target?.kind === "deck" ? target.deck.title : undefined,
+          method: installMethod,
+          clearCartAfter: target?.kind === "dock-bulk",
+          toastMessage: toastLabel,
+        });
+      } else {
+        onToast(toastLabel);
+      }
       setTimeout(() => setCopiedKey(null), 1800);
     } catch {
       onToast("복사에 실패했어요. 아래 미리보기에서 직접 선택해 복사해 주세요.");
@@ -401,7 +430,14 @@ export function SkillDetailModal({
       setBridgeMsg(
         `자동 설치 완료! 파일 ${json.writtenFiles.length}개를 안전하게 반영했어요 (백업 ${json.backups.length}건).`,
       );
-      onToast(`${activeSkills.length}개 스킬을 내 PC에 자동 설치했어요.`);
+      onRecordInstall({
+        slugs: activeSkills.map((s) => s.slug),
+        presetSlug: target?.kind === "deck" ? target.deck.slug : undefined,
+        presetTitle: target?.kind === "deck" ? target.deck.title : undefined,
+        method: "live-bridge",
+        clearCartAfter: target?.kind === "dock-bulk",
+        toastMessage: `${activeSkills.length}개 스킬을 내 PC에 자동 설치했어요! 좌측 '내 장착 독'에 기록되었습니다.`,
+      });
       await onRefreshBridge();
     } catch (err) {
       setBridgeErr(err instanceof Error ? err.message : String(err));
@@ -544,6 +580,30 @@ export function SkillDetailModal({
               )}
               {isSkill && (
                 <>
+                  {(() => {
+                    const lc = getLifecycleBadgeMeta(target.skill.lifecycleTier);
+                    return (
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11.5px] font-semibold ${lc.badgeClass}`}
+                      >
+                        <span
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ backgroundColor: lc.dotColor }}
+                        />
+                        {lc.label}
+                      </span>
+                    );
+                  })()}
+                  {radarList.length > 0 && (
+                    <span className="inline-flex items-center rounded-full bg-[#F0F9FF] border border-[#BAE6FD] px-2 py-0.5 text-[11.5px] font-semibold text-[#0369A1]">
+                      실시간 이슈 해결
+                    </span>
+                  )}
+                  {installedIds.has(target.skill.slug) && (
+                    <span className="inline-flex items-center rounded-full bg-[#ECFDF5] border border-[#A7F3D0] px-2 py-0.5 text-[11.5px] font-bold text-[#047857]">
+                      설치 완료 ✓
+                    </span>
+                  )}
                   <span className="tnum inline-flex items-center gap-1 font-semibold text-[#374151]">
                     <StarIcon className="w-3.5 h-3.5 text-[#D97706]" />
                     GitHub {target.skill.stars.toLocaleString("en-US")}
@@ -552,9 +612,16 @@ export function SkillDetailModal({
                 </>
               )}
               {isDeck && (
-                <span className="text-[#6B7280] font-medium">
-                  검증된 오픈소스 {activeSkills.length}개 추천 조합
-                </span>
+                <>
+                  <span className="rounded-full bg-[#181D27] text-[#34D399] px-2.5 py-0.5 text-[12px] font-bold">
+                    프리셋 세트 · {activeSkills.length}개 무기 합체
+                  </span>
+                  {target.deck.skillSlugs.every((s) => installedIds.has(s)) && (
+                    <span className="inline-flex items-center rounded-full bg-[#ECFDF5] border border-[#A7F3D0] px-2 py-0.5 text-[11.5px] font-bold text-[#047857]">
+                      설치 완료 ✓
+                    </span>
+                  )}
+                </>
               )}
             </div>
 
@@ -589,11 +656,12 @@ export function SkillDetailModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
               <button
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
                   if (isSkill) {
-                    onToggleDockSkill(target.skill.slug);
+                    onToggleDockSkill(target.skill.slug, rect);
                   } else if (isDeck) {
-                    onLoadDeckToDock(target.deck);
+                    onLoadDeckToDock(target.deck, rect);
                   }
                 }}
                 className={`inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-[14px] font-bold border transition-colors ${
@@ -605,13 +673,13 @@ export function SkillDetailModal({
                 {isDockedNow ? (
                   <>
                     <CheckIcon className="w-4 h-4" />
-                    <span>내 독에 담김</span>
+                    <span>장바구니에 담김</span>
                   </>
                 ) : (
                   <>
                     <PlusIcon className="w-4 h-4" />
                     <span>
-                      {isDeck ? "이 세트 통째로 독에 담기" : "내 장착 독에 담기"}
+                      {isDeck ? "이 세트 통째로 장바구니 담기" : "장바구니에 담기"}
                     </span>
                   </>
                 )}
@@ -955,7 +1023,8 @@ export function SkillDetailModal({
                       handleCopy(
                         beginnerPrompt,
                         "beginner-chat",
-                        "한글 자동설치 문구를 복사했어요! 켜둔 AI 채팅창에 그대로 붙여넣고 엔터를 눌러주세요.",
+                        "설치 문구가 복사되었어요! 좌측 '내 장착 독'에 기록되었습니다.",
+                        "ai-chat-prompt",
                       )
                     }
                     className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#059669] px-4 py-3 text-[15px] font-bold text-white hover:bg-[#047857]"
@@ -1033,7 +1102,8 @@ export function SkillDetailModal({
                       handleCopy(
                         webPack,
                         "web-pack",
-                        "Lovable · Bolt · v0 전용 프롬프트 팩을 복사했어요!",
+                        "웹 빌더 프롬프트 팩이 복사되었어요! 좌측 '내 장착 독'에 기록되었습니다.",
+                        "web-builder-pack",
                       )
                     }
                     className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#0284C7] px-4 py-2.5 text-[14.5px] font-bold text-white hover:bg-[#0369A1]"

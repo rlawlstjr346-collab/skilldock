@@ -2,6 +2,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+export const MAX_CATALOG_SIZE = 120;
+export const STALE_DAYS_LIMIT = 120;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const ROOT = process.cwd();
 const OUT_DIR = path.join(ROOT, "public", "data");
@@ -67,6 +72,123 @@ function classifyContextTier(tokens) {
   if (tokens <= 800) return "초경량";
   if (tokens <= 2200) return "보통";
   return "무거움";
+}
+
+function parseDaysSince(isoString, nowMs) {
+  if (!isoString) return 0;
+  const ts = Date.parse(isoString);
+  if (Number.isNaN(ts)) return 0;
+  return Math.max(0, (nowMs - ts) / MS_PER_DAY);
+}
+
+/**
+ * Evaluates a skill's lifecycleTier ("evergreen" | "rising") and vitalityScore
+ * based on real GitHub star scale, recent push activity, and today's AI Radar issue matches.
+ */
+export function evaluateSkillVitality(
+  skill,
+  { nowMs = Date.now(), radarMatchCount = 0 } = {},
+) {
+  const stars = typeof skill.stars === "number" ? skill.stars : 0;
+  const daysSincePush = parseDaysSince(skill.pushedAt, nowMs);
+  const daysSinceCreated = skill.createdAt
+    ? parseDaysSince(skill.createdAt, nowMs)
+    : 365;
+
+  // 1. Star scale component (0~50)
+  const starScore =
+    stars > 0 ? Math.min(50, Math.round(Math.log10(Math.max(10, stars)) * 9)) : 12;
+
+  // 2. Push recency component (0~30)
+  let recencyScore = 0;
+  if (daysSincePush <= 7) recencyScore = 30;
+  else if (daysSincePush <= 30) recencyScore = 24;
+  else if (daysSincePush <= 60) recencyScore = 16;
+  else if (daysSincePush <= STALE_DAYS_LIMIT) recencyScore = 8;
+
+  // 3. Today's AI Radar live issue matching bonus (0~20)
+  const radarBonus = Math.min(20, Math.max(0, radarMatchCount) * 7);
+
+  const vitalityScore = Math.min(100, starScore + recencyScore + radarBonus);
+
+  // Classify lifecycleTier:
+  // - "rising": emerged within 30 days OR directly solves today's AI Radar live issue while actively rising/smaller-scale or newly surged
+  // - "evergreen": proven classic with high star count & active maintenance (permanently preserved)
+  let lifecycleTier = "evergreen";
+  if (daysSinceCreated <= 30) {
+    lifecycleTier = "rising";
+  } else if (skill.slug === "ai-radar-live") {
+    lifecycleTier = "rising";
+  } else if (
+    radarMatchCount >= 1 &&
+    daysSincePush <= 30 &&
+    (daysSinceCreated <= 180 || stars < 40000)
+  ) {
+    lifecycleTier = "rising";
+  } else if (stars >= 10000 && daysSincePush <= STALE_DAYS_LIMIT) {
+    lifecycleTier = "evergreen";
+  } else if (radarMatchCount >= 2 && daysSincePush <= 45) {
+    lifecycleTier = "rising";
+  }
+
+  return { lifecycleTier, vitalityScore };
+}
+
+/**
+ * Automatic catalog pruning & capacity cap engine:
+ * - Drops archived repos, HTTP 404 repos, or repos untouched for > STALE_DAYS_LIMIT days without star growth
+ * - Preserves evergreen classics and rising hot skills
+ * - Caps total catalog length to MAX_CATALOG_SIZE (120) sorted by vitalityScore
+ */
+export function pruneAndCapCatalog(
+  skills,
+  {
+    nowMs = Date.now(),
+    maxSize = MAX_CATALOG_SIZE,
+    staleDaysLimit = STALE_DAYS_LIMIT,
+  } = {},
+) {
+  const kept = [];
+  const pruned = [];
+
+  for (const item of skills) {
+    const isArchived = Boolean(item.archived);
+    const isNotFound = item.httpStatus === 404;
+    const daysSincePush = parseDaysSince(item.pushedAt, nowMs);
+    const starDelta =
+      typeof item.starDelta === "number" ? item.starDelta : 0;
+    const isStaleWithoutGrowth =
+      daysSincePush > staleDaysLimit && starDelta <= 0;
+
+    if (isArchived || isNotFound || isStaleWithoutGrowth) {
+      const reason = isArchived
+        ? "archived"
+        : isNotFound
+          ? "http-404"
+          : `stale-${Math.round(daysSincePush)}d-no-growth`;
+      pruned.push({ slug: item.slug, repo: item.repo, reason });
+      continue;
+    }
+
+    // Strip internal sync-only diagnostic fields before persisting
+    const { archived: _a, httpStatus: _h, starDelta: _d, ...cleanSkill } = item;
+    kept.push(cleanSkill);
+  }
+
+  kept.sort((a, b) => {
+    const scoreDiff = (b.vitalityScore ?? 0) - (a.vitalityScore ?? 0);
+    if (scoreDiff !== 0) return scoreDiff;
+    return (b.stars ?? 0) - (a.stars ?? 0);
+  });
+
+  if (kept.length > maxSize) {
+    const overflow = kept.splice(maxSize);
+    for (const extra of overflow) {
+      pruned.push({ slug: extra.slug, repo: extra.repo, reason: "capacity-cap" });
+    }
+  }
+
+  return { kept, pruned };
 }
 
 /**
@@ -1668,10 +1790,12 @@ async function main() {
     const prev = prevBySlug.get(seed.slug);
     const apiUrl = `https://api.github.com/repos/${seed.repo}`;
     let meta = null;
+    let httpStatus = 200;
 
     if (!circuitOpen) {
       await sleep(jitterMs());
       const res = await fetchJsonWithCache(apiUrl, ghHeaders, etagCache);
+      httpStatus = res.status;
       if (res.rateLimited) {
         console.warn(
           `[SKILLDOCK sync] Circuit breaker tripped (HTTP ${res.status}) at ${seed.repo}. Using cached data for remaining repos.`,
@@ -1696,6 +1820,8 @@ async function main() {
       typeof meta?.stargazers_count === "number"
         ? meta.stargazers_count
         : (prev?.stars ?? 0);
+    const starDelta =
+      typeof prev?.stars === "number" ? stars - prev.stars : 0;
     const language = meta?.language || prev?.language || "Markdown";
     const license =
       (meta?.license && meta.license.spdx_id && meta.license.spdx_id !== "NOASSERTION"
@@ -1704,6 +1830,8 @@ async function main() {
       prev?.license ||
       "Open Source";
     const pushedAt = meta?.pushed_at || prev?.pushedAt || nowIso;
+    const createdAt = meta?.created_at || prev?.createdAt || undefined;
+    const archived = Boolean(meta?.archived);
 
     // Verify demo media URL (HTTP 200 only)
     let demoMedia = null;
@@ -1718,6 +1846,8 @@ async function main() {
           url: candidateUrl,
           caption: seed.mediaCandidate.caption,
         };
+      } else if (prev?.demoMedia?.url === candidateUrl) {
+        demoMedia = prev.demoMedia;
       } else {
         console.warn(`    media check non-200 skipped: ${candidateUrl}`);
       }
@@ -1735,6 +1865,9 @@ async function main() {
       language,
       license,
       pushedAt,
+      createdAt,
+      lifecycleTier: "evergreen",
+      vitalityScore: 0,
       category: seed.category,
       roleSlot: seed.roleSlot,
       roleLabelKo: seed.roleLabelKo,
@@ -1750,6 +1883,9 @@ async function main() {
       radarKeywords: seed.radarKeywords,
       matchedRadar: [],
       verifiedAt: nowIso,
+      archived,
+      httpStatus,
+      starDelta,
     });
   }
 
@@ -1758,18 +1894,38 @@ async function main() {
     radar.signals,
     builtSkills,
   );
+  const nowMs = Date.now();
   for (const skill of builtSkills) {
     skill.matchedRadar = matchedBySkill[skill.slug] || [];
+    const { lifecycleTier, vitalityScore } = evaluateSkillVitality(skill, {
+      nowMs,
+      radarMatchCount: skill.matchedRadar.length,
+    });
+    skill.lifecycleTier = lifecycleTier;
+    skill.vitalityScore = vitalityScore;
+  }
+
+  // 4. Prune archived/404/stale repos and enforce MAX_CATALOG_SIZE = 120
+  const { kept: finalSkills, pruned } = pruneAndCapCatalog(builtSkills, {
+    nowMs,
+    maxSize: MAX_CATALOG_SIZE,
+    staleDaysLimit: STALE_DAYS_LIMIT,
+  });
+
+  if (pruned.length > 0) {
+    console.log(
+      `[SKILLDOCK sync] Pruned ${pruned.length} repos: ${pruned.map((p) => `${p.slug}(${p.reason})`).join(", ")}`,
+    );
   }
 
   const catalogPayload = {
-    version: 1,
+    version: 2,
     syncedAt: nowIso,
     radarGeneratedAt: radar.generatedAt,
     radarTotalSignals: radar.totalSignals,
     radarChinaSignals: radar.chinaSignals,
     radarMatchedCount: matchedSignals.length,
-    skills: builtSkills,
+    skills: finalSkills,
     radarItems: matchedSignals.slice(0, 30),
   };
 
@@ -1785,12 +1941,20 @@ async function main() {
   );
   fs.writeFileSync(ETAG_CACHE_PATH, JSON.stringify(etagCache, null, 2), "utf8");
 
+  const evergreenCount = finalSkills.filter((s) => s.lifecycleTier === "evergreen").length;
+  const risingCount = finalSkills.filter((s) => s.lifecycleTier === "rising").length;
   console.log(
-    `[SKILLDOCK sync] Done! Wrote ${builtSkills.length} verified skills, ${SYNERGY_DECKS.length} synergy decks, and ${matchedSignals.length} matched AI Radar signals.`,
+    `[SKILLDOCK sync] Done! Wrote ${finalSkills.length} verified skills (evergreen=${evergreenCount}, rising=${risingCount}, pruned=${pruned.length}), ${SYNERGY_DECKS.length} synergy decks, and ${matchedSignals.length} matched AI Radar signals.`,
   );
 }
 
-main().catch((err) => {
-  console.error("[SKILLDOCK sync] Fatal error:", err);
-  process.exit(1);
-});
+const isDirectRun =
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error("[SKILLDOCK sync] Fatal error:", err);
+    process.exit(1);
+  });
+}

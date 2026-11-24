@@ -275,3 +275,47 @@ export function AlertIcon({ className = "w-4 h-4" }: { className?: string }) {
     </svg>
   );
 }
+
+export function CartIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M3.5 5H6.2L8.4 15.2C8.55 15.9 9.17 16.4 9.88 16.4H17.8C18.5 16.4 19.11 15.92 19.27 15.24L20.8 8.6H7"
+        stroke="currentColor"
+        strokeWidth="1.85"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="10.2" cy="19.8" r="1.4" fill="currentColor" />
+      <circle cx="17.2" cy="19.8" r="1.4" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function TrashIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M3 4.5H13M6 4.5V3C6 2.45 6.45 2 7 2H9C9.55 2 10 2.45 10 3V4.5M4.5 4.5L5.1 13C5.15 13.55 5.6 14 6.15 14H9.85C10.4 14 10.85 13.55 10.9 13L11.5 4.5" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function ArchiveDockIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect x="2.2" y="2.5" width="11.6" height="3.2" rx="1" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M3.2 5.7V12.2C3.2 12.9 3.8 13.5 4.5 13.5H11.5C12.2 13.5 12.8 12.9 12.8 12.2V5.7" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M6.2 9.4L7.5 10.7L10 8.2" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function HomeGridIcon({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect x="2.2" y="2.2" width="11.6" height="4.4" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="2.2" y="8.8" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="8.8" y="8.8" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  );
+}

@@ -1,44 +1,54 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  analyzeDockSkills,
-  deserializeDockParam,
-  serializeDockParam,
-} from "@/lib/dock";
+import { deserializeDockParam, serializeDockParam } from "@/lib/dock";
 import {
   DOMAIN_LIST,
+  buildInterleavedMagazineFeed,
   deckMatchesDomain,
   getCleanKoreanRadarMatches,
   getFriendlySkillTitle,
-  getFriendlyWeightLabel,
   skillMatchesDomain,
   type DomainFilterId,
+  type QuickFilterId,
 } from "@/lib/editorial";
+import {
+  deserializeInstalledParam,
+  loadInstalledHistory,
+  mergeRestoredInstalledSlugs,
+  removeInstalledRecord,
+  saveInstalledHistory,
+  serializeInstalledParam,
+  upsertInstalledRecords,
+  type InstalledRecord,
+} from "@/lib/installed";
 import {
   TOOL_TARGETS,
   type CatalogData,
+  type InstallMethod,
   type InstallScope,
   type SkillItem,
   type SynergyDeck,
   type ToolTargetId,
 } from "@/lib/types";
 import { DeckFeedCard, SkillFeedCard } from "./FeedCards";
-import { FloatingDockBar } from "./FloatingDockBar";
+import { FloatingCartPopover } from "./FloatingCartPopover";
+import { FlyToCartLayer, type FlyParticle } from "./FlyToCartLayer";
 import {
-  AlertIcon,
-  ArrowRightIcon,
-  CloseIcon,
-  CompassIcon,
-  CopyIcon,
-  DockBagIcon,
-  LayersIcon,
-  RadarIcon,
+  ArchiveDockIcon,
+  HomeGridIcon,
   SearchIcon,
   SkillDockLogo,
   ToolIcon,
 } from "./Icons";
+import { InstalledDockView } from "./InstalledDockView";
 import {
   SkillDetailModal,
   type BridgeInstalledEntry,
@@ -50,44 +60,26 @@ interface WorkbenchProps {
   decks: SynergyDeck[];
 }
 
-type NavTab = "presets" | "issues" | "catalog" | "dock";
+type NavTab = "home" | "installed";
 
 const STORAGE_TOOLS_KEY = "skilldock:selected-tools:v1";
 const BRIDGE_BASE = "http://127.0.0.1:4789";
 
-const NAV_META: Record<
-  NavTab,
-  { title: string; subtitle: string }
-> = {
-  presets: {
-    title: "추천 프리셋 세트",
-    subtitle:
-      "어려운 깃허브 설치법을 몰라도 괜찮아요. 검증된 AI 스킬이나 해커톤 우승 세트를 골라 담고, 내가 쓰는 코딩 툴에 버튼 하나로 적용해 보세요.",
-  },
-  issues: {
-    title: "최신 이슈 맞춤 무기",
-    subtitle:
-      "요즘 AI 코딩하면서 자주 겪는 답답함과 최신 AI Radar 동향을 바로 해결해 주는 검증 오픈소스 스킬만 골라 연결했어요.",
-  },
-  catalog: {
-    title: "전체 스킬 도감",
-    subtitle:
-      "GitHub에서 실존과 효용을 직접 확인한 24개 오픈소스 스킬을 분야별로 둘러보고 필요한 무기만 가볍게 담아보세요.",
-  },
-  dock: {
-    title: "내 장착 독",
-    subtitle:
-      "담아둔 스킬의 기억용량 부담과 역할 중복을 확인하고, AI 채팅창 한글 자동설치나 웹 빌더 팩으로 한 번에 적용하세요.",
-  },
-};
+const QUICK_FILTERS: Array<{ id: QuickFilterId; label: string }> = [
+  { id: "all", label: "전체 섞어보기" },
+  { id: "presets", label: "묵직한 프리셋만" },
+  { id: "rising", label: "요즘 뜨는 신상·이슈" },
+  { id: "evergreen", label: "검증된 스테디 필수" },
+];
 
 export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [catalog, setCatalog] = useState<CatalogData>(initialCatalog);
-  const [activeTab, setActiveTab] = useState<NavTab>("presets");
+  const [activeTab, setActiveTab] = useState<NavTab>("home");
   const [activeDomain, setActiveDomain] = useState<DomainFilterId>("all");
+  const [quickFilter, setQuickFilter] = useState<QuickFilterId>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [scope, setScope] = useState<InstallScope>("project");
 
@@ -97,19 +89,35 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
     "gemini-agy",
   ]);
 
-  // Docked skill slugs (bidirectional with ?dock=)
   const validSlugs = useMemo(
     () => new Set(catalog.skills.map((s) => s.slug)),
     [catalog.skills],
   );
-  const [dockSlugs, setDockSlugs] = useState<string[]>(() => {
-    const fromUrl = deserializeDockParam(searchParams.get("dock"), validSlugs);
-    return fromUrl;
-  });
+
+  // Cart (temporary selection, bidirectional with ?dock=)
+  const [dockSlugs, setDockSlugs] = useState<string[]>(() =>
+    deserializeDockParam(searchParams.get("dock"), validSlugs),
+  );
+  const [cartOpen, setCartOpen] = useState(false);
+
+  // Installed History (loginless localStorage archive + ?installed= restore support)
+  const [installedRecords, setInstalledRecords] = useState<InstalledRecord[]>(
+    [],
+  );
+  const [pendingRestoreSlugs, setPendingRestoreSlugs] = useState<string[]>(() =>
+    deserializeInstalledParam(searchParams.get("installed"), validSlugs),
+  );
+
+  // Flying chip animation & cart catch pop
+  const cartButtonRef = useRef<HTMLButtonElement | null>(null);
+  const nextParticleIdRef = useRef(1);
+  const [flyParticles, setFlyParticles] = useState<FlyParticle[]>([]);
+  const [catchPopTick, setCatchPopTick] = useState(0);
 
   // Modal & Toast
   const [modalTarget, setModalTarget] = useState<ModalTarget | null>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
 
   // Local Live Bridge state
   const [bridgeConnected, setBridgeConnected] = useState(false);
@@ -123,10 +131,11 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
 
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 2600);
+    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = window.setTimeout(() => setToastMsg(null), 2800);
   }, []);
 
-  // Load saved tools from localStorage
+  // Load saved tools & installed history on client mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_TOOLS_KEY);
@@ -137,8 +146,22 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
         }
       }
     } catch {
-      // ignore storage errors
+      // ignore
     }
+
+    const loadedHistory = loadInstalledHistory();
+    setInstalledRecords(loadedHistory);
+
+    // If URL arrived with ?installed=..., surface the restore view immediately
+    const fromInstalledUrl = deserializeInstalledParam(
+      searchParams.get("installed"),
+      validSlugs,
+    );
+    if (fromInstalledUrl.length > 0) {
+      setPendingRestoreSlugs(fromInstalledUrl);
+      setActiveTab("installed");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Quiet background live-sync refresh on mount
@@ -155,7 +178,7 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
       });
   }, []);
 
-  // Bidirectional ?dock= URL synchronization
+  // Bidirectional ?dock= URL synchronization (preserves ?installed= separately)
   useEffect(() => {
     const serialized = serializeDockParam(dockSlugs);
     const current = searchParams.get("dock") ?? "";
@@ -171,7 +194,7 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
     }
   }, [dockSlugs, router, searchParams]);
 
-  // Check Live Bridge health on mount
+  // Check Live Bridge health on mount & scope change
   const refreshBridge = useCallback(async () => {
     try {
       const res = await fetch(`${BRIDGE_BASE}/health`, {
@@ -200,6 +223,47 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
     refreshBridge();
   }, [refreshBridge]);
 
+  const skillsBySlug = useMemo(() => {
+    const map = new Map<string, SkillItem>();
+    for (const s of catalog.skills) map.set(s.slug, s);
+    return map;
+  }, [catalog.skills]);
+
+  const installedIds = useMemo(
+    () => new Set(installedRecords.map((r) => r.slug)),
+    [installedRecords],
+  );
+
+  // Launch parabolic fly-to-cart chip from clicked button center -> bottom-right cart button center
+  const launchFlyToCart = useCallback(
+    (label: string, originRect?: DOMRect, isPreset = false) => {
+      const targetRect = cartButtonRef.current?.getBoundingClientRect();
+      if (!originRect || !targetRect) {
+        setCatchPopTick((t) => t + 1);
+        return;
+      }
+      const id = nextParticleIdRef.current++;
+      setFlyParticles((prev) => [
+        ...prev,
+        {
+          id,
+          label,
+          isPreset,
+          startX: originRect.left + originRect.width * 0.5,
+          startY: originRect.top + originRect.height * 0.5,
+          endX: targetRect.left + targetRect.width * 0.5,
+          endY: targetRect.top + targetRect.height * 0.5,
+        },
+      ]);
+    },
+    [],
+  );
+
+  const handleFlyComplete = useCallback((id: number) => {
+    setFlyParticles((prev) => prev.filter((p) => p.id !== id));
+    setCatchPopTick((t) => t + 1);
+  }, []);
+
   const toggleTool = (id: ToolTargetId) => {
     setSelectedTools((prev) => {
       const next = prev.includes(id)
@@ -216,47 +280,162 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
     });
   };
 
-  const toggleDockSkill = (slug: string) => {
-    setDockSlugs((prev) => {
-      const exists = prev.includes(slug);
-      const next = exists ? prev.filter((s) => s !== slug) : [...prev, slug];
-      const sk = skillsBySlug.get(slug);
-      if (sk) {
-        showToast(
-          exists
-            ? `${sk.name} 스킬을 내 독에서 뺐어요.`
-            : `${sk.name} 스킬을 내 독에 담았어요.`,
-        );
-      }
-      return next;
-    });
+  const toggleDockSkill = (slug: string, originRect?: DOMRect) => {
+    const exists = dockSlugs.includes(slug);
+    const sk = skillsBySlug.get(slug);
+    setDockSlugs((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
+    );
+    if (!exists && sk) {
+      launchFlyToCart(sk.name, originRect, false);
+      showToast(`${sk.name} 스킬을 장바구니에 담았어요.`);
+    } else if (exists && sk) {
+      showToast(`${sk.name} 스킬을 장바구니에서 뺐어요.`);
+    }
   };
 
-  const loadDeckToDock = (deck: SynergyDeck) => {
+  const loadDeckToDock = (deck: SynergyDeck, originRect?: DOMRect) => {
     const allPresent = deck.skillSlugs.every((s) => dockSlugs.includes(s));
     if (allPresent) {
       setDockSlugs((prev) => prev.filter((s) => !deck.skillSlugs.includes(s)));
-      showToast(`"${deck.title}" 구성을 내 독에서 뺐어요.`);
+      showToast(`"${deck.title}" 구성을 장바구니에서 뺐어요.`);
     } else {
-      setDockSlugs((prev) => Array.from(new Set([...prev, ...deck.skillSlugs])));
-      showToast(`"${deck.title}" ${deck.skillSlugs.length}개 스킬을 내 독에 담았어요.`);
+      setDockSlugs((prev) =>
+        Array.from(new Set([...prev, ...deck.skillSlugs])),
+      );
+      launchFlyToCart(`${deck.skillSlugs.length}개 프리셋`, originRect, true);
+      showToast(
+        `"${deck.title}" ${deck.skillSlugs.length}개 무기를 장바구니에 담았어요.`,
+      );
     }
+  };
+
+  const clearCart = () => {
+    setDockSlugs([]);
+    showToast("장바구니를 비웠어요.");
+  };
+
+  const handleRecordInstall = useCallback(
+    ({
+      slugs,
+      presetSlug,
+      presetTitle,
+      method,
+      clearCartAfter = false,
+      toastMessage,
+    }: {
+      slugs: string[];
+      presetSlug?: string;
+      presetTitle?: string;
+      method: InstallMethod;
+      clearCartAfter?: boolean;
+      toastMessage: string;
+    }) => {
+      setInstalledRecords((prev) => {
+        const next = upsertInstalledRecords(prev, {
+          slugs,
+          presetSlug,
+          presetTitle,
+          tools: selectedTools,
+          scope,
+          method,
+        });
+        saveInstalledHistory(next);
+        return next;
+      });
+      if (clearCartAfter) {
+        setDockSlugs([]);
+        setCartOpen(false);
+      }
+      showToast(toastMessage);
+    },
+    [selectedTools, scope, showToast],
+  );
+
+  const handleRemoveInstalledRecord = (slug: string) => {
+    setInstalledRecords((prev) => {
+      const next = removeInstalledRecord(prev, slug);
+      saveInstalledHistory(next);
+      return next;
+    });
+    const sk = skillsBySlug.get(slug);
+    showToast(`${sk?.name ?? slug} 항목을 기록함에서 지웠어요.`);
   };
 
   const handleCopyShareUrl = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
-      showToast("현재 담은 스킬 조합 공유 링크를 복사했어요.");
+      const url = new URL(window.location.href);
+      const serialized = serializeDockParam(dockSlugs);
+      if (serialized) url.searchParams.set("dock", serialized);
+      url.searchParams.delete("installed");
+      await navigator.clipboard.writeText(url.toString());
+      showToast("장바구니 조합 공유 링크(?dock=)를 복사했어요.");
     } catch {
       showToast("링크 복사에 실패했어요.");
     }
   };
 
-  const skillsBySlug = useMemo(() => {
-    const map = new Map<string, SkillItem>();
-    for (const s of catalog.skills) map.set(s.slug, s);
-    return map;
-  }, [catalog.skills]);
+  const handleCopyRestoreUrl = async () => {
+    try {
+      const serialized = serializeInstalledParam(
+        installedRecords.map((r) => r.slug),
+      );
+      const url = new URL(window.location.origin);
+      if (serialized) url.searchParams.set("installed", serialized);
+      await navigator.clipboard.writeText(url.toString());
+      showToast(
+        "다른 PC 복원용 내 독 링크(?installed=)를 복사했어요! 새 PC에서 열면 1클릭으로 복원돼요.",
+      );
+    } catch {
+      showToast("복원 링크 복사에 실패했어요.");
+    }
+  };
+
+  const handleApplyRestoreFromUrl = (alsoAddToCart: boolean) => {
+    if (pendingRestoreSlugs.length === 0) return;
+    setInstalledRecords((prev) => {
+      const next = mergeRestoredInstalledSlugs(
+        prev,
+        pendingRestoreSlugs,
+        selectedTools,
+      );
+      saveInstalledHistory(next);
+      return next;
+    });
+    if (alsoAddToCart) {
+      setDockSlugs((prev) =>
+        Array.from(new Set([...prev, ...pendingRestoreSlugs])),
+      );
+      setCartOpen(true);
+    }
+    const restoredCount = pendingRestoreSlugs.length;
+    setPendingRestoreSlugs([]);
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("installed");
+    const qs = nextParams.toString();
+    router.replace(qs ? `/?${qs}` : "/", { scroll: false });
+    showToast(
+      alsoAddToCart
+        ? `${restoredCount}개 장착 기록을 복원하고 장바구니에 담았어요!`
+        : `${restoredCount}개 장착 기록을 내 장착 독에 복원했어요!`,
+    );
+  };
+
+  const handleDismissRestoreBanner = () => {
+    setPendingRestoreSlugs([]);
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("installed");
+    const qs = nextParams.toString();
+    router.replace(qs ? `/?${qs}` : "/", { scroll: false });
+  };
+
+  const handleSendInstalledToCart = () => {
+    const slugs = installedRecords.map((r) => r.slug);
+    if (slugs.length === 0) return;
+    setDockSlugs((prev) => Array.from(new Set([...prev, ...slugs])));
+    setCartOpen(true);
+    showToast(`내 장착 독 ${slugs.length}개 무기를 장바구니에 담았어요.`);
+  };
 
   const dockSkills = useMemo(
     () =>
@@ -265,25 +444,12 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
         .filter((s): s is SkillItem => Boolean(s)),
     [dockSlugs, skillsBySlug],
   );
-  const dockAnalysis = useMemo(
-    () => analyzeDockSkills(dockSkills),
-    [dockSkills],
-  );
-
-  // Skills that have clean Korean AI Radar issue matches
-  const issueMatchedSkills = useMemo(() => {
-    return catalog.skills
-      .filter((s) => getCleanKoreanRadarMatches(s).length > 0)
-      .sort(
-        (a, b) =>
-          getCleanKoreanRadarMatches(b).length -
-            getCleanKoreanRadarMatches(a).length || b.stars - a.stars,
-      );
-  }, [catalog.skills]);
 
   const q = searchQuery.trim().toLowerCase();
 
-  const visibleDecks = useMemo(() => {
+  // Filtered presets and skills (domain + search + quickFilter)
+  const filteredDecks = useMemo(() => {
+    if (quickFilter === "rising" || quickFilter === "evergreen") return [];
     return decks.filter((deck) => {
       if (!deckMatchesDomain(deck, activeDomain, skillsBySlug)) return false;
       if (!q) return true;
@@ -293,37 +459,55 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
         deck.synergyNarrative.toLowerCase().includes(q)
       );
     });
-  }, [decks, activeDomain, skillsBySlug, q]);
+  }, [decks, activeDomain, skillsBySlug, q, quickFilter]);
 
-  const visibleIssueSkills = useMemo(() => {
-    return issueMatchedSkills.filter((skill) => {
-      if (!skillMatchesDomain(skill, activeDomain)) return false;
-      if (!q) return true;
-      return (
-        skill.name.toLowerCase().includes(q) ||
-        getFriendlySkillTitle(skill).toLowerCase().includes(q) ||
-        skill.summaryKo.toLowerCase().includes(q)
-      );
-    });
-  }, [issueMatchedSkills, activeDomain, q]);
+  const filteredSkills = useMemo(() => {
+    if (quickFilter === "presets") return [];
+    return catalog.skills
+      .filter((skill) => {
+        if (!skillMatchesDomain(skill, activeDomain)) return false;
+        if (quickFilter === "rising") {
+          const isRisingOrHot =
+            skill.lifecycleTier === "rising" ||
+            getCleanKoreanRadarMatches(skill).length > 0;
+          if (!isRisingOrHot) return false;
+        }
+        if (quickFilter === "evergreen" && skill.lifecycleTier !== "evergreen") {
+          return false;
+        }
+        if (!q) return true;
+        return (
+          skill.name.toLowerCase().includes(q) ||
+          getFriendlySkillTitle(skill).toLowerCase().includes(q) ||
+          skill.repo.toLowerCase().includes(q) ||
+          skill.summaryKo.toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => {
+        if (quickFilter === "rising") {
+          const aScore =
+            (a.lifecycleTier === "rising" ? 50 : 0) +
+            getCleanKoreanRadarMatches(a).length * 10 +
+            (a.vitalityScore ?? 0);
+          const bScore =
+            (b.lifecycleTier === "rising" ? 50 : 0) +
+            getCleanKoreanRadarMatches(b).length * 10 +
+            (b.vitalityScore ?? 0);
+          return bScore - aScore;
+        }
+        return (b.vitalityScore ?? 0) - (a.vitalityScore ?? 0) || b.stars - a.stars;
+      });
+  }, [catalog.skills, activeDomain, q, quickFilter]);
 
-  const visibleCatalogSkills = useMemo(() => {
-    return catalog.skills.filter((skill) => {
-      if (!skillMatchesDomain(skill, activeDomain)) return false;
-      if (!q) return true;
-      return (
-        skill.name.toLowerCase().includes(q) ||
-        getFriendlySkillTitle(skill).toLowerCase().includes(q) ||
-        skill.repo.toLowerCase().includes(q) ||
-        skill.summaryKo.toLowerCase().includes(q)
-      );
-    });
-  }, [catalog.skills, activeDomain, q]);
+  const magazineBlocks = useMemo(
+    () => buildInterleavedMagazineFeed(filteredDecks, filteredSkills),
+    [filteredDecks, filteredSkills],
+  );
 
-  // Domain counts for left sidebar
+  // Domain counts across both presets & individual skills
   const domainCounts = useMemo(() => {
     const counts: Record<DomainFilterId, number> = {
-      all: 0,
+      all: decks.length + catalog.skills.length,
       savings: 0,
       design: 0,
       architecture: 0,
@@ -331,27 +515,18 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
       video: 0,
       live: 0,
     };
-    if (activeTab === "presets") {
-      counts.all = decks.length;
-      for (const dom of DOMAIN_LIST) {
-        if (dom.id === "all") continue;
-        counts[dom.id] = decks.filter((d) =>
-          deckMatchesDomain(d, dom.id, skillsBySlug),
-        ).length;
-      }
-    } else {
-      const pool =
-        activeTab === "issues" ? issueMatchedSkills : catalog.skills;
-      counts.all = pool.length;
-      for (const dom of DOMAIN_LIST) {
-        if (dom.id === "all") continue;
-        counts[dom.id] = pool.filter((s) =>
-          skillMatchesDomain(s, dom.id),
-        ).length;
-      }
+    for (const dom of DOMAIN_LIST) {
+      if (dom.id === "all") continue;
+      const dCount = decks.filter((d) =>
+        deckMatchesDomain(d, dom.id, skillsBySlug),
+      ).length;
+      const sCount = catalog.skills.filter((s) =>
+        skillMatchesDomain(s, dom.id),
+      ).length;
+      counts[dom.id] = dCount + sCount;
     }
     return counts;
-  }, [activeTab, decks, issueMatchedSkills, catalog.skills, skillsBySlug]);
+  }, [decks, catalog.skills, skillsBySlug]);
 
   const detectedShortList = useMemo(() => {
     const labels: string[] = [];
@@ -363,240 +538,86 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
     return labels.slice(0, 2).join(" · ");
   }, [bridgeDetectedTools]);
 
-  // Helper to render AI Radar 1-lead + 2-feature + 1-stream rhythm
-  const renderDeckFeed = (list: SynergyDeck[]) => {
-    if (list.length === 0) {
-      return (
-        <div className="editorial-card p-10 text-center space-y-3">
-          <p className="text-[15.5px] text-[#4B5563]">
-            조건에 맞는 추천 세트가 없어요. 분야를 전체로 바꾸거나 검색어를 비워보세요.
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveDomain("all");
-              setSearchQuery("");
-            }}
-            className="rounded-full bg-[#111827] text-white px-5 py-2 text-[14px] font-semibold"
-          >
-            전체 세트 보기
-          </button>
-        </div>
-      );
-    }
-
-    const lead = list[0];
-    const features = list.slice(1, 3);
-    const stream = list.slice(3);
-
-    return (
-      <div className="space-y-4">
-        <DeckFeedCard
-          deck={lead}
-          skillsBySlug={skillsBySlug}
-          variant="lead"
-          isAllDocked={lead.skillSlugs.every((s) => dockSlugs.includes(s))}
-          onOpen={() => setModalTarget({ kind: "deck", deck: lead })}
-          onToggleDeck={() => loadDeckToDock(lead)}
-        />
-
-        {features.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {features.map((deck) => (
-              <DeckFeedCard
-                key={deck.slug}
-                deck={deck}
-                skillsBySlug={skillsBySlug}
-                variant="feature"
-                isAllDocked={deck.skillSlugs.every((s) => dockSlugs.includes(s))}
-                onOpen={() => setModalTarget({ kind: "deck", deck })}
-                onToggleDeck={() => loadDeckToDock(deck)}
-              />
-            ))}
-          </div>
-        )}
-
-        {stream.length > 0 && (
-          <div className="space-y-3.5">
-            {stream.map((deck) => (
-              <DeckFeedCard
-                key={deck.slug}
-                deck={deck}
-                skillsBySlug={skillsBySlug}
-                variant="stream"
-                isAllDocked={deck.skillSlugs.every((s) => dockSlugs.includes(s))}
-                onOpen={() => setModalTarget({ kind: "deck", deck })}
-                onToggleDeck={() => loadDeckToDock(deck)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderSkillFeed = (list: SkillItem[], showRadarBadge: boolean) => {
-    if (list.length === 0) {
-      return (
-        <div className="editorial-card p-10 text-center space-y-3">
-          <p className="text-[15.5px] text-[#4B5563]">
-            선택한 조건에 맞는 스킬이 아직 없어요. 분야를 전체로 전환해 둘러보세요.
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveDomain("all");
-              setSearchQuery("");
-            }}
-            className="rounded-full bg-[#111827] text-white px-5 py-2 text-[14px] font-semibold"
-          >
-            전체 스킬 보기
-          </button>
-        </div>
-      );
-    }
-
-    const lead = list[0];
-    const features = list.slice(1, 3);
-    const stream = list.slice(3);
-
-    return (
-      <div className="space-y-4">
-        <SkillFeedCard
-          skill={lead}
-          variant="lead"
-          docked={dockSlugs.includes(lead.slug)}
-          showRadarBadge={showRadarBadge}
-          onOpen={() => setModalTarget({ kind: "skill", skill: lead })}
-          onToggleDock={() => toggleDockSkill(lead.slug)}
-        />
-
-        {features.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {features.map((skill) => (
-              <SkillFeedCard
-                key={skill.slug}
-                skill={skill}
-                variant="feature"
-                docked={dockSlugs.includes(skill.slug)}
-                showRadarBadge={showRadarBadge}
-                onOpen={() => setModalTarget({ kind: "skill", skill })}
-                onToggleDock={() => toggleDockSkill(skill.slug)}
-              />
-            ))}
-          </div>
-        )}
-
-        {stream.length > 0 && (
-          <div className="space-y-3.5">
-            {stream.map((skill) => (
-              <SkillFeedCard
-                key={skill.slug}
-                skill={skill}
-                variant="stream"
-                docked={dockSlugs.includes(skill.slug)}
-                showRadarBadge={showRadarBadge}
-                onOpen={() => setModalTarget({ kind: "skill", skill })}
-                onToggleDock={() => toggleDockSkill(skill.slug)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const navItems: Array<{
-    id: NavTab;
-    label: string;
-    count: number;
-    Icon: typeof LayersIcon;
-  }> = [
-    { id: "presets", label: "추천 프리셋 세트", count: decks.length, Icon: LayersIcon },
-    {
-      id: "issues",
-      label: "최신 이슈 맞춤 무기",
-      count: issueMatchedSkills.length,
-      Icon: RadarIcon,
-    },
-    {
-      id: "catalog",
-      label: "전체 스킬 도감",
-      count: catalog.skills.length,
-      Icon: CompassIcon,
-    },
-    {
-      id: "dock",
-      label: "내 장착 독",
-      count: dockSkills.length,
-      Icon: DockBagIcon,
-    },
-  ];
-
-  const weightInfo = getFriendlyWeightLabel(dockAnalysis.weightTier);
-
   return (
     <div className="min-h-screen bg-[#F5F6F8] text-[#111827] pb-28">
       <div className="max-w-[1120px] mx-auto px-5 sm:px-8 py-8 sm:py-10 flex flex-col lg:flex-row gap-8">
-        {/* LEFT SLIM SIDEBAR (AI Radar proportions) */}
+        {/* LEFT SLIM SIDEBAR — Cleaned up to 2 primary tabs + 7 colored-dot domains */}
         <aside className="w-full lg:w-[220px] shrink-0 flex flex-col justify-between gap-7 lg:sticky lg:top-8 lg:self-start">
           <div className="flex flex-col gap-6">
             {/* Brand Logo */}
             <button
               type="button"
               onClick={() => {
-                setActiveTab("presets");
+                setActiveTab("home");
                 setActiveDomain("all");
+                setQuickFilter("all");
                 setSearchQuery("");
               }}
               className="text-left focus-visible:outline-none"
-              aria-label="SkillDock 첫 화면으로 이동"
+              aria-label="SkillDock 스킬 탐색 홈으로 이동"
             >
               <SkillDockLogo />
             </button>
 
-            {/* Primary 4 Navigation Menus */}
-            <nav aria-label="주요 탐색 메뉴" className="flex flex-col gap-1">
-              {navItems.map(({ id, label, count, Icon }) => {
-                const active = activeTab === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setActiveTab(id)}
-                    aria-current={active ? "page" : undefined}
-                    className={`flex w-full items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-left text-[15px] transition-colors ${
-                      active
-                        ? "bg-white shadow-sm border border-[#E5E7EB] font-bold text-[#111827]"
-                        : "border border-transparent font-medium text-[#4B5563] hover:bg-white/60 hover:text-[#111827]"
+            {/* Primary 2 Navigation Tabs */}
+            <nav aria-label="주요 탐색 메뉴" className="flex flex-col gap-1.5">
+              <button
+                type="button"
+                onClick={() => setActiveTab("home")}
+                aria-current={activeTab === "home" ? "page" : undefined}
+                className={`flex w-full items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-left text-[15px] transition-colors ${
+                  activeTab === "home"
+                    ? "bg-white shadow-sm border border-[#E5E7EB] font-bold text-[#111827]"
+                    : "border border-transparent font-medium text-[#4B5563] hover:bg-white/60 hover:text-[#111827]"
+                }`}
+              >
+                <span className="flex items-center gap-2.5 min-w-0">
+                  <HomeGridIcon
+                    className={`w-[17px] h-[17px] shrink-0 ${
+                      activeTab === "home" ? "text-[#111827]" : "text-[#6B7280]"
                     }`}
-                  >
-                    <span className="flex items-center gap-2.5 min-w-0">
-                      <Icon
-                        className={`w-[17px] h-[17px] shrink-0 ${
-                          active ? "text-[#111827]" : "text-[#6B7280]"
-                        }`}
-                      />
-                      <span className="truncate">{label}</span>
-                    </span>
-                    <span
-                      className={`tnum shrink-0 text-[13px] ${
-                        id === "dock" && count > 0
-                          ? "rounded-full bg-[#10B981] text-white px-2 py-0.5 text-[11.5px] font-bold"
-                          : active
-                            ? "font-semibold text-[#374151]"
-                            : "text-[#6B7280]"
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
+                  />
+                  <span className="truncate">스킬 탐색 홈</span>
+                </span>
+                <span className="tnum shrink-0 text-[12.5px] font-semibold text-[#6B7280]">
+                  {decks.length + catalog.skills.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("installed")}
+                aria-current={activeTab === "installed" ? "page" : undefined}
+                className={`flex w-full items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-left text-[15px] transition-colors ${
+                  activeTab === "installed"
+                    ? "bg-white shadow-sm border border-[#E5E7EB] font-bold text-[#111827]"
+                    : "border border-transparent font-medium text-[#4B5563] hover:bg-white/60 hover:text-[#111827]"
+                }`}
+              >
+                <span className="flex items-center gap-2.5 min-w-0">
+                  <ArchiveDockIcon
+                    className={`w-[17px] h-[17px] shrink-0 ${
+                      activeTab === "installed"
+                        ? "text-[#059669]"
+                        : "text-[#6B7280]"
+                    }`}
+                  />
+                  <span className="truncate">내 장착 독</span>
+                </span>
+                <span
+                  className={`tnum shrink-0 text-[12px] ${
+                    installedRecords.length > 0
+                      ? "rounded-full bg-[#10B981] text-white px-2 py-0.5 font-bold"
+                      : "text-[#6B7280] font-semibold"
+                  }`}
+                >
+                  {installedRecords.length}
+                </span>
+              </button>
             </nav>
 
-            {/* Domain Filters (AI Radar colored dot list) */}
-            {activeTab !== "dock" && (
+            {/* 7 Colored-Dot Domain Filters */}
+            {activeTab === "home" && (
               <section aria-labelledby="sidebar-domain-heading">
                 <h2
                   id="sidebar-domain-heading"
@@ -639,11 +660,11 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
             )}
           </div>
 
-          {/* Bottom-left subtle Bridge status chip */}
+          {/* Bottom-left subtle Live Bridge status chip */}
           <div className="pt-2 border-t border-[#E5E7EB]">
             <button
               type="button"
-              onClick={() => setModalTarget({ kind: "dock-bulk" })}
+              onClick={() => setCartOpen(true)}
               className="w-full flex items-center gap-2 rounded-xl bg-white border border-[#E5E7EB] px-3 py-2 text-left text-[12.5px] text-[#374151] hover:border-[#CBD5E1]"
             >
               <span
@@ -668,7 +689,7 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
           <header className="space-y-2">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h1 className="text-[24px] sm:text-[26px] font-extrabold tracking-[-0.025em] text-[#111827]">
-                {NAV_META[activeTab].title}
+                {activeTab === "home" ? "스킬 탐색 홈" : "내 장착 독"}
               </h1>
               {catalog.radarGeneratedAt && (
                 <span className="text-[12.5px] text-[#6B7280] tnum">
@@ -677,13 +698,15 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
               )}
             </div>
             <p className="text-[15px] text-[#4B5563] leading-[1.68]">
-              {NAV_META[activeTab].subtitle}
+              {activeTab === "home"
+                ? "묵직한 추천 프리셋 세트와 산뜻한 단품 스킬을 한 화면에서 비교해 보세요. 원하는 무기를 [+ 담기]로 장바구니에 쏙 넣고 버튼 하나로 내 코딩 툴에 적용할 수 있어요."
+                : "지금까지 내가 복사하거나 내 PC에 직접 설치한 스킬들이 로그인 없이 자동 기록되는 보관함이에요. 링크 하나로 다른 PC에서도 그대로 복원할 수 있어요."}
             </p>
           </header>
 
-          {/* Clean White Tool Selector + Search Bar */}
+          {/* Clean White Tool Selector + Search + Slim Quick-View Filter Chips */}
           <section
-            aria-label="내 코딩 툴 선택 및 검색"
+            aria-label="내 코딩 툴 선택 및 빠른 보기"
             className="rounded-2xl bg-white border border-[#E5E7EB] shadow-[0_1px_3px_rgba(15,23,42,0.04)] p-3.5 sm:p-4 flex flex-col gap-3"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -716,154 +739,214 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
                 })}
               </div>
 
-              {activeTab !== "dock" && (
-                <div className="relative w-full sm:w-56 ml-auto">
+              {activeTab === "home" && (
+                <div className="relative w-full sm:w-52 ml-auto">
                   <SearchIcon className="w-4 h-4 text-[#6B7280] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="search"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="스킬 이름이나 기능 검색..."
+                    placeholder="스킬·프리셋 검색..."
                     aria-label="스킬 검색"
                     className="w-full rounded-full bg-[#F8FAFC] border border-[#E5E7EB] pl-9 pr-3.5 py-1.5 text-[13.5px] text-[#111827] placeholder:text-[#6B7280] focus:outline-none focus:border-[#0284C7] focus:bg-white"
                   />
                 </div>
               )}
             </div>
+
+            {/* Slim Quick-View Filter Pills */}
+            {activeTab === "home" && (
+              <div className="pt-2.5 border-t border-[#F1F5F9] flex flex-wrap items-center justify-between gap-2">
+                <div
+                  role="tablist"
+                  aria-label="빠른 보기 필터"
+                  className="flex flex-wrap items-center gap-1.5"
+                >
+                  {QUICK_FILTERS.map((qf) => {
+                    const active = quickFilter === qf.id;
+                    return (
+                      <button
+                        key={qf.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => setQuickFilter(qf.id)}
+                        className={`rounded-full px-3 py-1 text-[12.5px] font-semibold border transition-colors ${
+                          active
+                            ? qf.id === "presets"
+                              ? "bg-[#181D27] text-white border-[#181D27]"
+                              : "bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]"
+                            : "bg-white text-[#4B5563] border-[#E5E7EB] hover:bg-[#F8FAFC] hover:text-[#111827]"
+                        }`}
+                      >
+                        {qf.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <span className="text-[12px] text-[#6B7280] tnum">
+                  프리셋 {filteredDecks.length} · 단품 {filteredSkills.length}
+                </span>
+              </div>
+            )}
           </section>
 
-          {/* Feed / Dock View Content */}
-          {activeTab === "presets" && renderDeckFeed(visibleDecks)}
-          {activeTab === "issues" && renderSkillFeed(visibleIssueSkills, true)}
-          {activeTab === "catalog" &&
-            renderSkillFeed(visibleCatalogSkills, false)}
-
-          {activeTab === "dock" && (
-            <section className="space-y-4">
-              {dockSkills.length === 0 ? (
-                <div className="editorial-card p-10 text-center space-y-3">
-                  <p className="text-[16px] font-bold text-[#111827]">
-                    아직 내 장착 독이 비어 있어요.
-                  </p>
-                  <p className="text-[14.5px] text-[#4B5563]">
-                    추천 프리셋 세트에서 마음에 드는 조합의 [+ 세트 담기]를 누르면 한 번에 채워져요.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("presets")}
-                    className="rounded-full bg-[#111827] text-white px-5 py-2.5 text-[14px] font-bold"
-                  >
-                    추천 프리셋 세트 보러가기
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="editorial-card p-6 space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <h2 className="text-[18px] font-bold text-[#111827]">
-                          담아둔 스킬 {dockSkills.length}개
-                        </h2>
-                        <p className="text-[13.5px] text-[#6B7280] mt-0.5">
-                          예상 상시 기억 점유량 약{" "}
-                          <strong className="text-[#111827] tnum">
-                            {dockAnalysis.totalTokens.toLocaleString("en-US")} tokens
-                          </strong>{" "}
-                          ({weightInfo.detail})
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={handleCopyShareUrl}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-[#D1D5DB] bg-white px-3.5 py-2 text-[13px] font-semibold text-[#374151] hover:bg-[#F9FAFB]"
-                        >
-                          <CopyIcon className="w-3.5 h-3.5" />
-                          <span>공유 링크 복사</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setModalTarget({ kind: "dock-bulk" })}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-[#059669] px-4 py-2 text-[13.5px] font-bold text-white hover:bg-[#047857]"
-                        >
-                          <span>한 번에 설치 창 열기</span>
-                          <ArrowRightIcon className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="w-full h-2.5 rounded-full bg-[#F1F5F9] overflow-hidden">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${Math.max(10, dockAnalysis.percentOfBudget)}%`,
-                          backgroundColor: weightInfo.barColor,
-                        }}
+          {/* MAIN CONTENT: Unified Interleaved Magazine Mix Feed OR Installed Dock Archive */}
+          {activeTab === "home" ? (
+            magazineBlocks.length === 0 ? (
+              <div className="editorial-card p-10 text-center space-y-3">
+                <p className="text-[15.5px] text-[#4B5563]">
+                  선택한 조건에 맞는 프리셋이나 스킬이 없어요. 필터를 초기화해
+                  전체 구성을 둘러보세요.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveDomain("all");
+                    setQuickFilter("all");
+                    setSearchQuery("");
+                  }}
+                  className="rounded-full bg-[#111827] text-white px-5 py-2 text-[14px] font-semibold"
+                >
+                  전체 섞어보기
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {magazineBlocks.map((block, idx) => {
+                  if (block.kind === "deck-full") {
+                    const deck = block.deck;
+                    const isAllDocked = deck.skillSlugs.every((s) =>
+                      dockSlugs.includes(s),
+                    );
+                    const isAllInstalled =
+                      deck.skillSlugs.length > 0 &&
+                      deck.skillSlugs.every((s) => installedIds.has(s));
+                    return (
+                      <DeckFeedCard
+                        key={`deck-${deck.slug}`}
+                        deck={deck}
+                        skillsBySlug={skillsBySlug}
+                        variant={idx === 0 ? "lead" : "stream"}
+                        isAllDocked={isAllDocked}
+                        isAllInstalled={isAllInstalled}
+                        onOpen={() => setModalTarget({ kind: "deck", deck })}
+                        onToggleDeck={(rect) => loadDeckToDock(deck, rect)}
                       />
-                    </div>
+                    );
+                  }
 
-                    {dockAnalysis.conflicts.length > 0 && (
-                      <div className="rounded-xl bg-[#FFFBEB] border border-[#FDE68A] p-3.5 text-[13.5px] text-[#92400E] flex items-start gap-2">
-                        <AlertIcon className="w-4 h-4 shrink-0 mt-0.5 text-[#D97706]" />
-                        <span>{dockAnalysis.conflicts[0].messageKo}</span>
-                      </div>
-                    )}
-
-                    <div className="divide-y divide-[#F1F5F9]">
-                      {dockSkills.map((sk) => (
-                        <div
-                          key={sk.slug}
-                          className="py-3 flex items-center justify-between gap-3"
-                        >
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setModalTarget({ kind: "skill", skill: sk })
+                  if (block.kind === "skill-pair") {
+                    return (
+                      <div
+                        key={`pair-${block.skills[0].slug}-${block.skills[1].slug}`}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                      >
+                        {block.skills.map((skill) => (
+                          <SkillFeedCard
+                            key={skill.slug}
+                            skill={skill}
+                            variant="feature"
+                            docked={dockSlugs.includes(skill.slug)}
+                            isInstalled={installedIds.has(skill.slug)}
+                            showRadarBadge={quickFilter === "rising"}
+                            onOpen={() =>
+                              setModalTarget({ kind: "skill", skill })
                             }
-                            className="text-left min-w-0 flex-1"
-                          >
-                            <div className="text-[15px] font-bold text-[#111827] hover:underline truncate">
-                              {getFriendlySkillTitle(sk)}
-                            </div>
-                            <div className="text-[13px] text-[#6B7280] mt-0.5">
-                              {sk.roleLabelKo} · 약 {sk.contextTokens} tokens
-                            </div>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => toggleDockSkill(sk.slug)}
-                            aria-label={`${sk.name} 빼기`}
-                            className="rounded-full p-2 text-[#6B7280] hover:bg-[#FEF2F2] hover:text-[#B91C1C]"
-                          >
-                            <CloseIcon className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </section>
+                            onToggleDock={(rect) =>
+                              toggleDockSkill(skill.slug, rect)
+                            }
+                          />
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  const skill = block.skill;
+                  return (
+                    <SkillFeedCard
+                      key={`single-${skill.slug}`}
+                      skill={skill}
+                      variant={idx === 0 ? "lead" : "stream"}
+                      docked={dockSlugs.includes(skill.slug)}
+                      isInstalled={installedIds.has(skill.slug)}
+                      showRadarBadge={
+                        quickFilter === "rising" ||
+                        getCleanKoreanRadarMatches(skill).length > 0
+                      }
+                      onOpen={() => setModalTarget({ kind: "skill", skill })}
+                      onToggleDock={(rect) => toggleDockSkill(skill.slug, rect)}
+                    />
+                  );
+                })}
+              </div>
+            )
+          ) : (
+            <InstalledDockView
+              records={installedRecords}
+              skillsBySlug={skillsBySlug}
+              selectedTools={selectedTools}
+              scope={scope}
+              bridgeConnected={bridgeConnected}
+              bridgeCwd={bridgeCwd}
+              bridgeInstalled={bridgeInstalled}
+              pendingRestoreSlugs={pendingRestoreSlugs}
+              onApplyRestoreFromUrl={handleApplyRestoreFromUrl}
+              onDismissRestoreBanner={handleDismissRestoreBanner}
+              onCopyRestoreUrl={handleCopyRestoreUrl}
+              onSendAllToCart={handleSendInstalledToCart}
+              onRemoveRecord={handleRemoveInstalledRecord}
+              onOpenSkill={(skill) => setModalTarget({ kind: "skill", skill })}
+              onGoExplore={() => setActiveTab("home")}
+              onRefreshBridge={refreshBridge}
+              onToast={showToast}
+            />
           )}
         </main>
       </div>
 
-      {/* Floating Bottom Dock Bar */}
-      <FloatingDockBar
-        dockSkills={dockSkills}
-        onCopyShareUrl={handleCopyShareUrl}
-        onOpenBulkInstall={() => setModalTarget({ kind: "dock-bulk" })}
+      {/* Parabolic Fly-to-Cart Animation Layer */}
+      <FlyToCartLayer
+        particles={flyParticles}
+        onComplete={handleFlyComplete}
       />
 
-      {/* Centered White Focus Detail & Install Modal */}
+      {/* Bottom-Right Floating Cart Button & Mini Popover */}
+      <FloatingCartPopover
+        dockSkills={dockSkills}
+        decks={decks}
+        selectedTools={selectedTools}
+        onToggleTool={toggleTool}
+        scope={scope}
+        onChangeScope={setScope}
+        onRemoveSkill={(slug) => toggleDockSkill(slug)}
+        onClearCart={clearCart}
+        onCopyShareUrl={handleCopyShareUrl}
+        onOpenSkill={(skill) => setModalTarget({ kind: "skill", skill })}
+        onRecordInstall={handleRecordInstall}
+        bridgeConnected={bridgeConnected}
+        bridgeCwd={bridgeCwd}
+        onRefreshBridge={refreshBridge}
+        onToast={showToast}
+        cartButtonRef={cartButtonRef}
+        catchPopTick={catchPopTick}
+        isOpen={cartOpen}
+        onToggleOpen={(next) =>
+          setCartOpen((prev) => (typeof next === "boolean" ? next : !prev))
+        }
+      />
+
+      {/* Centered White Focus 4-Stage Detail & Install Modal */}
       <SkillDetailModal
         target={modalTarget}
         onClose={() => setModalTarget(null)}
         onChangeTarget={setModalTarget}
         skillsBySlug={skillsBySlug}
         dockSlugs={dockSlugs}
+        installedIds={installedIds}
         onToggleDockSkill={toggleDockSkill}
         onLoadDeckToDock={loadDeckToDock}
+        onRecordInstall={handleRecordInstall}
         selectedTools={selectedTools}
         onToggleTool={toggleTool}
         scope={scope}
@@ -880,7 +963,7 @@ export function SkilldockWorkbench({ initialCatalog, decks }: WorkbenchProps) {
       {toastMsg && (
         <div
           role="status"
-          className="fixed top-5 left-1/2 -translate-x-1/2 z-50 rounded-full bg-[#111827] text-white px-5 py-2.5 text-[13.5px] font-semibold shadow-xl"
+          className="fixed top-5 left-1/2 -translate-x-1/2 z-[60] rounded-full bg-[#111827] text-white px-5 py-2.5 text-[13.5px] font-semibold shadow-xl max-w-[92vw] text-center"
         >
           {toastMsg}
         </div>

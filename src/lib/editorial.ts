@@ -1,11 +1,108 @@
 import { formatStars } from "./dock";
 import type {
   ContextWeightTier,
+  LifecycleTier,
   RadarSignal,
   SkillCategory,
   SkillItem,
   SynergyDeck,
 } from "./types";
+
+export type QuickFilterId = "all" | "presets" | "rising" | "evergreen";
+
+export type MagazineBlock =
+  | { kind: "deck-full"; deck: SynergyDeck }
+  | { kind: "skill-pair"; skills: [SkillItem, SkillItem] }
+  | { kind: "skill-single"; skill: SkillItem };
+
+/**
+ * Interleaves heavy dark Preset Deck cards with crisp white individual Skill cards
+ * in a magazine editorial rhythm:
+ *   Preset (full) -> 2 Skills (2-col) -> 1 Skill (1-col) -> Next Preset -> 2 Skills -> ...
+ */
+export function buildInterleavedMagazineFeed(
+  decks: SynergyDeck[],
+  skills: SkillItem[],
+): MagazineBlock[] {
+  const blocks: MagazineBlock[] = [];
+
+  if (decks.length === 0 && skills.length === 0) return blocks;
+
+  if (decks.length === 0) {
+    let idx = 0;
+    if (skills.length > 0) {
+      blocks.push({ kind: "skill-single", skill: skills[idx++] });
+    }
+    while (idx < skills.length) {
+      if (idx + 1 < skills.length) {
+        blocks.push({
+          kind: "skill-pair",
+          skills: [skills[idx], skills[idx + 1]],
+        });
+        idx += 2;
+      } else {
+        blocks.push({ kind: "skill-single", skill: skills[idx++] });
+      }
+      if (idx < skills.length) {
+        blocks.push({ kind: "skill-single", skill: skills[idx++] });
+      }
+    }
+    return blocks;
+  }
+
+  if (skills.length === 0) {
+    for (const deck of decks) {
+      blocks.push({ kind: "deck-full", deck });
+    }
+    return blocks;
+  }
+
+  let dIdx = 0;
+  let sIdx = 0;
+
+  while (dIdx < decks.length || sIdx < skills.length) {
+    if (dIdx < decks.length) {
+      blocks.push({ kind: "deck-full", deck: decks[dIdx++] });
+    }
+
+    if (sIdx < skills.length) {
+      if (sIdx + 1 < skills.length) {
+        blocks.push({
+          kind: "skill-pair",
+          skills: [skills[sIdx], skills[sIdx + 1]],
+        });
+        sIdx += 2;
+      } else {
+        blocks.push({ kind: "skill-single", skill: skills[sIdx++] });
+      }
+    }
+
+    if (sIdx < skills.length) {
+      blocks.push({ kind: "skill-single", skill: skills[sIdx++] });
+    }
+  }
+
+  return blocks;
+}
+
+export function getLifecycleBadgeMeta(tier?: LifecycleTier): {
+  label: string;
+  badgeClass: string;
+  dotColor: string;
+} {
+  if (tier === "rising") {
+    return {
+      label: "최근 급상승",
+      badgeClass: "bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]",
+      dotColor: "#F59E0B",
+    };
+  }
+  return {
+    label: "스테디 필수",
+    badgeClass: "bg-[#F1F5F9] text-[#334155] border-[#CBD5E1]",
+    dotColor: "#475569",
+  };
+}
 
 export type DomainFilterId =
   | "all"

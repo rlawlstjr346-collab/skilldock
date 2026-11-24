@@ -47,6 +47,13 @@ export type ContextWeightTier = "초경량" | "보통" | "무거움";
 
 export type InstallScope = "project" | "global";
 
+export type LifecycleTier = "evergreen" | "rising";
+
+export type InstallMethod =
+  | "ai-chat-prompt"
+  | "web-builder-pack"
+  | "live-bridge";
+
 export interface BenchmarkMetric {
   label: string;
   beforeLabel: string;
@@ -103,6 +110,9 @@ export interface SkillItem {
   language: string;
   license: string;
   pushedAt: string;
+  createdAt?: string;
+  lifecycleTier: LifecycleTier;
+  vitalityScore: number;
   category: SkillCategory;
   roleSlot: RoleSlot;
   roleLabelKo: string;
