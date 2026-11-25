@@ -2,48 +2,23 @@ import React from "react";
 import type { ToolTargetId } from "@/lib/types";
 
 /**
- * Borderless Supabase x Vercel style 45-degree interlocking geometric mark
- * (Solid #10B981 emerald skill module snapping with exact 2.2px negative space
- * into solid #1D1D1F ink-black dock cradle) + crisp `SkillDock` bold wordmark.
+ * Ultra-minimal typographic wordmark (`SKILLDOCK.`) inspired by KREAM / Savee / DISPENSER.
+ * Dense uppercase ink-black wordmark + single emerald baseline circular period dot.
  */
-export function SkillDockMark({
-  className = "h-8 w-8",
-}: {
-  className?: string;
-}) {
-  return (
-    <svg
-      viewBox="0 0 32 32"
-      fill="none"
-      className={`${className} shrink-0`}
-      aria-hidden="true"
-    >
-      {/* Upper Skill Module (#10B981): horizontal bar + 45° diagonal stem */}
-      <path
-        d="M3 3H29V7.4L15.6 20.8H11.2V16.7L18.9 9H3V3Z"
-        fill="#10B981"
-      />
-      {/* Lower Dock Cradle (#1D1D1F): left pillar + base + 45° locking lip (2.2px gap) */}
-      <path
-        d="M3 11.2H9V23H16.5L24 15.5H29V19L19 29H3V11.2Z"
-        fill="#1D1D1F"
-      />
-    </svg>
-  );
-}
-
 export function SkillDockLogo({ compact = false }: { compact?: boolean }) {
-  const sizeClass = compact ? "h-7 w-7" : "h-8 w-8";
   return (
-    <span className="inline-flex items-center gap-2.5 select-none">
-      <SkillDockMark className={sizeClass} />
+    <span
+      className={`inline-flex items-baseline select-none font-black tracking-[-0.045em] text-[#1D1D1F] leading-none ${
+        compact
+          ? "text-[clamp(17px,1.15vw,21px)]"
+          : "text-[clamp(19px,1.3vw,24px)]"
+      }`}
+    >
+      <span>SKILLDOCK</span>
       <span
-        className={`font-extrabold tracking-[-0.03em] text-[#1D1D1F] leading-none ${
-          compact ? "text-[19px]" : "text-[21px]"
-        }`}
-      >
-        SkillDock
-      </span>
+        aria-hidden="true"
+        className="ml-[0.06em] inline-block h-[0.24em] w-[0.24em] shrink-0 rounded-full bg-[#10B981]"
+      />
     </span>
   );
 }

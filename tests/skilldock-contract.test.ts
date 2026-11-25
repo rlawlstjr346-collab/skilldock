@@ -642,23 +642,36 @@ describe("SKILLDOCK Final Production Release Contract Suite", () => {
     }
   });
 
-  it("7. 시안 2번 무테 대각 맞물림 로고·파비콘·OG 통일 및 HTTPS 실서버 PNA/CORS 브릿지 호환 검증", () => {
-    // Interlocking geometric mark unified across Icons, icon, apple-icon, and opengraph-image
-    const markPath = "M3 3H29V7.4L15.6 20.8H11.2V16.7L18.9 9H3V3Z";
-    const dockPath = "M3 11.2H9V23H16.5L24 15.5H29V19L19 29H3V11.2Z";
-    for (const rel of [
-      "src/components/Icons.tsx",
-      "src/app/icon.tsx",
-      "src/app/apple-icon.tsx",
-      "src/app/opengraph-image.tsx",
-    ]) {
+  it("7. 극미니멀 SKILLDOCK. 순수 워드마크 · S. 파비콘/애플아이콘/OG 통일 및 HTTPS 실서버 PNA/CORS 브릿지 호환 검증", () => {
+    const iconsSrc = fs.readFileSync(
+      path.join(process.cwd(), "src/components/Icons.tsx"),
+      "utf8",
+    );
+    expect(iconsSrc).toContain("SKILLDOCK");
+    expect(iconsSrc).toContain("font-black");
+    expect(iconsSrc).toContain("tracking-[-0.045em]");
+    expect(iconsSrc).toContain("#10B981");
+    expect(iconsSrc).toContain("#1D1D1F");
+    expect(iconsSrc).not.toContain("SkillDockMark");
+    expect(iconsSrc).not.toContain("15.6 20.8");
+
+    for (const rel of ["src/app/icon.tsx", "src/app/apple-icon.tsx"]) {
       const content = fs.readFileSync(path.join(process.cwd(), rel), "utf8");
-      expect(content).toContain(markPath);
-      expect(content).toContain(dockPath);
-      expect(content).toContain("#10B981");
       expect(content).toContain("#1D1D1F");
-      expect(content).not.toContain("[=]");
+      expect(content).toContain("#10B981");
+      expect(content).toMatch(/>\s*S\s*</);
+      expect(content).not.toContain("15.6 20.8");
     }
+
+    const ogSrc = fs.readFileSync(
+      path.join(process.cwd(), "src/app/opengraph-image.tsx"),
+      "utf8",
+    );
+    expect(ogSrc).toContain("SKILLDOCK");
+    expect(ogSrc).toContain("#10B981");
+    expect(ogSrc).toContain("#1D1D1F");
+    expect(ogSrc).not.toContain("[=]");
+    expect(ogSrc).not.toContain("15.6 20.8");
 
     // HTTPS PROD_URL & *.vercel.app CORS + Private Network Access header verification
     expect(isAllowedOrigin("http://localhost:3000")).toBe(true);

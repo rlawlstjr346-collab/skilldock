@@ -28,38 +28,34 @@ export default function OpengraphImage() {
             width: "100%",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+            }}
+          >
             <div
               style={{
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "52px",
-                height: "52px",
-              }}
-            >
-              <svg width="52" height="52" viewBox="0 0 32 32" fill="none">
-                <path
-                  d="M3 3H29V7.4L15.6 20.8H11.2V16.7L18.9 9H3V3Z"
-                  fill="#10B981"
-                />
-                <path
-                  d="M3 11.2H9V23H16.5L24 15.5H29V19L19 29H3V11.2Z"
-                  fill="#1D1D1F"
-                />
-              </svg>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                fontSize: "38px",
-                fontWeight: 800,
-                letterSpacing: "-1.2px",
+                fontSize: "42px",
+                fontWeight: 900,
+                letterSpacing: "-2px",
+                lineHeight: 0.9,
                 color: "#1D1D1F",
               }}
             >
-              SkillDock
+              SKILLDOCK
             </div>
+            <div
+              style={{
+                width: "10px",
+                height: "10px",
+                borderRadius: "9999px",
+                backgroundColor: "#10B981",
+                marginLeft: "4px",
+                marginBottom: "3px",
+              }}
+            />
           </div>
 
           <div

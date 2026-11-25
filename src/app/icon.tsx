@@ -14,20 +14,40 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#FBFBFD",
-          borderRadius: "7px",
+          backgroundColor: "#1D1D1F",
+          borderRadius: "8px",
+          fontFamily: "sans-serif",
         }}
       >
-        <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-          <path
-            d="M3 3H29V7.4L15.6 20.8H11.2V16.7L18.9 9H3V3Z"
-            fill="#10B981"
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+          }}
+        >
+          <span
+            style={{
+              color: "#FFFFFF",
+              fontSize: "21px",
+              fontWeight: 900,
+              letterSpacing: "-0.04em",
+              lineHeight: 0.85,
+            }}
+          >
+            S
+          </span>
+          <div
+            style={{
+              width: "5px",
+              height: "5px",
+              borderRadius: "9999px",
+              backgroundColor: "#10B981",
+              marginLeft: "1px",
+              marginBottom: "1px",
+            }}
           />
-          <path
-            d="M3 11.2H9V23H16.5L24 15.5H29V19L19 29H3V11.2Z"
-            fill="#1D1D1F"
-          />
-        </svg>
+        </div>
       </div>
     ),
     { ...size },
