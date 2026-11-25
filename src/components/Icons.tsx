@@ -2,38 +2,43 @@ import React from "react";
 import type { ToolTargetId } from "@/lib/types";
 
 /**
- * AI Radar-inspired rounded black squircle emblem + crisp `SkillDock` sans-serif wordmark.
+ * Borderless Supabase x Vercel style 45-degree interlocking geometric mark
+ * (Solid #10B981 emerald skill module snapping with exact 2.2px negative space
+ * into solid #1D1D1F ink-black dock cradle) + crisp `SkillDock` bold wordmark.
  */
+export function SkillDockMark({
+  className = "h-8 w-8",
+}: {
+  className?: string;
+}) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      fill="none"
+      className={`${className} shrink-0`}
+      aria-hidden="true"
+    >
+      {/* Upper Skill Module (#10B981): horizontal bar + 45° diagonal stem */}
+      <path
+        d="M3 3H29V7.4L15.6 20.8H11.2V16.7L18.9 9H3V3Z"
+        fill="#10B981"
+      />
+      {/* Lower Dock Cradle (#1D1D1F): left pillar + base + 45° locking lip (2.2px gap) */}
+      <path
+        d="M3 11.2H9V23H16.5L24 15.5H29V19L19 29H3V11.2Z"
+        fill="#1D1D1F"
+      />
+    </svg>
+  );
+}
+
 export function SkillDockLogo({ compact = false }: { compact?: boolean }) {
-  const sizeClass = compact ? "h-8 w-8" : "h-9 w-9";
+  const sizeClass = compact ? "h-7 w-7" : "h-8 w-8";
   return (
     <span className="inline-flex items-center gap-2.5 select-none">
-      <svg
-        viewBox="0 0 36 36"
-        fill="none"
-        className={`${sizeClass} shrink-0`}
-        aria-hidden="true"
-      >
-        <rect x="0.5" y="0.5" width="35" height="35" rx="9" fill="#111827" />
-        <path
-          d="M12.5 10H9.5V26H12.5"
-          stroke="#FFFFFF"
-          strokeWidth="2.1"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M23.5 10H26.5V26H23.5"
-          stroke="#FFFFFF"
-          strokeWidth="2.1"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <rect x="14" y="11.5" width="8" height="5" rx="1.5" fill="#10B981" />
-        <rect x="14" y="19.5" width="8" height="5" rx="1.5" fill="#38BDF8" />
-      </svg>
+      <SkillDockMark className={sizeClass} />
       <span
-        className={`font-extrabold tracking-[-0.03em] text-[#111827] leading-none ${
+        className={`font-extrabold tracking-[-0.03em] text-[#1D1D1F] leading-none ${
           compact ? "text-[19px]" : "text-[21px]"
         }`}
       >
@@ -142,15 +147,6 @@ export function RadarIcon({ className = "w-4 h-4" }: { className?: string }) {
       <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.4" />
       <circle cx="8" cy="8" r="2.8" stroke="currentColor" strokeWidth="1.3" />
       <path d="M8 8L12.3 4.3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-export function CompassIcon({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M10.4 5.6L9.1 9.1L5.6 10.4L6.9 6.9L10.4 5.6Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -283,14 +279,6 @@ export function BoltIcon({ className = "w-4 h-4" }: { className?: string }) {
   );
 }
 
-export function BridgeIcon({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M6 2V5.5M10 2V5.5M4.5 5.5H11.5V8.5C11.5 10.4 9.9 12 8 12C6.1 12 4.5 10.4 4.5 8.5V5.5ZM8 12V14.5" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export function AlertIcon({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -363,14 +351,6 @@ export function HuggingFaceIcon({ className = "w-4 h-4" }: { className?: string 
       <circle cx="5.9" cy="6.7" r="0.85" fill="#1D1D1F" />
       <circle cx="10.1" cy="6.7" r="0.85" fill="#1D1D1F" />
       <path d="M5.4 9.5C6.1 10.6 7 11.1 8 11.1C9 11.1 9.9 10.6 10.6 9.5" stroke="#1D1D1F" strokeWidth="1.2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-export function HeartIcon({ className = "w-3.5 h-3.5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-      <path d="M8 13.7C7.7 13.5 2 9.8 2 5.7C2 3.7 3.5 2.3 5.3 2.3C6.4 2.3 7.4 2.9 8 3.8C8.6 2.9 9.6 2.3 10.7 2.3C12.5 2.3 14 3.7 14 5.7C14 9.8 8.3 13.5 8 13.7Z" />
     </svg>
   );
 }

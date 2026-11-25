@@ -25,5 +25,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# sync cache
+# sync cache & temp logs
 .sync-etag-cache.json
+*.log
+output.txt

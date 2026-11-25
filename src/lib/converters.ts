@@ -1,4 +1,5 @@
 import { stripHighlightMarkers } from "./highlight";
+import { getSiteUrl } from "./site-url";
 import {
   TOOL_TARGETS,
   type InstallScope,
@@ -185,6 +186,7 @@ export function buildProCliCommands(
   const globalFlag = scope === "global" ? " -g" : "";
   const lines: string[] = [
     `# SKILLDOCK Pro CLI Installer (${skills.length}개 무기 · 범위: ${scope === "global" ? "전역" : "프로젝트 격리"})`,
+    `# 원격 Live Bridge 원클릭 연결(선택): curl -fsSL ${getSiteUrl()}/bridge.mjs | node`,
   ];
 
   if (selectedTools.includes("agy")) {

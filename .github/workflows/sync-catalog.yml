@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
 
+env:
+  SITE_URL: "https://skilldock-pi.vercel.app"
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -34,6 +37,7 @@ jobs:
             git add public/data/skills-catalog.json public/data/synergy-decks.json src/data/translation-cache.json
             git commit -m "chore(data): sync GitHub, Hugging Face MCP, and AI Radar catalog"
             git push
+            SITE_URL="${SITE_URL}" node scripts/ping-indexnow.mjs || true
           else
             echo "No catalog changes detected."
           fi

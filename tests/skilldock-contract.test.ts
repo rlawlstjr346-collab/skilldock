@@ -51,6 +51,7 @@ import { GET as getRss } from "@/app/rss.xml/route";
 import {
   assertSafeSubpath,
   installSkillsToRoot,
+  isAllowedOrigin,
   toggleSkillInRoot,
   uninstallSkillFromRoot,
 } from "../scripts/skilldock-bridge.mjs";
@@ -309,7 +310,7 @@ describe("SKILLDOCK Final Production Release Contract Suite", () => {
     try {
       delete process.env.NEXT_PUBLIC_SITE_URL;
       delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
-      expect(getSiteUrl()).toBe("https://skilldock.vercel.app");
+      expect(getSiteUrl()).toBe("https://skilldock-pi.vercel.app");
 
       process.env.VERCEL_PROJECT_PRODUCTION_URL = "skilldock-prod.vercel.app";
       expect(getSiteUrl()).toBe("https://skilldock-prod.vercel.app");
@@ -639,5 +640,42 @@ describe("SKILLDOCK Final Production Release Contract Suite", () => {
     } finally {
       fs.rmSync(tmpHome, { recursive: true, force: true });
     }
+  });
+
+  it("7. 시안 2번 무테 대각 맞물림 로고·파비콘·OG 통일 및 HTTPS 실서버 PNA/CORS 브릿지 호환 검증", () => {
+    // Interlocking geometric mark unified across Icons, icon, apple-icon, and opengraph-image
+    const markPath = "M3 3H29V7.4L15.6 20.8H11.2V16.7L18.9 9H3V3Z";
+    const dockPath = "M3 11.2H9V23H16.5L24 15.5H29V19L19 29H3V11.2Z";
+    for (const rel of [
+      "src/components/Icons.tsx",
+      "src/app/icon.tsx",
+      "src/app/apple-icon.tsx",
+      "src/app/opengraph-image.tsx",
+    ]) {
+      const content = fs.readFileSync(path.join(process.cwd(), rel), "utf8");
+      expect(content).toContain(markPath);
+      expect(content).toContain(dockPath);
+      expect(content).toContain("#10B981");
+      expect(content).toContain("#1D1D1F");
+      expect(content).not.toContain("[=]");
+    }
+
+    // HTTPS PROD_URL & *.vercel.app CORS + Private Network Access header verification
+    expect(isAllowedOrigin("http://localhost:3000")).toBe(true);
+    expect(isAllowedOrigin("http://127.0.0.1:3000")).toBe(true);
+    expect(isAllowedOrigin("https://skilldock-pi.vercel.app")).toBe(true);
+    expect(isAllowedOrigin("https://skilldock-hh7g.vercel.app")).toBe(true);
+    expect(isAllowedOrigin("https://evil.example.com")).toBe(false);
+
+    const scriptBridge = fs.readFileSync(
+      path.join(process.cwd(), "scripts/skilldock-bridge.mjs"),
+      "utf8",
+    );
+    const publicBridge = fs.readFileSync(
+      path.join(process.cwd(), "public/bridge.mjs"),
+      "utf8",
+    );
+    expect(scriptBridge).toBe(publicBridge);
+    expect(scriptBridge).toContain("Access-Control-Allow-Private-Network");
   });
 });

@@ -34,24 +34,28 @@ export default function OpengraphImage() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: "48px",
-                height: "48px",
-                borderRadius: "12px",
-                backgroundColor: "#111827",
-                color: "#FFFFFF",
-                fontSize: "24px",
-                fontWeight: 800,
+                width: "52px",
+                height: "52px",
               }}
             >
-              [=]
+              <svg width="52" height="52" viewBox="0 0 32 32" fill="none">
+                <path
+                  d="M3 3H29V7.4L15.6 20.8H11.2V16.7L18.9 9H3V3Z"
+                  fill="#10B981"
+                />
+                <path
+                  d="M3 11.2H9V23H16.5L24 15.5H29V19L19 29H3V11.2Z"
+                  fill="#1D1D1F"
+                />
+              </svg>
             </div>
             <div
               style={{
                 display: "flex",
-                fontSize: "34px",
+                fontSize: "38px",
                 fontWeight: 800,
-                letterSpacing: "-1px",
-                color: "#111827",
+                letterSpacing: "-1.2px",
+                color: "#1D1D1F",
               }}
             >
               SkillDock
@@ -70,7 +74,7 @@ export default function OpengraphImage() {
               fontWeight: 700,
             }}
           >
-            24 Verified Open-Source Skills + 6 Preset Sets
+            45 Verified Open-Source Skills + 6 Preset Sets
           </div>
         </div>
 
@@ -87,7 +91,7 @@ export default function OpengraphImage() {
               fontSize: "50px",
               fontWeight: 800,
               lineHeight: 1.2,
-              color: "#111827",
+              color: "#1D1D1F",
             }}
           >
             1-Click AI Coding Skill Library
@@ -100,7 +104,7 @@ export default function OpengraphImage() {
               lineHeight: 1.45,
             }}
           >
-            Claude Code · Gemini CLI · Cursor · Windsurf · Lovable · Bolt · v0
+            Claude Code · Gemini CLI · agy · Cursor · Windsurf · Lovable · Bolt
           </div>
         </div>
 

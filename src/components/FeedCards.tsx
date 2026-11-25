@@ -1,7 +1,7 @@
 "use client";
 
 import React, { type KeyboardEvent } from "react";
-import { analyzeDockSkills, formatStars } from "@/lib/dock";
+import { analyzeDockSkills } from "@/lib/dock";
 import {
   formatRelativeTimeKo,
   getCardMetrics,

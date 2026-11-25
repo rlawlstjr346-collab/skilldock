@@ -23,8 +23,16 @@ const ALLOWED_ORIGINS = new Set([
   "http://127.0.0.1:3000",
   "http://localhost:3001",
   "http://127.0.0.1:3001",
+  "https://skilldock-pi.vercel.app",
   "https://skilldock.vercel.app",
 ]);
+
+const TRUSTED_VERCEL_ORIGIN_RE = /^https:\/\/[a-z0-9-]+\.vercel\.app$/i;
+
+export function isAllowedOrigin(origin) {
+  if (!origin || typeof origin !== "string") return false;
+  return ALLOWED_ORIGINS.has(origin) || TRUSTED_VERCEL_ORIGIN_RE.test(origin);
+}
 
 const TOOL_CONFIG = {
   "claude-code": {
@@ -484,13 +492,19 @@ function sendJson(res, status, payload, origin) {
   const headers = {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
+    "Access-Control-Allow-Private-Network": "true",
+    Vary: "Origin, Access-Control-Request-Private-Network",
   };
-  if (origin && ALLOWED_ORIGINS.has(origin)) {
+  if (isAllowedOrigin(origin)) {
     headers["Access-Control-Allow-Origin"] = origin;
     headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS";
     headers["Access-Control-Allow-Headers"] = "Content-Type";
   }
   res.writeHead(status, headers);
+  if (status === 204) {
+    res.end();
+    return;
+  }
   res.end(JSON.stringify(payload));
 }
 
@@ -528,7 +542,7 @@ function resolveTargetRoot(scope, projectDir) {
 export function createBridgeServer() {
   return http.createServer(async (req, res) => {
     const origin = req.headers.origin;
-    if (origin && !ALLOWED_ORIGINS.has(origin)) {
+    if (origin && !isAllowedOrigin(origin)) {
       return sendJson(res, 403, { error: "Origin not allowed" });
     }
     if (req.method === "OPTIONS") {
@@ -626,9 +640,11 @@ export function createBridgeServer() {
   });
 }
 
+const isStdinEntry = !process.argv[1] && !process.env.VITEST;
 const isMain =
-  process.argv[1] &&
-  path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+  isStdinEntry ||
+  (Boolean(process.argv[1]) &&
+    path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url)));
 
 if (isMain) {
   const server = createBridgeServer();
