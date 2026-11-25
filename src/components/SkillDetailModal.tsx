@@ -362,7 +362,7 @@ export function SkillDetailModal({
   const effectiveLocalTools: ToolTargetId[] =
     localTools.length > 0 ? localTools : ["claude-code", "gemini-agy"];
   const localToolShortLabels = effectiveLocalTools
-    .slice(0, 2)
+    .slice(0, 3)
     .map((id) => TOOL_TARGETS.find((t) => t.id === id)?.shortLabel ?? id)
     .join(" · ");
 
@@ -554,7 +554,7 @@ export function SkillDetailModal({
     ? "프로젝트 지침 칸에 붙여넣으면 바로 적용됩니다"
     : bridgeConnected
       ? "기존 파일을 자동 백업하고 내 PC 툴 폴더에 즉시 반영합니다"
-      : "복사 후 켜둔 Claude · Gemini · Cursor 창에 붙여넣기만 하면 AI가 알아서 설치합니다";
+      : "복사 후 켜둔 Claude · Gemini · agy · Cursor 창에 붙여넣기만 하면 AI가 알아서 설치합니다";
 
   const primaryMainLabel = bridgeBusy
     ? "안전 백업 후 내 PC에 장착하는 중..."

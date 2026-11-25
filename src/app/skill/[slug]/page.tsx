@@ -134,7 +134,12 @@ export default async function SkillDetailPage({
             </h1>
 
             <div className="flex flex-wrap gap-2 pt-1">
-              {TOOL_TARGETS.filter((t) => skill.supportedTools.includes(t.id)).map(
+              {TOOL_TARGETS.filter(
+                (t) =>
+                  skill.supportedTools.includes(t.id) ||
+                  (t.id === "agy" &&
+                    skill.supportedTools.includes("gemini-agy")),
+              ).map(
                 (t) => (
                   <span
                     key={t.id}

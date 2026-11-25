@@ -29,6 +29,7 @@ import {
   upsertInstalledRecords,
 } from "@/lib/installed";
 import { getSiteUrl } from "@/lib/site-url";
+import { TOOL_TARGETS } from "@/lib/types";
 import {
   MAX_READ_IDS,
   READ_IDS_STORAGE_KEY,
@@ -483,6 +484,160 @@ describe("SKILLDOCK Final Production Release Contract Suite", () => {
       expect(uninstallSkillFromRoot({ rootDir: tmpRoot, tool: "claude-code", slug: "ponytail" }).ok).toBe(true);
     } finally {
       fs.rmSync(tmpRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("6. agy 전용 타깃 버튼·변환기(자동설치 문구·CLI·경로) 및 os.tmpdir() 격리 프로젝트/전역 Live Bridge 검증", () => {
+    const catalog = loadCatalogData();
+    const subset = catalog.skills.filter((s) =>
+      ["ponytail", "headroom"].includes(s.slug),
+    );
+    expect(subset.length).toBe(2);
+
+    // Target tool order: Claude Code -> Gemini CLI -> agy
+    const ids = TOOL_TARGETS.map((t) => t.id);
+    expect(ids.slice(0, 3)).toEqual(["claude-code", "gemini-agy", "agy"]);
+    const agyMeta = TOOL_TARGETS.find((t) => t.id === "agy")!;
+    expect(agyMeta.label).toBe("agy");
+
+    // Converter: beginner auto-install prompt, Pro CLI, file preview (project & global)
+    const projectPrompt = buildBeginnerAutoInstallPrompt(subset, ["agy"], "project");
+    expect(projectPrompt).toContain(".agent/skills/");
+    expect(projectPrompt).toContain(".gemini/skills/");
+    expect(projectPrompt).toContain("GEMINI.md");
+    expect(projectPrompt).toContain("[agy 전용]");
+
+    const globalPrompt = buildBeginnerAutoInstallPrompt(subset, ["agy"], "global");
+    expect(globalPrompt).toContain("~/.gemini/skills/");
+    expect(globalPrompt).toContain("~/.gemini/GEMINI.md");
+    expect(globalPrompt).toContain("oauth_creds.json");
+    expect(globalPrompt).toContain("settings.json");
+
+    const agyCliProject = buildProCliCommands(subset, ["agy"], "project");
+    expect(agyCliProject).toContain(".agent/skills/");
+    expect(agyCliProject).toContain("GEMINI.md");
+
+    const agyCliGlobal = buildProCliCommands(subset, ["agy"], "global");
+    expect(agyCliGlobal).toContain("~/.gemini/skills/");
+    expect(agyCliGlobal).toContain("~/.gemini/GEMINI.md");
+
+    expect(buildToolFilePreview(subset[0], "agy", "project").filePath).toBe(
+      `.agent/skills/${subset[0].slug}/SKILL.md`,
+    );
+    expect(buildToolFilePreview(subset[0], "agy", "global").filePath).toBe(
+      `~/.gemini/skills/${subset[0].slug}/SKILL.md`,
+    );
+
+    // Isolated os.tmpdir() Live Bridge test: project scope (.agent/skills + .gemini/skills + GEMINI.md)
+    const tmpProject = fs.mkdtempSync(path.join(os.tmpdir(), "skilldock-agy-project-"));
+    try {
+      fs.writeFileSync(path.join(tmpProject, "GEMINI.md"), "# Existing Project Gemini\n", "utf8");
+      const installRes = installSkillsToRoot({
+        rootDir: tmpProject,
+        scope: "project",
+        tools: ["agy"],
+        skills: [
+          {
+            slug: "ponytail",
+            name: "Ponytail",
+            repoUrl: "https://github.com/DietrichGebert/ponytail",
+            content: "---\nname: ponytail\n---\n# Agy Project Test",
+          },
+        ],
+      });
+      expect(installRes.ok).toBe(true);
+      expect(fs.existsSync(path.join(tmpProject, ".agent/skills/ponytail/SKILL.md"))).toBe(true);
+      expect(fs.existsSync(path.join(tmpProject, ".gemini/skills/ponytail/SKILL.md"))).toBe(true);
+      const geminiMd = fs.readFileSync(path.join(tmpProject, "GEMINI.md"), "utf8");
+      expect(geminiMd).toContain("<!-- SKILLDOCK:START -->");
+      expect(geminiMd).toContain("ponytail");
+      expect(installRes.backups.some((b) => b.includes("GEMINI.md.skilldock.bak."))).toBe(true);
+
+      const offRes = toggleSkillInRoot({
+        rootDir: tmpProject,
+        scope: "project",
+        tool: "agy",
+        slug: "ponytail",
+        enabled: false,
+      });
+      expect(offRes.enabled).toBe(false);
+      expect(fs.existsSync(path.join(tmpProject, ".agent/skills/ponytail/SKILL.md.disabled"))).toBe(true);
+      expect(fs.existsSync(path.join(tmpProject, ".gemini/skills/ponytail/SKILL.md.disabled"))).toBe(true);
+
+      const onRes = toggleSkillInRoot({
+        rootDir: tmpProject,
+        scope: "project",
+        tool: "agy",
+        slug: "ponytail",
+        enabled: true,
+      });
+      expect(onRes.enabled).toBe(true);
+      expect(fs.existsSync(path.join(tmpProject, ".agent/skills/ponytail/SKILL.md"))).toBe(true);
+
+      const uninstallRes = uninstallSkillFromRoot({
+        rootDir: tmpProject,
+        scope: "project",
+        tool: "agy",
+        slug: "ponytail",
+      });
+      expect(uninstallRes.ok).toBe(true);
+      expect(fs.existsSync(path.join(tmpProject, ".agent/skills/ponytail/SKILL.md"))).toBe(false);
+      expect(fs.existsSync(path.join(tmpProject, ".gemini/skills/ponytail/SKILL.md"))).toBe(false);
+      const geminiAfter = fs.readFileSync(path.join(tmpProject, "GEMINI.md"), "utf8");
+      expect(geminiAfter).not.toContain("ponytail");
+    } finally {
+      fs.rmSync(tmpProject, { recursive: true, force: true });
+    }
+
+    // Isolated os.tmpdir() Live Bridge test: global scope (~/.gemini/skills + ~/.gemini/GEMINI.md; auth files untouched)
+    const tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "skilldock-agy-global-"));
+    try {
+      const fakeGeminiDir = path.join(tmpHome, ".gemini");
+      fs.mkdirSync(fakeGeminiDir, { recursive: true });
+      const oauthPath = path.join(fakeGeminiDir, "oauth_creds.json");
+      const settingsPath = path.join(fakeGeminiDir, "settings.json");
+      const globalGeminiMd = path.join(fakeGeminiDir, "GEMINI.md");
+      const origOauth = '{"token":"secret-untouched"}\n';
+      const origSettings = '{"theme":"dark"}\n';
+      fs.writeFileSync(oauthPath, origOauth, "utf8");
+      fs.writeFileSync(settingsPath, origSettings, "utf8");
+      fs.writeFileSync(globalGeminiMd, "# Existing Global Gemini\n", "utf8");
+
+      const installGlobal = installSkillsToRoot({
+        rootDir: tmpHome,
+        scope: "global",
+        tools: ["agy"],
+        skills: [
+          {
+            slug: "headroom",
+            name: "Headroom",
+            repoUrl: "https://github.com/headroomlabs-ai/headroom",
+            content: "---\nname: headroom\n---\n# Agy Global Test",
+          },
+        ],
+      });
+      expect(installGlobal.ok).toBe(true);
+      expect(fs.existsSync(path.join(tmpHome, ".gemini/skills/headroom/SKILL.md"))).toBe(true);
+      expect(fs.existsSync(path.join(tmpHome, ".agent/skills/headroom/SKILL.md"))).toBe(false);
+      expect(fs.existsSync(path.join(tmpHome, "GEMINI.md"))).toBe(false);
+      expect(fs.readFileSync(globalGeminiMd, "utf8")).toContain("headroom");
+      expect(installGlobal.backups.some((b) => b.includes("GEMINI.md.skilldock.bak."))).toBe(true);
+      expect(fs.readFileSync(oauthPath, "utf8")).toBe(origOauth);
+      expect(fs.readFileSync(settingsPath, "utf8")).toBe(origSettings);
+
+      const uninstallGlobal = uninstallSkillFromRoot({
+        rootDir: tmpHome,
+        scope: "global",
+        tool: "agy",
+        slug: "headroom",
+      });
+      expect(uninstallGlobal.ok).toBe(true);
+      expect(fs.existsSync(path.join(tmpHome, ".gemini/skills/headroom/SKILL.md"))).toBe(false);
+      expect(fs.readFileSync(globalGeminiMd, "utf8")).not.toContain("headroom");
+      expect(fs.readFileSync(oauthPath, "utf8")).toBe(origOauth);
+      expect(fs.readFileSync(settingsPath, "utf8")).toBe(origSettings);
+    } finally {
+      fs.rmSync(tmpHome, { recursive: true, force: true });
     }
   });
 });

@@ -9,6 +9,7 @@ import {
 const LOCAL_TOOLS: ToolTargetId[] = [
   "claude-code",
   "gemini-agy",
+  "agy",
   "cursor",
   "windsurf",
   "codex",
@@ -20,19 +21,38 @@ function targetPathsForTool(
 ): {
   label: string;
   skillDir: string;
+  extraSkillDirs: string[];
   ruleFile: string;
 } {
   const meta = TOOL_TARGETS.find((t) => t.id === tool) ?? TOOL_TARGETS[0];
+  if (tool === "agy") {
+    if (scope === "global") {
+      return {
+        label: "agy (Antigravity CLI)",
+        skillDir: "~/.gemini/skills",
+        extraSkillDirs: [],
+        ruleFile: "~/.gemini/GEMINI.md",
+      };
+    }
+    return {
+      label: "agy (Antigravity CLI)",
+      skillDir: ".agent/skills",
+      extraSkillDirs: [".gemini/skills"],
+      ruleFile: "GEMINI.md",
+    };
+  }
   if (scope === "global") {
     return {
       label: meta.label,
       skillDir: meta.globalSkillDir,
-      ruleFile: meta.ruleFile,
+      extraSkillDirs: [],
+      ruleFile: meta.globalRuleFile ?? meta.ruleFile,
     };
   }
   return {
     label: meta.label,
     skillDir: meta.projectSkillDir,
+    extraSkillDirs: [],
     ruleFile: meta.ruleFile,
   };
 }
@@ -77,9 +97,25 @@ export function buildBeginnerAutoInstallPrompt(
   const pathLines = effectiveTools
     .map((t) => {
       const p = targetPathsForTool(t, scope);
+      if (t === "agy" && scope === "project") {
+        return `- ${p.label}: 워크스페이스 스킬 폴더 \`.agent/skills/<slug>/SKILL.md\` 및 \`.gemini/skills/<slug>/SKILL.md\` 동시 생성 + 루트 규칙 인덱스 \`GEMINI.md\` 관리 블록 연결`;
+      }
+      if (t === "agy" && scope === "global") {
+        return `- ${p.label}: 전역 스킬 폴더 \`~/.gemini/skills/<slug>/SKILL.md\` 및 전역 규칙 인덱스 \`~/.gemini/GEMINI.md\` 관리 블록 연결 (기존 \`~/.gemini/oauth_creds.json\`, \`~/.gemini/settings.json\` 인증·설정 파일은 절대 수정 금지)`;
+      }
       return `- ${p.label}: 스킬 폴더 \`${p.skillDir}/<slug>/SKILL.md\` 및 규칙 인덱스 \`${p.ruleFile}\``;
     })
     .join("\n");
+
+  const uniqueRuleFiles = Array.from(
+    new Set(effectiveTools.map((t) => targetPathsForTool(t, scope).ruleFile)),
+  );
+  const includesAgy = effectiveTools.includes("agy");
+  const agySafetyRule = includesAgy
+    ? scope === "project"
+      ? `4) [agy 전용] 현재 워크스페이스의 \`.agent/skills/<slug>/SKILL.md\`와 \`.gemini/skills/<slug>/SKILL.md\`에 스킬을 직접 세팅하고, 루트 \`GEMINI.md\`의 \`<!-- SKILLDOCK:START -->\` ~ \`<!-- SKILLDOCK:END -->\` 관리 블록에 자동 참조를 연결한 뒤 생성·수정 경로와 백업 경로를 한글로 보고하세요.`
+      : `4) [agy 전용] 기존 인증·설정 파일(\`~/.gemini/oauth_creds.json\`, \`~/.gemini/settings.json\` 등)은 단 1바이트도 수정하지 말고, \`~/.gemini/skills/<slug>/SKILL.md\`와 \`~/.gemini/GEMINI.md\` 관리 블록(\`<!-- SKILLDOCK:START -->\` ~ \`<!-- SKILLDOCK:END -->\`)에만 백업 후 안전하게 장착하고 결과를 한글로 보고하세요.`
+    : null;
 
   const hfMcpJson = buildHfRemoteMcpConfig(skills);
 
@@ -127,9 +163,10 @@ export function buildBeginnerAutoInstallPrompt(
     pathLines,
     ``,
     `## 2. 안전 수칙 (반드시 준수)`,
-    `1) 기존 설정 파일(${effectiveTools.map((t) => targetPathsForTool(t, scope).ruleFile).join(", ")})이 이미 있으면 수정 전에 반드시 \`.bak\` 백업 파일을 먼저 생성하세요.`,
+    `1) 기존 설정 파일(${uniqueRuleFiles.join(", ")})이 이미 있으면 수정 전에 반드시 \`.bak\` 백업 파일을 먼저 생성하세요.`,
     `2) 각 스킬 폴더에 \`SKILL.md\` 파일을 생성하고, 규칙 인덱스 파일 하단에는 \`<!-- SKILLDOCK:START -->\` ~ \`<!-- SKILLDOCK:END -->\` 블록으로 장착 목록만 안전하게 추가하세요.`,
     `3) 작업이 끝나면 생성·수정한 파일 경로, 백업 경로, 바로 테스트해 볼 1줄 첫마디를 한글로 요약해 보고하세요.`,
+    ...(agySafetyRule ? [agySafetyRule] : []),
     hfSection,
     ``,
     `## 3. 장착할 무기 명세 (${skills.length}종)`,
@@ -150,6 +187,14 @@ export function buildProCliCommands(
     `# SKILLDOCK Pro CLI Installer (${skills.length}개 무기 · 범위: ${scope === "global" ? "전역" : "프로젝트 격리"})`,
   ];
 
+  if (selectedTools.includes("agy")) {
+    lines.push(
+      scope === "global"
+        ? `# agy 전역 장착 경로: ~/.gemini/skills/<slug>/SKILL.md + ~/.gemini/GEMINI.md (oauth_creds.json · settings.json 보호)`
+        : `# agy 워크스페이스 경로: .agent/skills/<slug>/SKILL.md + .gemini/skills/<slug>/SKILL.md + GEMINI.md`,
+    );
+  }
+
   for (const skill of skills) {
     lines.push(`\n# ${skill.koreanAlias} (${skill.repo})`);
     if (skill.sourcePlatform === "huggingface" && skill.hfMcpEndpoint) {
@@ -157,7 +202,7 @@ export function buildProCliCommands(
         `claude mcp add --transport sse ${skill.slug} ${skill.hfMcpEndpoint}`,
       );
       lines.push(
-        `# 범용 MCP 클라이언트(Cursor·Windsurf·Gemini): npx -y mcp-remote ${skill.hfMcpEndpoint}`,
+        `# 범용 MCP 클라이언트(Cursor·Windsurf·Gemini·agy): npx -y mcp-remote ${skill.hfMcpEndpoint}`,
       );
     }
     if (skill.installCommands.npxSkills) {

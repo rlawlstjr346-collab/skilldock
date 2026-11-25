@@ -7,12 +7,24 @@ import fs from "node:fs";
 import path from "node:path";
 
 const SITE_URL = (
+  process.env.SITE_URL ||
   process.env.NEXT_PUBLIC_SITE_URL ||
   (process.env.VERCEL_PROJECT_PRODUCTION_URL
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : "https://skilldock.vercel.app")
 ).replace(/\/$/, "");
-const INDEXNOW_KEY = process.env.INDEXNOW_KEY || "";
+
+function detectIndexNowKey() {
+  if (process.env.INDEXNOW_KEY) return process.env.INDEXNOW_KEY.trim();
+  const publicDir = path.join(process.cwd(), "public");
+  if (!fs.existsSync(publicDir)) return "";
+  const match = fs
+    .readdirSync(publicDir)
+    .find((name) => /^[a-f0-9]{32}\.txt$/i.test(name));
+  return match ? match.replace(/\.txt$/i, "") : "";
+}
+
+const INDEXNOW_KEY = detectIndexNowKey();
 
 const DISCOVER_SLUGS = [
   "claude-code-skills",
@@ -26,6 +38,7 @@ const DISCOVER_SLUGS = [
 const ENDPOINTS = [
   "https://searchadvisor.naver.com/indexnow",
   "https://api.indexnow.org/indexnow",
+  "https://www.bing.com/indexnow",
 ];
 
 async function main() {

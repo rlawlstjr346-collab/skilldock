@@ -1,10 +1,13 @@
 export type ToolTargetId =
   | "claude-code"
   | "gemini-agy"
+  | "agy"
   | "cursor"
   | "windsurf"
   | "codex"
   | "web-builder";
+
+export type TargetTool = ToolTargetId;
 
 export type SkillCategory =
   | "guardrail"
@@ -191,6 +194,7 @@ export interface ToolMeta {
   projectSkillDir: string;
   globalSkillDir: string;
   ruleFile: string;
+  globalRuleFile?: string;
   isWebBuilder?: boolean;
 }
 
@@ -205,11 +209,21 @@ export const TOOL_TARGETS: ToolMeta[] = [
   },
   {
     id: "gemini-agy",
-    label: "Gemini CLI / agy",
-    shortLabel: "Gemini/agy",
+    label: "Gemini CLI",
+    shortLabel: "Gemini",
     projectSkillDir: ".gemini/skills",
     globalSkillDir: "~/.gemini/skills",
     ruleFile: "GEMINI.md",
+    globalRuleFile: "~/.gemini/GEMINI.md",
+  },
+  {
+    id: "agy",
+    label: "agy",
+    shortLabel: "agy",
+    projectSkillDir: ".agent/skills",
+    globalSkillDir: "~/.gemini/skills",
+    ruleFile: "GEMINI.md",
+    globalRuleFile: "~/.gemini/GEMINI.md",
   },
   {
     id: "cursor",

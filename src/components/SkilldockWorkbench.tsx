@@ -135,6 +135,7 @@ export function SkilldockWorkbench({
     "claude-code",
     "gemini-agy",
   ]);
+  const hasUserSavedToolsRef = useRef(false);
 
   const validSlugs = useMemo(
     () => new Set(catalog.skills.map((s) => s.slug)),
@@ -202,8 +203,12 @@ export function SkilldockWorkbench({
     try {
       const saved = localStorage.getItem(STORAGE_TOOLS_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved) as ToolTargetId[];
+        const validToolIds = new Set(TOOL_TARGETS.map((t) => t.id));
+        const parsed = (JSON.parse(saved) as ToolTargetId[]).filter((id) =>
+          validToolIds.has(id),
+        );
         if (Array.isArray(parsed) && parsed.length > 0) {
+          hasUserSavedToolsRef.current = true;
           setSelectedTools(parsed);
         }
       }
@@ -270,6 +275,12 @@ export function SkilldockWorkbench({
       setBridgeConnected(Boolean(json.ok));
       setBridgeDetectedTools(json.detectedTools || {});
       setBridgeCwd(json.cwd || "");
+
+      if (json.detectedTools?.agy && !hasUserSavedToolsRef.current) {
+        setSelectedTools((prev) =>
+          prev.includes("agy") ? prev : [...prev, "agy"],
+        );
+      }
 
       const stRes = await fetch(
         `${BRIDGE_BASE}/status?scope=${encodeURIComponent(scope)}`,
@@ -359,6 +370,7 @@ export function SkilldockWorkbench({
   }, []);
 
   const toggleTool = (id: ToolTargetId) => {
+    hasUserSavedToolsRef.current = true;
     setSelectedTools((prev) => {
       const next = prev.includes(id)
         ? prev.length > 1
@@ -719,11 +731,11 @@ export function SkilldockWorkbench({
   const detectedShortList = useMemo(() => {
     const labels: string[] = [];
     if (bridgeDetectedTools.claude) labels.push("Claude");
-    if (bridgeDetectedTools.gemini || bridgeDetectedTools.agy)
-      labels.push("Gemini");
+    if (bridgeDetectedTools.gemini) labels.push("Gemini");
+    if (bridgeDetectedTools.agy) labels.push("agy");
     if (bridgeDetectedTools.cursor) labels.push("Cursor");
     if (bridgeDetectedTools.codex) labels.push("Codex");
-    return labels.slice(0, 2).join(" · ");
+    return labels.slice(0, 3).join(" · ");
   }, [bridgeDetectedTools]);
 
   const headerTitle =

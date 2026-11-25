@@ -28,8 +28,12 @@ export const DISCOVER_HUBS: DiscoverHubMeta[] = [
     description:
       ".gemini/skills 표준 폴더에 안전하게 백업·장착할 수 있는 Gemini CLI 및 Antigravity 호환 오픈소스 무기와 프리셋 조합입니다.",
     keywords: ["Gemini CLI", "Antigravity", "agy 스킬", "제미나이 코딩"],
-    matchSkill: (s) => s.supportedTools.includes("gemini-agy"),
-    matchDeck: (d) => d.recommendedTools.includes("gemini-agy"),
+    matchSkill: (s) =>
+      s.supportedTools.includes("gemini-agy") ||
+      s.supportedTools.includes("agy"),
+    matchDeck: (d) =>
+      d.recommendedTools.includes("gemini-agy") ||
+      d.recommendedTools.includes("agy"),
   },
   {
     slug: "cursor-rules-presets",

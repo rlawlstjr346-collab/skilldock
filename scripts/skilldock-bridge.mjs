@@ -35,7 +35,19 @@ const TOOL_CONFIG = {
   },
   "gemini-agy": {
     skillDir: ".gemini/skills",
+    projectSkillDirs: [".gemini/skills"],
+    globalSkillDirs: [".gemini/skills"],
     ruleFile: "GEMINI.md",
+    globalRuleFile: ".gemini/GEMINI.md",
+    ext: "SKILL.md",
+    nestedDir: true,
+  },
+  agy: {
+    skillDir: ".agent/skills",
+    projectSkillDirs: [".agent/skills", ".gemini/skills"],
+    globalSkillDirs: [".gemini/skills"],
+    ruleFile: "GEMINI.md",
+    globalRuleFile: ".gemini/GEMINI.md",
     ext: "SKILL.md",
     nestedDir: true,
   },
@@ -168,31 +180,85 @@ function upsertManagedRuleBlock(rulePath, activeSkills) {
   return backupPath;
 }
 
-function resolveSkillFilePath(rootDir, tool, slug, enabled = true) {
+function resolveSkillDirsForScope(cfg, scope = "project") {
+  if (scope === "global") {
+    return cfg.globalSkillDirs || [cfg.skillDir];
+  }
+  return cfg.projectSkillDirs || [cfg.skillDir];
+}
+
+function resolveRuleFileForScope(cfg, scope = "project") {
+  if (scope === "global" && cfg.globalRuleFile) {
+    return cfg.globalRuleFile;
+  }
+  return cfg.ruleFile;
+}
+
+function resolveSkillFilePaths(
+  rootDir,
+  tool,
+  slug,
+  enabled = true,
+  scope = "project",
+) {
   const cfg = TOOL_CONFIG[tool];
   if (!cfg) throw new Error(`Unsupported local bridge tool: ${tool}`);
   validateSlug(slug);
   const suffix = enabled ? "" : ".disabled";
-  if (cfg.nestedDir) {
+  const dirs = resolveSkillDirsForScope(cfg, scope);
+  return dirs.map((dir) => {
+    if (cfg.nestedDir) {
+      return assertSafeSubpath(
+        rootDir,
+        path.join(rootDir, dir, slug, `${cfg.ext}${suffix}`),
+      );
+    }
     return assertSafeSubpath(
       rootDir,
-      path.join(rootDir, cfg.skillDir, slug, `${cfg.ext}${suffix}`),
+      path.join(rootDir, dir, `${slug}${cfg.ext}${suffix}`),
     );
+  });
+}
+
+function collectRuleEntriesForRuleFile(manifest, ruleFileRel, fallbackScope = "project") {
+  const bySlug = new Map();
+  for (const entry of Object.values(manifest.installed)) {
+    const entryCfg = TOOL_CONFIG[entry.tool];
+    if (!entryCfg) continue;
+    const entryRuleFile =
+      entry.ruleFile || resolveRuleFileForScope(entryCfg, entry.scope || fallbackScope);
+    if (entryRuleFile !== ruleFileRel) continue;
+    const prev = bySlug.get(entry.slug);
+    if (!prev || (prev.enabled === false && entry.enabled !== false)) {
+      bySlug.set(entry.slug, entry);
+    }
   }
-  return assertSafeSubpath(
-    rootDir,
-    path.join(rootDir, cfg.skillDir, `${slug}${cfg.ext}${suffix}`),
-  );
+  return Array.from(bySlug.values());
+}
+
+function isPathClaimedByOtherEntry(manifest, excludeKey, targetPath, onlyEnabled = false) {
+  for (const [k, entry] of Object.entries(manifest.installed)) {
+    if (k === excludeKey) continue;
+    if (onlyEnabled && entry.enabled === false) continue;
+    const paths = Array.isArray(entry.filePaths)
+      ? entry.filePaths
+      : entry.filePath
+        ? [entry.filePath]
+        : [];
+    if (paths.includes(targetPath)) return true;
+  }
+  return false;
 }
 
 /**
  * Pure filesystem operations exported for isolated unit testing in os.tmpdir().
  */
-export function installSkillsToRoot({ rootDir, tools, skills }) {
+export function installSkillsToRoot({ rootDir, tools, skills, scope = "project" }) {
   if (!rootDir || typeof rootDir !== "string") {
     throw new Error("rootDir is required");
   }
   const safeRoot = path.resolve(rootDir);
+  const normalizedScope = scope === "global" ? "global" : "project";
   const targetTools = (tools || []).filter((t) => Boolean(TOOL_CONFIG[t]));
   if (targetTools.length === 0) {
     throw new Error("At least one valid local tool target is required");
@@ -204,22 +270,41 @@ export function installSkillsToRoot({ rootDir, tools, skills }) {
   const manifest = readManifest(safeRoot);
   const writtenFiles = [];
   const backups = [];
+  const touchedRuleFiles = new Set();
 
   for (const tool of targetTools) {
     const cfg = TOOL_CONFIG[tool];
+    const ruleFileRel = resolveRuleFileForScope(cfg, normalizedScope);
     for (const skill of skills) {
       const slug = validateSlug(skill.slug);
-      const skillFile = resolveSkillFilePath(safeRoot, tool, slug, true);
-      const disabledFile = resolveSkillFilePath(safeRoot, tool, slug, false);
-      if (fs.existsSync(disabledFile)) fs.unlinkSync(disabledFile);
+      const skillFiles = resolveSkillFilePaths(
+        safeRoot,
+        tool,
+        slug,
+        true,
+        normalizedScope,
+      );
+      const disabledFiles = resolveSkillFilePaths(
+        safeRoot,
+        tool,
+        slug,
+        false,
+        normalizedScope,
+      );
+      for (const disabledFile of disabledFiles) {
+        if (fs.existsSync(disabledFile)) fs.unlinkSync(disabledFile);
+      }
 
-      fs.mkdirSync(path.dirname(skillFile), { recursive: true });
-      const bak = backupIfExists(skillFile);
-      if (bak) backups.push(bak);
+      const content =
+        String(skill.content || skill.skillMdTemplate || "").trim() + "\n";
 
-      const content = String(skill.content || skill.skillMdTemplate || "").trim() + "\n";
-      fs.writeFileSync(skillFile, content, "utf8");
-      writtenFiles.push(skillFile);
+      for (const skillFile of skillFiles) {
+        fs.mkdirSync(path.dirname(skillFile), { recursive: true });
+        const bak = backupIfExists(skillFile);
+        if (bak) backups.push(bak);
+        fs.writeFileSync(skillFile, content, "utf8");
+        writtenFiles.push(skillFile);
+      }
 
       const key = `${tool}:${slug}`;
       manifest.installed[key] = {
@@ -227,17 +312,26 @@ export function installSkillsToRoot({ rootDir, tools, skills }) {
         slug,
         name: skill.name || slug,
         repoUrl: skill.repoUrl || "",
-        filePath: skillFile,
+        scope: normalizedScope,
+        ruleFile: ruleFileRel,
+        filePath: skillFiles[0],
+        filePaths: skillFiles,
         enabled: true,
         installedAt: new Date().toISOString(),
       };
     }
 
-    const rulePath = assertSafeSubpath(safeRoot, path.join(safeRoot, cfg.ruleFile));
-    const toolSkills = Object.values(manifest.installed).filter(
-      (entry) => entry.tool === tool,
+    touchedRuleFiles.add(ruleFileRel);
+  }
+
+  for (const ruleFileRel of touchedRuleFiles) {
+    const rulePath = assertSafeSubpath(safeRoot, path.join(safeRoot, ruleFileRel));
+    const ruleSkills = collectRuleEntriesForRuleFile(
+      manifest,
+      ruleFileRel,
+      normalizedScope,
     );
-    const ruleBak = upsertManagedRuleBlock(rulePath, toolSkills);
+    const ruleBak = upsertManagedRuleBlock(rulePath, ruleSkills);
     if (ruleBak) backups.push(ruleBak);
     writtenFiles.push(rulePath);
   }
@@ -246,7 +340,13 @@ export function installSkillsToRoot({ rootDir, tools, skills }) {
   return { ok: true, rootDir: safeRoot, writtenFiles, backups, manifestPath, manifest };
 }
 
-export function toggleSkillInRoot({ rootDir, tool, slug, enabled }) {
+export function toggleSkillInRoot({
+  rootDir,
+  tool,
+  slug,
+  enabled,
+  scope = "",
+}) {
   const safeRoot = path.resolve(rootDir);
   validateSlug(slug);
   const manifest = readManifest(safeRoot);
@@ -256,67 +356,124 @@ export function toggleSkillInRoot({ rootDir, tool, slug, enabled }) {
     throw new Error(`Skill not installed in manifest: ${key}`);
   }
 
-  const activePath = resolveSkillFilePath(safeRoot, tool, slug, true);
-  const disabledPath = resolveSkillFilePath(safeRoot, tool, slug, false);
+  const effectiveScope =
+    scope === "global" || scope === "project"
+      ? scope
+      : entry.scope || "project";
+  const activePaths = resolveSkillFilePaths(
+    safeRoot,
+    tool,
+    slug,
+    true,
+    effectiveScope,
+  );
+  const disabledPaths = resolveSkillFilePaths(
+    safeRoot,
+    tool,
+    slug,
+    false,
+    effectiveScope,
+  );
 
   if (enabled) {
-    if (fs.existsSync(disabledPath)) {
-      fs.renameSync(disabledPath, activePath);
+    for (let i = 0; i < activePaths.length; i++) {
+      if (fs.existsSync(disabledPaths[i])) {
+        fs.renameSync(disabledPaths[i], activePaths[i]);
+      }
     }
     entry.enabled = true;
-    entry.filePath = activePath;
+    entry.filePath = activePaths[0];
+    entry.filePaths = activePaths;
   } else {
-    if (fs.existsSync(activePath)) {
-      fs.renameSync(activePath, disabledPath);
+    for (let i = 0; i < activePaths.length; i++) {
+      if (
+        fs.existsSync(activePaths[i]) &&
+        !isPathClaimedByOtherEntry(manifest, key, activePaths[i], true)
+      ) {
+        fs.renameSync(activePaths[i], disabledPaths[i]);
+      }
     }
     entry.enabled = false;
-    entry.filePath = disabledPath;
+    entry.filePath = disabledPaths[0];
+    entry.filePaths = disabledPaths;
   }
 
   const cfg = TOOL_CONFIG[tool];
-  const rulePath = assertSafeSubpath(safeRoot, path.join(safeRoot, cfg.ruleFile));
-  const toolSkills = Object.values(manifest.installed).filter(
-    (item) => item.tool === tool,
+  const ruleFileRel =
+    entry.ruleFile || resolveRuleFileForScope(cfg, effectiveScope);
+  const rulePath = assertSafeSubpath(safeRoot, path.join(safeRoot, ruleFileRel));
+  const ruleSkills = collectRuleEntriesForRuleFile(
+    manifest,
+    ruleFileRel,
+    effectiveScope,
   );
-  upsertManagedRuleBlock(rulePath, toolSkills);
+  upsertManagedRuleBlock(rulePath, ruleSkills);
   writeManifest(safeRoot, manifest);
 
   return { ok: true, key, enabled: entry.enabled, filePath: entry.filePath };
 }
 
-export function uninstallSkillFromRoot({ rootDir, tool, slug }) {
+export function uninstallSkillFromRoot({
+  rootDir,
+  tool,
+  slug,
+  scope = "",
+}) {
   const safeRoot = path.resolve(rootDir);
   validateSlug(slug);
   const manifest = readManifest(safeRoot);
   const key = `${tool}:${slug}`;
+  const prevEntry = manifest.installed[key];
+  const effectiveScope =
+    scope === "global" || scope === "project"
+      ? scope
+      : prevEntry?.scope || "project";
   const removed = [];
 
+  delete manifest.installed[key];
+
   for (const state of [true, false]) {
-    const filePath = resolveSkillFilePath(safeRoot, tool, slug, state);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      removed.push(filePath);
+    const filePaths = resolveSkillFilePaths(
+      safeRoot,
+      tool,
+      slug,
+      state,
+      effectiveScope,
+    );
+    for (const filePath of filePaths) {
+      if (
+        fs.existsSync(filePath) &&
+        !isPathClaimedByOtherEntry(manifest, key, filePath, false)
+      ) {
+        fs.unlinkSync(filePath);
+        removed.push(filePath);
+      }
     }
   }
 
   const cfg = TOOL_CONFIG[tool];
   if (cfg?.nestedDir) {
-    const skillDir = assertSafeSubpath(
-      safeRoot,
-      path.join(safeRoot, cfg.skillDir, slug),
-    );
-    if (fs.existsSync(skillDir) && fs.readdirSync(skillDir).length === 0) {
-      fs.rmdirSync(skillDir);
+    for (const dir of resolveSkillDirsForScope(cfg, effectiveScope)) {
+      const skillDir = assertSafeSubpath(
+        safeRoot,
+        path.join(safeRoot, dir, slug),
+      );
+      if (fs.existsSync(skillDir) && fs.readdirSync(skillDir).length === 0) {
+        fs.rmdirSync(skillDir);
+      }
     }
   }
 
-  delete manifest.installed[key];
-  const rulePath = assertSafeSubpath(safeRoot, path.join(safeRoot, cfg.ruleFile));
-  const toolSkills = Object.values(manifest.installed).filter(
-    (item) => item.tool === tool,
+  const ruleFileRel =
+    prevEntry?.ruleFile || resolveRuleFileForScope(cfg, effectiveScope);
+  const rulePath = assertSafeSubpath(safeRoot, path.join(safeRoot, ruleFileRel));
+  const ruleSkills = collectRuleEntriesForRuleFile(
+    manifest,
+    ruleFileRel,
+    effectiveScope,
   );
   if (fs.existsSync(rulePath)) {
-    upsertManagedRuleBlock(rulePath, toolSkills);
+    upsertManagedRuleBlock(rulePath, ruleSkills);
   }
   writeManifest(safeRoot, manifest);
 
@@ -419,9 +576,11 @@ export function createBridgeServer() {
 
       if (req.method === "POST" && urlObj.pathname === "/install") {
         const body = await readBody(req);
-        const rootDir = resolveTargetRoot(body.scope || "project", body.projectDir);
+        const scope = body.scope || "project";
+        const rootDir = resolveTargetRoot(scope, body.projectDir);
         const result = installSkillsToRoot({
           rootDir,
+          scope,
           tools: body.tools,
           skills: body.skills,
         });
@@ -430,9 +589,11 @@ export function createBridgeServer() {
 
       if (req.method === "POST" && urlObj.pathname === "/toggle") {
         const body = await readBody(req);
-        const rootDir = resolveTargetRoot(body.scope || "project", body.projectDir);
+        const scope = body.scope || "project";
+        const rootDir = resolveTargetRoot(scope, body.projectDir);
         const result = toggleSkillInRoot({
           rootDir,
+          scope,
           tool: body.tool,
           slug: body.slug,
           enabled: Boolean(body.enabled),
@@ -442,9 +603,11 @@ export function createBridgeServer() {
 
       if (req.method === "POST" && urlObj.pathname === "/uninstall") {
         const body = await readBody(req);
-        const rootDir = resolveTargetRoot(body.scope || "project", body.projectDir);
+        const scope = body.scope || "project";
+        const rootDir = resolveTargetRoot(scope, body.projectDir);
         const result = uninstallSkillFromRoot({
           rootDir,
+          scope,
           tool: body.tool,
           slug: body.slug,
         });

@@ -69,6 +69,18 @@ export function ToolIcon({
           />
         </svg>
       );
+    case "agy":
+      return (
+        <svg className={className} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path
+            d="M8 2.2L13.2 13.2L8 10.6L2.8 13.2L8 2.2Z"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinejoin="round"
+          />
+          <circle cx="8" cy="7.2" r="1.1" fill="currentColor" />
+        </svg>
+      );
     case "cursor":
       return (
         <svg className={className} viewBox="0 0 16 16" fill="none" aria-hidden="true">
