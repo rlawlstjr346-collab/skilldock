@@ -1,5 +1,6 @@
 {
   "Reverse engineer anything with agents, from app behavior down to native binaries.": "앱 동작부터 네이티브 바이너리까지 AI 에이전트로 자동 역공학 분석하는 오픈소스 도구입니다.",
   "Orca lets you run a fleet of bots with your own subscription (e.g. Claude Code, Grok, Agy, Codex). Available on desktop, mobile and remote runtime.": "기존 Claude Code·Agy·Codex 구독으로 데스크톱·모바일·원격에서 멀티 에이전트 봇 함대를 운영하는 오케스트레이터입니다.",
-  "Real-time global intelligence dashboard. AI-powered news aggregation, geopolitical monitoring, and infrastructure tracking in a unified situational awareness interface": "AI 기반 글로벌 뉴스·인프라·지정학 시그널을 실시간으로 통합 추적하는 오픈소스 상황 관제 대시보드입니다."
+  "Real-time global intelligence dashboard. AI-powered news aggregation, geopolitical monitoring, and infrastructure tracking in a unified situational awareness interface": "AI 기반 글로벌 뉴스·인프라·지정학 시그널을 실시간으로 통합 추적하는 오픈소스 상황 관제 대시보드입니다.",
+  "NVIDIA Object Oriented Agents: the Pythonic way to build AI Agents.": "NVIDIA 객체 지향 에이전트: AI 에이전트를 구축하는 Python 방식입니다."
 }
