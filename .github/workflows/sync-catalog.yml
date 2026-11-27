@@ -2,7 +2,7 @@ name: Sync SKILLDOCK Catalog, Hugging Face & AI Radar
 
 on:
   schedule:
-    - cron: "17 */2 * * *"
+    - cron: "17 */4 * * *"
   workflow_dispatch:
 
 permissions:
