@@ -132,9 +132,9 @@ describe("SKILLDOCK Final Production Release Contract Suite", () => {
     expect(srcContents).toContain("FlyToCartLayer");
   });
 
-  it("2. 노이즈(REA·역공학·해킹) 0건 · 1티어 필수 무기 누락 0건 · Hugging Face MCP 변환 검증", () => {
-    const catalog = loadCatalogData();
-    const decks = loadSynergyDecks();
+  it("2. 노이즈(REA·역공학·해킹) 0건 · 1티어 필수 무기 누락 0건 · Hugging Face MCP 변환 검증", async () => {
+    const catalog = await loadCatalogData();
+    const decks = await loadSynergyDecks();
 
     expect(catalog.skills.length).toBeGreaterThanOrEqual(30);
     expect(catalog.skills.length).toBeLessThanOrEqual(MAX_CATALOG_SIZE);
@@ -206,9 +206,9 @@ describe("SKILLDOCK Final Production Release Contract Suite", () => {
     expect(buildWebBuilderPromptPack([hfMcpItem], 4000)).toContain("@gradio/client");
   });
 
-  it("3. 전 스킬·프리셋 beginnerAnalogyKo 100% 완비 · 기계 번역투 0건 · 무관한 뉴스 오매칭 차단 검증", () => {
-    const catalog = loadCatalogData();
-    const decks = loadSynergyDecks();
+  it("3. 전 스킬·프리셋 beginnerAnalogyKo 100% 완비 · 기계 번역투 0건 · 무관한 뉴스 오매칭 차단 검증", async () => {
+    const catalog = await loadCatalogData();
+    const decks = await loadSynergyDecks();
 
     for (const deck of decks) {
       expect(typeof deck.beginnerAnalogyKo).toBe("string");
@@ -325,7 +325,7 @@ describe("SKILLDOCK Final Production Release Contract Suite", () => {
     }
 
     expect(DISCOVER_HUBS.length).toBe(6);
-    const sm = sitemap();
+    const sm = await sitemap();
     expect(sm.length).toBeGreaterThanOrEqual(40);
     for (const hub of DISCOVER_HUBS) {
       expect(sm.some((u) => u.url.endsWith(`/discover/${hub.slug}`))).toBe(true);
@@ -342,7 +342,7 @@ describe("SKILLDOCK Final Production Release Contract Suite", () => {
     expect(stripHighlightMarkers("테스트 ==강조== 문구")).toBe("테스트 강조 문구");
   });
 
-  it("5. visit-state.ts · 매거진 인터리빙 · 생명력/120일 퇴출 · 내 장착 독(?installed=/?dock=) · Live Bridge 검증", () => {
+  it("5. visit-state.ts · 매거진 인터리빙 · 생명력/120일 퇴출 · 내 장착 독(?installed=/?dock=) · Live Bridge 검증", async () => {
     const map = new Map<string, string>();
     const memStorage: StorageLike = {
       getItem: (k) => map.get(k) ?? null,
@@ -372,8 +372,8 @@ describe("SKILLDOCK Final Production Release Contract Suite", () => {
     expect(formatVisitDividerLabel(divider!)).toContain("새로 발견된 무기 1건");
 
     // Interleaving & Vitality/Prune
-    const catalog = loadCatalogData();
-    const decks = loadSynergyDecks();
+    const catalog = await loadCatalogData();
+    const decks = await loadSynergyDecks();
     const blocks = buildInterleavedMagazineFeed(decks, catalog.skills);
     expect(blocks[0].kind).toBe("deck-full");
     expect(blocks[1].kind).toBe("skill-pair");
@@ -488,8 +488,8 @@ describe("SKILLDOCK Final Production Release Contract Suite", () => {
     }
   });
 
-  it("6. agy 전용 타깃 버튼·변환기(자동설치 문구·CLI·경로) 및 os.tmpdir() 격리 프로젝트/전역 Live Bridge 검증", () => {
-    const catalog = loadCatalogData();
+  it("6. agy 전용 타깃 버튼·변환기(자동설치 문구·CLI·경로) 및 os.tmpdir() 격리 프로젝트/전역 Live Bridge 검증", async () => {
+    const catalog = await loadCatalogData();
     const subset = catalog.skills.filter((s) =>
       ["ponytail", "headroom"].includes(s.slug),
     );

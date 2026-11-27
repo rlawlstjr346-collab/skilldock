@@ -29,3 +29,8 @@ next-env.d.ts
 .sync-etag-cache.json
 *.log
 output.txt
+
+# cloudflare (opennext)
+.open-next
+.wrangler
+.dev.vars*

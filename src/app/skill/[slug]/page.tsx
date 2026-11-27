@@ -29,8 +29,8 @@ import {
   ToolIcon,
 } from "@/components/Icons";
 
-export function generateStaticParams() {
-  return loadCatalogData().skills.map((s) => ({ slug: s.slug }));
+export async function generateStaticParams() {
+  return (await loadCatalogData()).skills.map((s) => ({ slug: s.slug }));
 }
 
 export async function generateMetadata({
@@ -39,7 +39,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const skill = getSkillBySlug(slug);
+  const skill = await getSkillBySlug(slug);
   if (!skill) return { title: "스킬을 찾을 수 없어요" };
   const cleanDesc = stripHighlightMarkers(skill.oneLineAnalogy);
   return {
@@ -54,7 +54,7 @@ export default async function SkillDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const skill = getSkillBySlug(slug);
+  const skill = await getSkillBySlug(slug);
   if (!skill) notFound();
 
   const domain = getDomainForCategory(skill.category);

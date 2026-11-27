@@ -3,10 +3,10 @@ import { loadCatalogData, loadSynergyDecks } from "@/lib/catalog";
 import { DISCOVER_HUBS } from "@/lib/discover";
 import { getSiteUrl } from "@/lib/site-url";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
-  const catalog = loadCatalogData();
-  const decks = loadSynergyDecks();
+  const catalog = await loadCatalogData();
+  const decks = await loadSynergyDecks();
   const lastModified = new Date(catalog.syncedAt);
 
   return [

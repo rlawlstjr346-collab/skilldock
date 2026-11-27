@@ -12,9 +12,9 @@ function WorkbenchFallback() {
   );
 }
 
-export default function HomePage() {
-  const catalog = loadCatalogData();
-  const decks = loadSynergyDecks();
+export default async function HomePage() {
+  const catalog = await loadCatalogData();
+  const decks = await loadSynergyDecks();
 
   return (
     <>

@@ -59,8 +59,8 @@ export default async function DiscoverHubPage({
   const hub = getDiscoverHubBySlug(slug);
   if (!hub) notFound();
 
-  const catalog = loadCatalogData();
-  const decks = loadSynergyDecks();
+  const catalog = await loadCatalogData();
+  const decks = await loadSynergyDecks();
   const matchedDecks = decks.filter((d) => hub.matchDeck(d));
   const matchedSkills = catalog.skills.filter((s) => hub.matchSkill(s)).slice(0, 16);
   const topThreeDock = serializeDockParam(matchedSkills.slice(0, 3).map((s) => s.slug));

@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "skilldock",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-23",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "kv_namespaces": [{ "binding": "NEXT_INC_CACHE_KV", "id": "bc1f8321e8b1418da77341e9ea31f98e" }],
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "skilldock" }],
+  "observability": { "enabled": true }
+}

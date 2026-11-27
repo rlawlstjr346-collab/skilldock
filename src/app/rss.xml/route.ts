@@ -14,8 +14,8 @@ function escapeXml(str: string): string {
 
 export async function GET() {
   const siteUrl = getSiteUrl();
-  const catalog = loadCatalogData();
-  const decks = loadSynergyDecks();
+  const catalog = await loadCatalogData();
+  const decks = await loadSynergyDecks();
   const pubDate = new Date(catalog.syncedAt).toUTCString();
 
   const itemsXml = [

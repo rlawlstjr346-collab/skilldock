@@ -22,8 +22,8 @@ import {
 } from "@/components/Icons";
 import type { SkillItem } from "@/lib/types";
 
-export function generateStaticParams() {
-  return loadSynergyDecks().map((d) => ({ slug: d.slug }));
+export async function generateStaticParams() {
+  return (await loadSynergyDecks()).map((d) => ({ slug: d.slug }));
 }
 
 export async function generateMetadata({
@@ -32,7 +32,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const deck = getDeckBySlug(slug);
+  const deck = await getDeckBySlug(slug);
   if (!deck) return { title: "세트를 찾을 수 없어요" };
   return {
     title: `${getFriendlyDeckTitle(deck)}`,
@@ -46,10 +46,10 @@ export default async function DeckDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const deck = getDeckBySlug(slug);
+  const deck = await getDeckBySlug(slug);
   if (!deck) notFound();
 
-  const catalog = loadCatalogData();
+  const catalog = await loadCatalogData();
   const skillsBySlug = new Map(catalog.skills.map((s) => [s.slug, s]));
   const members = deck.skillSlugs
     .map((s) => skillsBySlug.get(s))

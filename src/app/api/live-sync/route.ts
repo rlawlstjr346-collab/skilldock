@@ -56,8 +56,8 @@ interface RawHfTrendingResponse {
 }
 
 export async function GET() {
-  const localCatalog = loadCatalogData();
-  const localDecks = loadSynergyDecks();
+  const localCatalog = await loadCatalogData();
+  const localDecks = await loadSynergyDecks();
 
   const [remoteCatalog, remoteDecksPayload, planningFeed, liveFeed, hfTrending] =
     await Promise.all([
