@@ -1,10 +1,10 @@
 {
   "version": 3,
-  "syncedAt": "2026-11-27T18:13:56.202Z",
-  "radarGeneratedAt": "2026-11-27T04:56:48.179948Z",
+  "syncedAt": "2026-11-28T02:43:44.025Z",
+  "radarGeneratedAt": "2026-11-28T01:31:34.765850Z",
   "radarTotalSignals": 100,
-  "radarChinaSignals": 24,
-  "radarMatchedCount": 42,
+  "radarChinaSignals": 16,
+  "radarMatchedCount": 44,
   "sourceCounts": {
     "github": 33,
     "huggingface": 10,
@@ -13,7 +13,7 @@
   "hfTrendingPreview": [
     {
       "id": "JCisHERE/wan2-2-i2v-v3",
-      "likes": 864,
+      "likes": 875,
       "sdk": "gradio",
       "shortDescription": "Generate a video animation from a single image and prompt",
       "isMcp": true,
@@ -21,7 +21,7 @@
     },
     {
       "id": "Lakonik/pi-H3",
-      "likes": 203,
+      "likes": 209,
       "sdk": "gradio",
       "shortDescription": "Generate videos from prompts and optional keyframe images",
       "isMcp": false,
@@ -29,7 +29,7 @@
     },
     {
       "id": "MiniMaxAI/minimax-h3-image",
-      "likes": 385,
+      "likes": 390,
       "sdk": "gradio",
       "shortDescription": "Generate images from text or edit up to 8 pictures",
       "isMcp": false,
@@ -37,7 +37,7 @@
     },
     {
       "id": "huggingface/moe-blogpost",
-      "likes": 878,
+      "likes": 880,
       "sdk": "docker",
       "shortDescription": "Explore the MoE Training Handbook with interactive TOC",
       "isMcp": false,
@@ -45,7 +45,7 @@
     },
     {
       "id": "waitinghere/Krea2T-Revamped",
-      "likes": 203,
+      "likes": 204,
       "sdk": "gradio",
       "shortDescription": "Create or modify images from text prompts and optional pictures",
       "isMcp": false,
@@ -53,15 +53,15 @@
     },
     {
       "id": "joelniklaus/harness-leaderboard",
-      "likes": 571,
+      "likes": 573,
       "sdk": "docker",
-      "shortDescription": "Compare coding-agent harnesses for any model",
+      "shortDescription": "Compare coding-agent harness performance",
       "isMcp": false,
       "url": "https://huggingface.co/spaces/joelniklaus/harness-leaderboard"
     },
     {
       "id": "waitinghere/MINIMAX-H3-Ref2VA-Revamped",
-      "likes": 76,
+      "likes": 83,
       "sdk": "gradio",
       "shortDescription": "Generate custom videos from text prompts with AI",
       "isMcp": false,
@@ -69,7 +69,7 @@
     },
     {
       "id": "dlouapre/looped-transformers",
-      "likes": 50,
+      "likes": 57,
       "sdk": "docker",
       "shortDescription": "Visualize how looped transformers process tokens repeatedly",
       "isMcp": false,
@@ -87,7 +87,7 @@
       "repo": "affaan-m/ECC",
       "repoUrl": "https://github.com/affaan-m/ECC",
       "sourcePlatform": "github",
-      "stars": 311705,
+      "stars": 311906,
       "discoveredVia": "seed",
       "language": "JavaScript",
       "license": "MIT",
@@ -149,6 +149,23 @@
       ],
       "matchedRadar": [
         {
+          "id": "live-0a4ccef05135",
+          "titleKo": "AI 에이전트의 원형은 3개의 논문에 있었다: ReAct, SWE-bench, SWE-agent를 읽는다",
+          "originalTitle": "AIエージェントの原型は3本の論文にあった：ReAct、SWE-bench、SWE-agentを読み解く",
+          "platformId": "zenn",
+          "category": "dev",
+          "canonicalUrl": "https://zenn.dev/kentaro36/articles/ai-agent-foundation-papers",
+          "publishedAt": "2026-11-27T23:07:24Z",
+          "highlightSummary": "==Claude Code 개발 생태계에서 'AI== 에이전트의 원형은 3개의 논문에 있었다: ReAct, SWE-bench, SWE-agent를 읽는다' 구현 방식과 실전 적용 사례가 공개됐어요. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+          "importanceScore": 33.2,
+          "isChinaSource": false,
+          "matchedSkillSlugs": [
+            "ponytail",
+            "ecc-core"
+          ],
+          "matchReason": "이슈 키워드 \"claude code\"와 직접 연결됨 (zenn)"
+        },
+        {
           "id": "live-f22dad31bb1e",
           "titleKo": "Anthropic Research: AI와 함께 일하기",
           "originalTitle": "Anthropic Research: Working With AI",
@@ -181,26 +198,9 @@
             "ai-radar-live"
           ],
           "matchReason": "이슈 키워드 \"anthropic\"와 직접 연결됨 (anthropic)"
-        },
-        {
-          "id": "live-ace94b1e7fc4",
-          "titleKo": "Anthropic은 AI의 가짜 망각을 폭로하고 460,000개의 뉴런이 수십 번 활성화되고 해커 지식이 부활합니다",
-          "originalTitle": "Anthropic拆穿AI假遗忘，46万神经元动几十个，黑客知识就复活",
-          "platformId": "36kr-ai",
-          "category": "industry",
-          "canonicalUrl": "https://36kr.com/p/4087453646420361",
-          "publishedAt": "2026-11-27T03:55:55.634000Z",
-          "highlightSummary": "==인류학 연구에 따르면 AI의 낮은== 점수는 실제로 이를 잊지 않을 수 있으며 지식은 종종 숨겨져 있음이 밝혀졌습니다. AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
-          "importanceScore": 28.66,
-          "isChinaSource": true,
-          "matchedSkillSlugs": [
-            "ecc-core",
-            "ai-radar-live"
-          ],
-          "matchReason": "이슈 키워드 \"anthropic\"와 직접 연결됨 (36kr-ai)"
         }
       ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "ponytail",
@@ -212,7 +212,7 @@
       "repo": "DietrichGebert/ponytail",
       "repoUrl": "https://github.com/DietrichGebert/ponytail",
       "sourcePlatform": "github",
-      "stars": 199927,
+      "stars": 200168,
       "discoveredVia": "seed",
       "language": "JavaScript",
       "license": "MIT",
@@ -340,40 +340,42 @@
           "matchReason": "이슈 키워드 \"coding\"와 직접 연결됨 (hacker-news)"
         },
         {
-          "id": "live-2a2f1ed8be28",
-          "titleKo": "영혼의 형상 클로드 코드, 바이브코딩의 미래를 성찰하기 시작하다",
-          "originalTitle": "Claude Code 灵魂人物，开始反思 Vibe Coding 的未来了",
-          "platformId": "36kr-ai",
-          "category": "industry",
-          "canonicalUrl": "https://36kr.com/p/4087449994181000",
-          "publishedAt": "2026-11-27T03:59:12.851000Z",
-          "highlightSummary": "==36K==r AI가 전한 '영혼의 형상 클로드 코드, 바이브코딩의 미래를 성찰하기 시작하다' 이슈로 글로벌 AI 시장·서비스 전략의 방향 변화가 뚜렷해졌어요. AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
-          "importanceScore": 28.67,
-          "isChinaSource": true,
+          "id": "live-0a4ccef05135",
+          "titleKo": "AI 에이전트의 원형은 3개의 논문에 있었다: ReAct, SWE-bench, SWE-agent를 읽는다",
+          "originalTitle": "AIエージェントの原型は3本の論文にあった：ReAct、SWE-bench、SWE-agentを読み解く",
+          "platformId": "zenn",
+          "category": "dev",
+          "canonicalUrl": "https://zenn.dev/kentaro36/articles/ai-agent-foundation-papers",
+          "publishedAt": "2026-11-27T23:07:24Z",
+          "highlightSummary": "==Claude Code 개발 생태계에서 'AI== 에이전트의 원형은 3개의 논문에 있었다: ReAct, SWE-bench, SWE-agent를 읽는다' 구현 방식과 실전 적용 사례가 공개됐어요. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+          "importanceScore": 33.2,
+          "isChinaSource": false,
           "matchedSkillSlugs": [
             "ponytail",
-            "headroom"
+            "ecc-core"
           ],
-          "matchReason": "이슈 키워드 \"claude code\"와 직접 연결됨 (36kr-ai)"
+          "matchReason": "이슈 키워드 \"claude code\"와 직접 연결됨 (zenn)"
         },
         {
-          "id": "live-1da092c7cd6f",
-          "titleKo": "vibecoding 에이전트 작업 상태 동기화를 지원하는 데스크탑 애완동물",
-          "originalTitle": "vibecoding 个支持 agent 任务状态同步的桌宠",
-          "platformId": "v2ex",
+          "id": "live-f4aa5cece81d",
+          "titleKo": "sdk/workflow-harness@1.0.196 새 정식 버전 릴리즈",
+          "originalTitle": "@ai-sdk/workflow-harness@1.0.196",
+          "platformId": "github",
           "category": "dev",
-          "canonicalUrl": "https://v2ex.com/t/1260250",
-          "publishedAt": "2026-11-27T03:16:13Z",
-          "highlightSummary": "==저는 데스크탑 애완동물 소프트웨어를 만들고,== 유용하고 함께 할 수 있는 일을 하고, 매일 여러분의 항문을 들어 올리도록 도와드립니다![01-RillBuddy-cover.png]( ![02-RillBuddy-workbench.png](… 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
-          "importanceScore": 27.98,
-          "isChinaSource": true,
+          "canonicalUrl": "https://github.com/vercel/ai/releases/tag/%40ai-sdk/workflow-harness%401.0.196",
+          "publishedAt": "2026-11-27T23:27:10Z",
+          "highlightSummary": "==핵심 변경점: ### 패치 변경== 사항 - 종속성 업데이트됨 [974e80e] - @ai-sdk/harness@1.0.196 핵심 이득은 ==새 정식 버전 릴리스==이에요.",
+          "benefitTag": "새 정식 버전 릴리스",
+          "importanceScore": 28.11,
+          "isChinaSource": false,
           "matchedSkillSlugs": [
-            "ponytail"
+            "ponytail",
+            "ecc-core"
           ],
-          "matchReason": "이슈 키워드 \"agent\"와 직접 연결됨 (v2ex)"
+          "matchReason": "이슈 키워드 \"harness\"와 직접 연결됨 (github)"
         }
       ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "gemini-cli",
@@ -385,13 +387,13 @@
       "repo": "google-gemini/gemini-cli",
       "repoUrl": "https://github.com/google-gemini/gemini-cli",
       "sourcePlatform": "github",
-      "stars": 109246,
+      "stars": 109254,
       "tryPromptExample": "현재 프로젝트 구조를 분석하고 TypeScript 에러와 누락된 테스트를 한 번에 정리해 줘",
       "keyMetricBadge": "Google 공식 에이전트",
       "discoveredVia": "gh-search",
       "language": "TypeScript",
       "license": "Apache-2.0",
-      "pushedAt": "2026-11-27T10:00:19Z",
+      "pushedAt": "2026-11-28T01:12:45Z",
       "createdAt": "2025-04-17T17:04:31Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 95,
@@ -460,41 +462,41 @@
           "matchReason": "이슈 키워드 \"gemini\"와 직접 연결됨 (x)"
         },
         {
-          "id": "live-39c80f1e3e4b",
-          "titleKo": "신형 모델들이 자기 개선에 더 능숙해지고 있나요? Gemini Carbon과 Argon은 벤치마크에서 뛰어난 성과를 보이고 있으므로, 저희는",
-          "originalTitle": "@Harman26Singh: Are newer models getting better at self-improvement? Gemini Carbon and Argon are great on benchmarks, so we tr…",
-          "platformId": "x",
-          "category": "social",
-          "canonicalUrl": "https://x.com/Harman26Singh/status/2124911857064640826",
-          "publishedAt": "2026-11-23T22:12:20.086678Z",
-          "highlightSummary": "==최신 모델이 자기 개선에 더== 능숙해지고 있나요? 공식 보도자료보다 X에서 데모·런칭이 먼저 공개되는 경우가 많아 초기 반응과 신기능 아이디어를 한발 앞서 잡을 수 있어요.",
-          "importanceScore": 29.45,
+          "id": "live-48aaa1e4d3d4",
+          "titleKo": "[AI뉴스] Gemini 4 Neon, GDM이 프론티어 랩으로 완전 복귀",
+          "originalTitle": "[AINews] Gemini 4 Neon marks GDM's full return as a Frontier Lab",
+          "platformId": "latent-space",
+          "category": "industry",
+          "canonicalUrl": "https://latent.space/p/ainews-gemini-4-neon-marks-gdm-s-full-return-as-a-frontier-lab",
+          "publishedAt": "2026-11-25T04:29:07Z",
+          "highlightSummary": "==X에서 게시물 보기 ↗ Gemini== 4 Argon(RIP), Carbon 및 Neon에 타이틀 스토리(Hydrogen이 거의 누락됨)를 제공했음에도 불구하고 우리는 Neon 채택의 유난히 강력한 돌파 추세를 강조하기 위해 또 다른 드문 이중 기능… AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
+          "importanceScore": 23.74,
           "isChinaSource": false,
           "matchedSkillSlugs": [
             "omniroute",
             "gemini-cli"
           ],
-          "matchReason": "이슈 키워드 \"gemini\"와 직접 연결됨 (x)"
+          "matchReason": "이슈 키워드 \"gemini\"와 직접 연결됨 (latent-space)"
         },
         {
-          "id": "live-647e37827a02",
-          "titleKo": "Gemini 4 Carbon은 8개의 태양을 밝히고, 70년 된 기하학 미스터리는 단 6페이지의 신 수준의 증명으로 풀립니다",
-          "originalTitle": "Gemini 4 Carbon点亮8颗太阳，70年几何悬案告破，只用6页神级证明",
-          "platformId": "36kr-ai",
-          "category": "industry",
-          "canonicalUrl": "https://36kr.com/p/4087355247540614",
-          "publishedAt": "2026-11-27T02:33:32.007000Z",
-          "highlightSummary": "==모든 볼록한 행성은 8개의 태양으로== 빛날 수 있습니다. AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
-          "importanceScore": 28.44,
-          "isChinaSource": true,
+          "id": "live-fe64aced74a8",
+          "titleKo": "Gemini 4 Neon은 멋지게 배치되고 설명되어 있으며 독특한 게임 메커니즘을 갖춘 참신한 RPG 룰북입니다",
+          "originalTitle": "Gemini 4 Neon one-shots a novel RPG rulebook that is nicely laid-out and illustrated, and with a unique game mechanic...",
+          "platformId": "bluesky",
+          "category": "social",
+          "canonicalUrl": "https://bsky.app/profile/emollick.bsky.social/post/3n3djifx6fk2b",
+          "publishedAt": "2026-11-28T01:11:54.182000Z",
+          "highlightSummary": "==Gemini 4 Neon은 멋진 레이아웃과== 그림, 그리고 독특한 게임 메커니즘을 갖춘 새로운 RPG 룰북을 한 장에 담은 것입니다... 현업 AI 개발자·빌더가 지금 가장 주목하는 실전 사례라 댓글 반응과 한계점까지 함께 보면 기획 통찰이 선명해져요.",
+          "importanceScore": 17.49,
+          "isChinaSource": false,
           "matchedSkillSlugs": [
             "omniroute",
             "gemini-cli"
           ],
-          "matchReason": "이슈 키워드 \"gemini\"와 직접 연결됨 (36kr-ai)"
+          "matchReason": "이슈 키워드 \"gemini\"와 직접 연결됨 (bluesky)"
         }
       ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "omniroute",
@@ -506,11 +508,11 @@
       "repo": "cheaper-inference/OmniRoute",
       "repoUrl": "https://github.com/cheaper-inference/OmniRoute",
       "sourcePlatform": "github",
-      "stars": 90729,
+      "stars": 90792,
       "discoveredVia": "seed",
       "language": "TypeScript",
       "license": "MIT",
-      "pushedAt": "2026-11-27T17:46:30Z",
+      "pushedAt": "2026-11-28T02:30:30Z",
       "createdAt": "2026-02-13T12:38:31Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 95,
@@ -632,24 +634,187 @@
           "matchReason": "이슈 키워드 \"gemini\"와 직접 연결됨 (x)"
         },
         {
-          "id": "live-39c80f1e3e4b",
-          "titleKo": "신형 모델들이 자기 개선에 더 능숙해지고 있나요? Gemini Carbon과 Argon은 벤치마크에서 뛰어난 성과를 보이고 있으므로, 저희는",
-          "originalTitle": "@Harman26Singh: Are newer models getting better at self-improvement? Gemini Carbon and Argon are great on benchmarks, so we tr…",
-          "platformId": "x",
-          "category": "social",
-          "canonicalUrl": "https://x.com/Harman26Singh/status/2124911857064640826",
-          "publishedAt": "2026-11-23T22:12:20.086678Z",
-          "highlightSummary": "==최신 모델이 자기 개선에 더== 능숙해지고 있나요? 공식 보도자료보다 X에서 데모·런칭이 먼저 공개되는 경우가 많아 초기 반응과 신기능 아이디어를 한발 앞서 잡을 수 있어요.",
-          "importanceScore": 29.45,
-          "isChinaSource": false,
+          "id": "live-a150e5dcd4b5",
+          "titleKo": "마스터 Karpathy가 다시 작업에 복귀하고 Claude는 7시간 만에 실제 미국을 \"문명화\"로 가져옵니다",
+          "originalTitle": "大神Karpathy又整活，Claude 7小时把真实美国搬进《文明》",
+          "platformId": "36kr-ai",
+          "category": "industry",
+          "canonicalUrl": "https://36kr.com/p/4087901307353735",
+          "publishedAt": "2026-11-27T12:33:56.015000Z",
+          "highlightSummary": "==\"지금은 클로드와 이야기를 나누고 그에게== 모든 일을 맡기고 있어요.\" AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
+          "importanceScore": 27.93,
+          "isChinaSource": true,
           "matchedSkillSlugs": [
             "omniroute",
-            "gemini-cli"
+            "anthropic-official-skills"
           ],
-          "matchReason": "이슈 키워드 \"gemini\"와 직접 연결됨 (x)"
+          "matchReason": "이슈 키워드 \"claude\"와 직접 연결됨 (36kr-ai)"
         }
       ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
+    },
+    {
+      "slug": "headroom",
+      "name": "Headroom",
+      "koreanAlias": "[AI 기억력 88% 압축팩] Headroom",
+      "oneLineAnalogy": "긴 에러 로그와 JSON 응답을 AI에게 보내기 직전 ==알맹이만 압축해 주는 컨텍스트 진공포장기==입니다.",
+      "beginnerAnalogyKo": "비유하자면, 두꺼운 겨울 패딩을 진공 압축팩에 쏙 넣어 캐리어 공간을 88% 비워주는 정리 달인과 같아요.",
+      "summaryKo": "코딩 에이전트가 도구 호출로 쏟아내는 수만 토큰짜리 로그·JSON·파일 출력을 LLM에 도달하기 직전에 0.21ms 만에 압축합니다. 원본은 로컬 CCR 캐시에 보관해 AI가 필요 시 즉시 복원(headroom_retrieve)할 수 있어 정확도 손실 없이 비용을 줄입니다.",
+      "repo": "headroomlabs-ai/headroom",
+      "repoUrl": "https://github.com/headroomlabs-ai/headroom",
+      "sourcePlatform": "github",
+      "stars": 81012,
+      "discoveredVia": "seed",
+      "language": "Python",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-11-27T18:14:41Z",
+      "createdAt": "2026-01-07T19:58:51Z",
+      "lifecycleTier": "evergreen",
+      "vitalityScore": 94,
+      "category": "context",
+      "roleSlot": "context-compression",
+      "roleLabelKo": "컨텍스트 · 도구 출력 토큰 압축",
+      "installFormats": [
+        "Proxy",
+        "CLI",
+        "MCP",
+        "Plugin",
+        "SKILL.md"
+      ],
+      "supportedTools": [
+        "claude-code",
+        "gemini-agy",
+        "cursor",
+        "codex"
+      ],
+      "contextTokens": 520,
+      "contextTier": "초경량",
+      "installCommands": {
+        "cli": "uv tool install --python 3.13 \"headroom-ai[all]\" && headroom deploy",
+        "npxSkills": "npx skills add headroomlabs-ai/headroom"
+      },
+      "skillMdTemplate": "---\nname: headroom\ndescription: 도구 출력·로그·JSON·RAG 청크를 로컬에서 가역 압축해 입력 토큰을 21~95% 절감하는 컨텍스트 최적화 스킬\nsource: https://github.com/headroomlabs-ai/headroom\n---\n\n# Headroom — 가역 컨텍스트 압축 규칙\n\n1. **대용량 출력 선압축**: 빌드 로그, API JSON 배열, 검색 결과처럼 반복 구조가 큰 출력은 원문 전체를 컨텍스트에 밀어 넣지 않고 핵심 시그널(에러·스택트레이스·스키마·통계) 우선으로 요약해 소비한다.\n2. **원본 복원 경로 유지**: 압축된 청크에서 정확한 원문이 필요할 때만 `headroom_retrieve` 또는 특정 라인 범위 읽기로 정밀 조회한다.\n3. **실패 학습 환류**: 반복되는 빌드·테스트 오류 해결책은 `headroom learn` 또는 프로젝트 메모리 규칙 파일에 1줄 교훈으로 누적한다.",
+      "demoMedia": {
+        "type": "gif",
+        "url": "https://raw.githubusercontent.com/headroomlabs-ai/headroom/main/HeadroomDemo-Fast.gif",
+        "caption": "10,144 토큰 로그 덤프를 1,260 토큰(88% 절감)으로 압축하면서 FATAL 원인을 정확히 유지하는 실측 시연"
+      },
+      "benchmarks": [
+        {
+          "label": "로그 덤프 압축 실측 (데모)",
+          "beforeLabel": "원본 로그 입력",
+          "afterLabel": "Headroom 압축 후",
+          "beforeValue": 10144,
+          "afterValue": 1260,
+          "unit": "tokens",
+          "deltaText": "-87.6% 절감",
+          "lowerIsBetter": true,
+          "sourceUrl": "https://github.com/headroomlabs-ai/headroom",
+          "methodology": "README 공식 Proof: 10,144 tokens 로그 → 1,260 tokens (동일 FATAL 원인 탐지 유지)"
+        },
+        {
+          "label": "코딩 에이전트 4대 시나리오 입력 토큰",
+          "beforeLabel": "순정 에이전트",
+          "afterLabel": "Headroom 프록시",
+          "beforeValue": 100,
+          "afterValue": 61,
+          "unit": "%",
+          "deltaText": "21~57% 절감",
+          "lowerIsBetter": true,
+          "sourceUrl": "https://github.com/headroomlabs-ai/headroom",
+          "methodology": "4개 코딩 에이전트 실측 시나리오(21~57% 절감, 반복 JSON·로그는 60~95% 절감)"
+        },
+        {
+          "label": "10K JSON 압축 처리 지연 (p50)",
+          "beforeLabel": "일반 LLM 요약 (참고 1000ms)",
+          "afterLabel": "Headroom 로컬 압축",
+          "beforeValue": 1000,
+          "afterValue": 0.21,
+          "unit": "ms",
+          "deltaText": "0.21ms p50",
+          "lowerIsBetter": true,
+          "sourceUrl": "https://github.com/headroomlabs-ai/headroom",
+          "methodology": "10K 토큰 JSON 검색 결과 p50 0.21ms, 100K 토큰 1.4ms (로컬 처리)"
+        }
+      ],
+      "workflowCompression": {
+        "beforeTitle": "컨텍스트 초과로 대화가 끊기고 세션 요약 반복",
+        "afterTitle": "프록시·MCP 레이어에서 자동 압축 + 원본 필요 시 즉시 복원",
+        "manualSteps": [
+          "긴 테스트/빌드 로그 수동 복사 및 핵심 줄 발췌",
+          "컨텍스트 80% 도달 시 /compact 수동 실행",
+          "압축 과정에서 유실된 파일 내용 다시 읽히기"
+        ],
+        "autoStep": "Headroom 로컬 프록시가 도구 출력을 0.21ms 만에 자동 압축하고 원본은 CCR 캐시 보존",
+        "stepCountBefore": 3,
+        "stepCountAfter": 1
+      },
+      "radarKeywords": [
+        "token",
+        "context",
+        "compress",
+        "cost",
+        "log",
+        "json",
+        "proxy",
+        "memory",
+        "claude code",
+        "rag"
+      ],
+      "matchedRadar": [
+        {
+          "id": "live-fae59c0ccc2c",
+          "titleKo": "저는 Claude Code에게 1,500줄이 넘는 함수를 재구성해 달라고 요청했습니다. 모든 테스트를 통과했지만 여전히 자신감이 없습니다",
+          "originalTitle": "让 Claude Code 重构了一个 1500 多行的函数，测试全过了，但我还是不太放心",
+          "platformId": "v2ex",
+          "category": "dev",
+          "canonicalUrl": "https://v2ex.com/t/1260469",
+          "publishedAt": "2026-11-27T15:54:47Z",
+          "highlightSummary": "Claude Code로 4단계 리팩토링을 거쳐 최종적으로 주요 기능은 150줄로 줄었고, 코드 복잡도는 143줄에서 7줄로 줄었으며, 6471번의 테스트를 모두 통과했지만, 전체 파일은 ==31%== 길어졌습니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+          "importanceScore": 28.1,
+          "isChinaSource": true,
+          "matchedSkillSlugs": [
+            "ponytail",
+            "headroom"
+          ],
+          "matchReason": "이슈 키워드 \"claude code\"와 직접 연결됨 (v2ex)"
+        },
+        {
+          "id": "live-a51926b5dfc1",
+          "titleKo": "Claude Code의 5시간 제한 및 주간 제한: 무엇이 계산되고, 언제 재설정되고, 나머지를 어떻게 확인하는지(2026년 11월 버전)",
+          "originalTitle": "Claude Codeの5時間制限と週間制限：何がカウントされ、いつリセットされ、残りをどう確認するか（2026年11月版）",
+          "platformId": "zenn",
+          "category": "dev",
+          "canonicalUrl": "https://zenn.dev/niedraaa/articles/5a070b53decbf1",
+          "publishedAt": "2026-11-28T00:01:58Z",
+          "highlightSummary": "Claude Code의 사용 제한은 ==5시간==마다 재설정되는 세션 제한과 계정별로 정해진 날짜와 시간에 매주 재설정되는 주간 제한의 두 개입니다(계획에 따라 모델별 주간 제한도 추가됩니다). 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+          "importanceScore": 27.34,
+          "isChinaSource": false,
+          "matchedSkillSlugs": [
+            "ponytail",
+            "headroom"
+          ],
+          "matchReason": "이슈 키워드 \"claude code\"와 직접 연결됨 (zenn)"
+        },
+        {
+          "id": "live-e1f4b365aec3",
+          "titleKo": "Claude Code를 복수 터미널+git worktree로 나란히 하고, 거의 혼자서 4개의 SaaS를 만드는 이야기",
+          "originalTitle": "Claude Code を複数ターミナル＋git worktree で並べて、ほぼ1人で4つの SaaSを作っている話",
+          "platformId": "zenn",
+          "category": "dev",
+          "canonicalUrl": "https://zenn.dev/newsletterready/articles/4585354b62b688",
+          "publishedAt": "2026-11-27T23:05:14Z",
+          "highlightSummary": "==이제 Claude Code를 사용하여 거의== 혼자서 네 개의 웹 서비스를 만들고 운영하고 있습니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+          "importanceScore": 27.19,
+          "isChinaSource": false,
+          "matchedSkillSlugs": [
+            "ponytail",
+            "headroom"
+          ],
+          "matchReason": "이슈 키워드 \"claude code\"와 직접 연결됨 (zenn)"
+        }
+      ],
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "anthropic-official-skills",
@@ -661,7 +826,7 @@
       "repo": "anthropics/skills",
       "repoUrl": "https://github.com/anthropics/skills",
       "sourcePlatform": "github",
-      "stars": 201387,
+      "stars": 201547,
       "discoveredVia": "seed",
       "language": "Python",
       "license": "Open Source",
@@ -714,58 +879,58 @@
       ],
       "matchedRadar": [
         {
-          "id": "live-fde211259d76",
-          "titleKo": "Clay가 GTM 에이전트를 구축하는 방법 — Jeff Barg, AI 책임자",
-          "originalTitle": "How Clay Builds GTM Agents — Jeff Barg, Head of AI",
-          "platformId": "latent-space",
+          "id": "live-a150e5dcd4b5",
+          "titleKo": "마스터 Karpathy가 다시 작업에 복귀하고 Claude는 7시간 만에 실제 미국을 \"문명화\"로 가져옵니다",
+          "originalTitle": "大神Karpathy又整活，Claude 7小时把真实美国搬进《文明》",
+          "platformId": "36kr-ai",
           "category": "industry",
-          "canonicalUrl": "https://latent.space/p/how_clay_builds_gtm_agents_jeff_barg_head_of_ai",
-          "publishedAt": "2026-11-26T22:44:44Z",
-          "highlightSummary": "==Clay는 자체 에이전트를 사용하든 Claude== Code를 Clay에 지정하든 거의 동일한 결과를 얻기를 원합니다. AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
-          "importanceScore": 28.8,
+          "canonicalUrl": "https://36kr.com/p/4087901307353735",
+          "publishedAt": "2026-11-27T12:33:56.015000Z",
+          "highlightSummary": "==\"지금은 클로드와 이야기를 나누고 그에게== 모든 일을 맡기고 있어요.\" AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
+          "importanceScore": 27.93,
+          "isChinaSource": true,
+          "matchedSkillSlugs": [
+            "omniroute",
+            "anthropic-official-skills"
+          ],
+          "matchReason": "이슈 키워드 \"claude\"와 직접 연결됨 (36kr-ai)"
+        },
+        {
+          "id": "live-dc167bf3159d",
+          "titleKo": "Convex 스킬, 사용자에게 알리지 않고 앱 아이디어를 원격 서버로 전송",
+          "originalTitle": "Convex 스킬, 사용자에게 알리지 않고 앱 아이디어를 원격 서버로 전송",
+          "platformId": "geeknews",
+          "category": "social",
+          "canonicalUrl": "https://news.hada.io/topic?id=37973",
+          "publishedAt": "2026-11-27T22:32:40Z",
+          "highlightSummary": "Anthropic의 claude-plugins-official 마켓플레이스에 등록된 Convex 플러그인에서, 사용자 아이디어의 무고지 전송과 원격 스크립트 실행 방식에 관한 문제가 제기됨 quickstart는 사용자의 한 문장짜리 프로젝트… 현업 AI 개발자·빌더가 지금 가장 주목하는 실전 사례라 댓글 반응과 한계점까지 함께 보면 기획 통찰이 선명해져요.",
+          "importanceScore": 27.11,
           "isChinaSource": false,
           "matchedSkillSlugs": [
             "anthropic-official-skills",
-            "ui-ux-pro-max-skill"
+            "ecc-core"
           ],
-          "matchReason": "이슈 키워드 \"claude\"와 직접 연결됨 (latent-space)"
+          "matchReason": "이슈 키워드 \"anthropic\"와 직접 연결됨 (geeknews)"
         },
         {
-          "id": "live-aaa5463d8ab5",
-          "titleKo": "평가 기준과 현장 관습이 서로 엇갈릴 때, 주기를 더하면 LLM 판정기는 어떻게 바뀌는가 - 999건과 미견의 300건으로 확인했다",
-          "originalTitle": "評価基準と現場の慣習が食い違うとき、注記を足すとLLM判定器はどう変わるか ― 999件と未見の300件で確かめた",
-          "platformId": "zenn",
-          "category": "dev",
-          "canonicalUrl": "https://zenn.dev/quent/articles/0a29761c6d2cb9",
-          "publishedAt": "2026-11-27T02:33:04Z",
-          "highlightSummary": "==Claude 개발 생태계에서 '평가 기준과== 현장 관습이 서로 엇갈릴 때, 주기를 더하면 LLM 판정기는 어떻게 바뀌는가 - 999건과 미견의 300건으로 확인했다' 구현 방식과 실전 적용 사례가 공개됐어요. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
-          "importanceScore": 27.2,
+          "id": "live-d53f7b2fac60",
+          "titleKo": "“Claude의 퍼소나는 무엇일까?” 그리고 다른 질문들",
+          "originalTitle": "“Claude의 퍼소나는 무엇일까?” 그리고 다른 질문들",
+          "platformId": "geeknews",
+          "category": "social",
+          "canonicalUrl": "https://news.hada.io/topic?id=37970",
+          "publishedAt": "2026-11-27T20:39:52Z",
+          "highlightSummary": "==모델마다 50회씩 동물 캐릭터 자아상인== 퍼소나(fursona) 를 물은 실험에서 Claude는 까마귀과 조류나 문어, Gemini는 사이버네틱 캐릭터, GPT-6.2 Astra는 나방을 선호하는 패턴을 보임 Gemini의 기계적 미학은 특히… 현업 AI 개발자·빌더가 지금 가장 주목하는 실전 사례라 댓글 반응과 한계점까지 함께 보면 기획 통찰이 선명해져요.",
+          "importanceScore": 26.82,
           "isChinaSource": false,
           "matchedSkillSlugs": [
             "omniroute",
             "anthropic-official-skills"
           ],
-          "matchReason": "이슈 키워드 \"claude\"와 직접 연결됨 (zenn)"
-        },
-        {
-          "id": "live-541a205c45ca",
-          "titleKo": "AI의 공개 전 체크를, 프로덕션으로 사람이 뒤집은 페이지로부터 다시 평가한다",
-          "originalTitle": "AIの公開前チェックを、本番で人が覆したページから評価し直す",
-          "platformId": "zenn",
-          "category": "dev",
-          "canonicalUrl": "https://zenn.dev/shon9278/articles/ai-lab-check-eval-from-production",
-          "publishedAt": "2026-11-27T02:10:41Z",
-          "highlightSummary": "==Claude·GPT·Gemini를 사원으로 한 작은 회사의== 실험(AI Product Lab)으로, 공개 전 체크의 평가의 구조를 더했습니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
-          "importanceScore": 27.14,
-          "isChinaSource": false,
-          "matchedSkillSlugs": [
-            "omniroute",
-            "anthropic-official-skills"
-          ],
-          "matchReason": "이슈 키워드 \"claude\"와 직접 연결됨 (zenn)"
+          "matchReason": "이슈 키워드 \"claude\"와 직접 연결됨 (geeknews)"
         }
       ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "github-mcp-server",
@@ -777,7 +942,7 @@
       "repo": "github/github-mcp-server",
       "repoUrl": "https://github.com/github/github-mcp-server",
       "sourcePlatform": "github",
-      "stars": 34802,
+      "stars": 34809,
       "discoveredVia": "seed",
       "language": "Go",
       "license": "MIT",
@@ -832,16 +997,16 @@
       ],
       "matchedRadar": [
         {
-          "id": "live-33c91b177917",
-          "titleKo": "gary23w/f-ck_data_brokers: fck_data_brokers.py는 옵트아웃 및 삭제 요청을 보내는 무료 오픈 소스…",
-          "originalTitle": "gary23w/f-ck_data_brokers: fck_data_brokers.py is a free, open-source Python script that sends opt-out and deletion req",
+          "id": "live-fb54de5f8dc4",
+          "titleKo": "n8n@2.49.8 새 정식 버전 릴리즈",
+          "originalTitle": "n8n@2.49.8",
           "platformId": "github",
           "category": "dev",
-          "canonicalUrl": "https://github.com/gary23w/f-ck_data_brokers",
-          "publishedAt": "2026-11-26T17:53:07Z",
-          "highlightSummary": "fck_data_brokers.py는 사용자를 대신하여 데이터 브로커에 옵트아웃 및 삭제 요청을 보내는 무료 오픈 소스 Python 스크립트입니다. 핵심 이득은 ==GitHub 급상승 ★301==이에요.",
-          "benefitTag": "GitHub 급상승 ★301",
-          "importanceScore": 33.46,
+          "canonicalUrl": "https://github.com/n8n-io/n8n/releases/tag/n8n%402.49.8",
+          "publishedAt": "2026-11-27T08:18:25Z",
+          "highlightSummary": "==GitHub의 n8n@2.49.8 새 정식 버전== 릴리즈 정식 배포가 이뤄져 안정화 패치와 신규 기능을 바로 프로젝트에 적용할 수 있어요. 핵심 이득은 ==새 정식 버전 릴리스==이에요.",
+          "benefitTag": "새 정식 버전 릴리스",
+          "importanceScore": 26.95,
           "isChinaSource": false,
           "matchedSkillSlugs": [
             "github-mcp-server",
@@ -850,16 +1015,16 @@
           "matchReason": "이슈 키워드 \"github\"와 직접 연결됨 (github)"
         },
         {
-          "id": "live-e812516bcadb",
-          "titleKo": "n8n@2.49.7 새 정식 버전 릴리즈",
-          "originalTitle": "n8n@2.49.7",
+          "id": "live-1ee4aae4403c",
+          "titleKo": "OfficialAtone/jenny-mod-enhanced-edition: Minecraft Java 및 Bedrock용 Jenny…",
+          "originalTitle": "OfficialAtone/jenny-mod-enhanced-edition: Unofficial Enhanced Edition of the Jenny Mod (Fapcraft) for Minecraft Java and Bedrock. Upgr",
           "platformId": "github",
           "category": "dev",
-          "canonicalUrl": "https://github.com/n8n-io/n8n/releases/tag/n8n%402.49.7",
-          "publishedAt": "2026-11-26T07:23:34Z",
-          "highlightSummary": "==GitHub의 n8n@2.49.7 새 정식 버전== 릴리즈 정식 배포가 이뤄져 안정화 패치와 신규 기능을 바로 프로젝트에 적용할 수 있어요. 핵심 이득은 ==새 정식 버전 릴리스==이에요.",
-          "benefitTag": "새 정식 버전 릴리스",
-          "importanceScore": 27.45,
+          "canonicalUrl": "https://github.com/OfficialAtone/jenny-mod-enhanced-edition",
+          "publishedAt": "2026-11-26T23:23:42Z",
+          "highlightSummary": "==Minecraft Java 및 Bedrock용 Jenny== Mod(Fapcraft)의 비공식 강화 에디션. 핵심 이득은 ==GitHub 급상승 ★78==이에요.",
+          "benefitTag": "GitHub 급상승 ★78",
+          "importanceScore": 25.06,
           "isChinaSource": false,
           "matchedSkillSlugs": [
             "github-mcp-server",
@@ -886,7 +1051,111 @@
           "matchReason": "이슈 키워드 \"open-source\"와 직접 연결됨 (interconnects)"
         }
       ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
+    },
+    {
+      "slug": "caveman",
+      "name": "Caveman",
+      "koreanAlias": "Caveman — AI의 장황한 말투를 65~75% 압축해 토큰을 아끼는 스킬",
+      "oneLineAnalogy": "불필요한 인사·서론·부연설명을 걷어내고 ==핵심 코드와 결론만 짧게 답하게 해 출력 토큰을 65~75% 절감하는 초압축 스킬==입니다.",
+      "beginnerAnalogyKo": "비유하자면, 길고 장황한 보고서 대신 핵심 결론과 수정 코드만 딱 요약해 토큰 요금을 70% 넘게 아껴주는 요약 전문가예요.",
+      "summaryKo": "불필요한 인사·서론·부연설명을 걷어내고 핵심 코드와 결론만 짧게 답하게 해 출력 토큰을 65~75% 절감하는 초압축 스킬입니다. GitHub(JuliusBrussee/caveman)에서 최근까지 활발히 유지보수 중인 오픈소스 도구로, Claude Code·Cursor·Gemini CLI 워크플로우에 바로 연결할 수 있습니다.",
+      "repo": "JuliusBrussee/caveman",
+      "repoUrl": "https://github.com/JuliusBrussee/caveman",
+      "sourcePlatform": "github",
+      "stars": 123332,
+      "tryPromptExample": "지금부터 Caveman 모드로 불필요한 서론 없이 원인·수정 코드·검증 결과만 짧게 답해 줘",
+      "keyMetricBadge": "출력 토큰 -75%",
+      "discoveredVia": "gh-search",
+      "language": "Go",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-11-27T05:38:24Z",
+      "createdAt": "2026-04-04T10:03:00Z",
+      "lifecycleTier": "evergreen",
+      "vitalityScore": 90,
+      "category": "context",
+      "roleSlot": "memory",
+      "roleLabelKo": "장기 기억·컨텍스트 토큰 절약",
+      "installFormats": [
+        "SKILL.md",
+        "MCP",
+        "CLI"
+      ],
+      "supportedTools": [
+        "claude-code",
+        "gemini-agy",
+        "cursor",
+        "windsurf",
+        "codex"
+      ],
+      "contextTokens": 540,
+      "contextTier": "초경량",
+      "installCommands": {
+        "npxSkills": "npx skills add JuliusBrussee/caveman"
+      },
+      "skillMdTemplate": "---\nname: caveman\ndescription: 불필요한 인사·서론·부연설명을 걷어내고 핵심 코드와 결론만 짧게 답하게 해 출력 토큰을 65~75% 절감하는 초압축 스킬입니다\nsource: https://github.com/JuliusBrussee/caveman\n---\n\n# Caveman — 실전 오픈소스 코딩 무기\n\n1. **목적**: 불필요한 인사·서론·부연설명을 걷어내고 핵심 코드와 결론만 짧게 답하게 해 출력 토큰을 65~75% 절감하는 초압축 스킬입니다\n2. **적용 방식**: 작업 전 기존 프로젝트 구조를 먼저 파악한 뒤 `JuliusBrussee/caveman`의 핵심 패턴을 최소 변경으로 적용한다.\n3. **검증 완료 보고**: 변경 파일과 테스트·실행 결과를 간결히 요약해 보고한다.",
+      "demoMedia": null,
+      "benchmarks": [],
+      "workflowCompression": {
+        "beforeTitle": "매번 반복적인 수동 설정과 긴 프롬프트 설명 작성",
+        "afterTitle": "Caveman 규칙·도구 1회 장착으로 자동 실행",
+        "manualSteps": [
+          "관련 오픈소스 문서를 직접 찾아 수동 세팅",
+          "코딩 툴마다 다른 규칙 파일 형식에 맞춰 변환",
+          "세션마다 동일한 작업 지침 반복 입력"
+        ],
+        "autoStep": "Caveman 자동 설치 문구로 내 코딩 툴에 즉시 이식해 1회 명령으로 실행",
+        "stepCountBefore": 3,
+        "stepCountAfter": 1
+      },
+      "radarKeywords": [
+        "caveman",
+        "context",
+        "ai",
+        "anthropic",
+        "caveman",
+        "claude",
+        "claude-code",
+        "agent",
+        "mcp"
+      ],
+      "matchedRadar": [
+        {
+          "id": "live-9772285579ef",
+          "titleKo": "이미지를 만들면 프롬프트와 생성 ID를 Claude Code에 md로 씁니다",
+          "originalTitle": "画像を作ったらプロンプトと生成 ID を Claude Code に md で書かせておく",
+          "platformId": "zenn",
+          "category": "dev",
+          "canonicalUrl": "https://zenn.dev/aida0522/articles/1c1a54f52bb2f9",
+          "publishedAt": "2026-11-27T23:00:06Z",
+          "highlightSummary": "==Claude Code에서 Higgsfield의 MCP로 이미지를== 만들고 있습니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+          "importanceScore": 27.18,
+          "isChinaSource": false,
+          "matchedSkillSlugs": [
+            "ui-ux-pro-max-skill",
+            "caveman"
+          ],
+          "matchReason": "이슈 키워드 \"claude\"와 직접 연결됨 (zenn)"
+        },
+        {
+          "id": "live-9fef9270cdd5",
+          "titleKo": "인류학 연구: 클로드 블랙홀 물리학",
+          "originalTitle": "Anthropic Research: Claude Black Hole Physics",
+          "platformId": "anthropic",
+          "category": "research",
+          "canonicalUrl": "https://anthropic.com/research/claude-black-hole-physics",
+          "publishedAt": "2026-11-18T21:42:44.116000Z",
+          "highlightSummary": "==Anthropic 공식 연구 보고서 'Claude== Black Hole Physics' ( 공개됐습니다. 조만간 상용 모델과 개발 도구에 흡수될 핵심 기법이라 실험 수치와 한계를 미리 짚어 두면 기술 로드맵에 도움돼요.",
+          "importanceScore": 23.36,
+          "isChinaSource": false,
+          "matchedSkillSlugs": [
+            "anthropic-official-skills",
+            "caveman"
+          ],
+          "matchReason": "이슈 키워드 \"anthropic\"와 직접 연결됨 (anthropic)"
+        }
+      ],
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "taste-skill",
@@ -898,7 +1167,7 @@
       "repo": "Leonxlnx/taste-skill",
       "repoUrl": "https://github.com/Leonxlnx/taste-skill",
       "sourcePlatform": "github",
-      "stars": 122264,
+      "stars": 122366,
       "discoveredVia": "seed",
       "language": "JavaScript",
       "license": "MIT",
@@ -997,7 +1266,107 @@
           "matchReason": "이슈 키워드 \"browser\"와 직접 연결됨 (github)"
         }
       ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
+    },
+    {
+      "slug": "mcp-reference-servers",
+      "name": "MCP Reference Servers",
+      "koreanAlias": "[Anthropic 공식 MCP 기본 연장통] MCP Servers",
+      "oneLineAnalogy": "파일시스템·Git·Fetch·Memory 등 ==AI가 외부 도구와 안전하게 연결되는 공식 표준 어댑터 묶음==입니다.",
+      "beginnerAnalogyKo": "비유하자면, 어떤 코딩 툴을 쓰든 파일·Git·단계별 추론을 안전하게 꽂아 쓸 수 있는 220V 표준 멀티탭이에요.",
+      "summaryKo": "Model Context Protocol 공식 레퍼런스 서버 저장소입니다. 안전한 경로 격리 파일시스템 접근, Git 이력 조회, 웹 Fetch, 구조화 추론(Sequential Thinking) 등 모든 코딩 에이전트의 기본 인프라를 제공합니다.",
+      "repo": "modelcontextprotocol/servers",
+      "repoUrl": "https://github.com/modelcontextprotocol/servers",
+      "sourcePlatform": "github",
+      "stars": 92300,
+      "discoveredVia": "seed",
+      "language": "TypeScript",
+      "license": "Other",
+      "pushedAt": "2026-11-27T10:34:05Z",
+      "createdAt": "2024-11-19T01:10:17Z",
+      "lifecycleTier": "evergreen",
+      "vitalityScore": 89,
+      "category": "workflow",
+      "roleSlot": "harness-suite",
+      "roleLabelKo": "공식 MCP 표준 레퍼런스 도구 세트",
+      "installFormats": [
+        "MCP",
+        "CLI"
+      ],
+      "supportedTools": [
+        "claude-code",
+        "gemini-agy",
+        "cursor",
+        "windsurf",
+        "codex"
+      ],
+      "contextTokens": 540,
+      "contextTier": "초경량",
+      "installCommands": {
+        "cli": "npx -y @modelcontextprotocol/server-sequential-thinking"
+      },
+      "skillMdTemplate": "---\nname: mcp-reference-servers\ndescription: 공식 MCP 표준 서버(Filesystem·Git·Fetch·Sequential Thinking)를 최소 권한 원칙으로 활용하는 스킬\nsource: https://github.com/modelcontextprotocol/servers\n---\n\n# MCP Reference Servers — 안전 도구 연동 규칙\n\n1. **최소 권한 경로 지정**: Filesystem MCP에는 작업 워크스페이스 디렉터리만 허용하고 홈 디렉터리 전체 노출을 피한다.\n2. **단계적 추론 분리**: 복잡한 설계나 트레이드오프 분석 시 순차 추론(Sequential Thinking)으로 가설을 검증한 뒤 코드를 작성한다.\n3. **도구 수 절제**: 현재 작업에 필요한 MCP 서버만 활성화해 도구 스키마 토큰 점유를 최소화한다.",
+      "demoMedia": null,
+      "benchmarks": [],
+      "workflowCompression": {
+        "beforeTitle": "도구마다 제각각인 커스텀 스크립트·플러그인 연동 코드 작성",
+        "afterTitle": "단일 MCP JSON 설정으로 모든 AI 툴에 표준 도구 일괄 연결",
+        "manualSteps": [
+          "AI 툴별 독자 플러그인 스펙 조사 및 개별 구현",
+          "경로 접근 권한 및 에러 핸들링 수동 래핑",
+          "다른 코딩 툴로 옮길 때 연동 코드 재작성"
+        ],
+        "autoStep": "공식 MCP 레퍼런스 서버 1회 설정으로 Claude·Cursor·Gemini·Codex 공통 활용",
+        "stepCountBefore": 3,
+        "stepCountAfter": 1
+      },
+      "radarKeywords": [
+        "mcp",
+        "protocol",
+        "anthropic",
+        "tool",
+        "server",
+        "filesystem",
+        "git",
+        "agent"
+      ],
+      "matchedRadar": [
+        {
+          "id": "live-1ac91a498e9b",
+          "titleKo": "servers v2.6.0 새 버전 공개",
+          "originalTitle": "servers v2.6.0",
+          "platformId": "github",
+          "category": "dev",
+          "canonicalUrl": "https://github.com/modelcontextprotocol/servers/releases/tag/v2.6.0",
+          "publishedAt": "2026-11-27T09:51:35Z",
+          "highlightSummary": "핵심 변경점: ## 보안 수정 ==v2.6.0==은 3개 서버의 8개 취약점을 수정하고 v2.5.0에서 남겨둔 2개의 수정 사항을 완료했습니다. 핵심 이득은 ==새 정식 버전 릴리스==이에요.",
+          "benefitTag": "새 정식 버전 릴리스",
+          "importanceScore": 27.16,
+          "isChinaSource": false,
+          "matchedSkillSlugs": [
+            "mcp-reference-servers"
+          ],
+          "matchReason": "이슈 키워드 \"server\"와 직접 연결됨 (github)"
+        },
+        {
+          "id": "live-b6a1f81ff98c",
+          "titleKo": "ollama v0.40.19 새 버전 공개",
+          "originalTitle": "ollama v0.40.19",
+          "platformId": "ollama",
+          "category": "dev",
+          "canonicalUrl": "https://github.com/ollama/ollama/releases/tag/v0.40.19",
+          "publishedAt": "2026-11-27T21:47:32Z",
+          "highlightSummary": "==핵심 변경점: 변경 사항 inkling2:== #19881에서 @dhiltgen의 더 빠른 짧은 기록, 초안 제안 및 대화 스냅샷 mlxrunner: #19913의 @pdevine의 컴팩트 엔그램 기록 버퍼ump llama-server, #19917의… 핵심 이득은 ==새 정식 버전 릴리스==이에요.",
+          "benefitTag": "새 정식 버전 릴리스",
+          "importanceScore": 25.25,
+          "isChinaSource": false,
+          "matchedSkillSlugs": [
+            "mcp-reference-servers"
+          ],
+          "matchReason": "이슈 키워드 \"server\"와 직접 연결됨 (ollama)"
+        }
+      ],
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "superpowers",
@@ -1009,7 +1378,7 @@
       "repo": "obra/superpowers",
       "repoUrl": "https://github.com/obra/superpowers",
       "sourcePlatform": "github",
-      "stars": 328150,
+      "stars": 328370,
       "discoveredVia": "seed",
       "language": "Shell",
       "license": "MIT",
@@ -1079,109 +1448,7 @@
           "matchReason": "이슈 키워드 \"engineering\"와 직접 연결됨 (x)"
         }
       ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
-    },
-    {
-      "slug": "vercel-skills-cli",
-      "name": "Vercel Skills CLI",
-      "koreanAlias": "[전 AI 툴 공용 스킬 설치기] Skills CLI",
-      "oneLineAnalogy": "`npx skills add` 한 줄로 ==Claude·Cursor·Codex·Gemini 모든 툴에 표준 스킬을 설치하는 오픈 앱스토어 명령줄==입니다.",
-      "beginnerAnalogyKo": "비유하자면, 여러 코딩 툴에 흩어진 스킬을 스마트폰 앱스토어에서 버튼 하나로 깔고 업데이트하는 공용 설치 매니저예요.",
-      "summaryKo": "Vercel Labs가 주도하는 개방형 `SKILL.md` 표준 생태계의 핵심 CLI(`npx skills`)입니다. `find`, `add`, `list`, `use` 명령으로 특정 GitHub 저장소의 스킬을 여러 코딩 에이전트 규격에 맞춰 일괄 배포·업데이트합니다.",
-      "repo": "vercel-labs/skills",
-      "repoUrl": "https://github.com/vercel-labs/skills",
-      "sourcePlatform": "github",
-      "stars": 41132,
-      "discoveredVia": "seed",
-      "language": "TypeScript",
-      "license": "MIT",
-      "pushedAt": "2026-11-27T05:06:11Z",
-      "createdAt": "2026-01-14T21:31:18Z",
-      "lifecycleTier": "evergreen",
-      "vitalityScore": 86,
-      "category": "workflow",
-      "roleSlot": "skill-installer",
-      "roleLabelKo": "표준 SKILL.md 크로스-툴 패키지 매니저",
-      "installFormats": [
-        "CLI",
-        "SKILL.md"
-      ],
-      "supportedTools": [
-        "claude-code",
-        "gemini-agy",
-        "cursor",
-        "windsurf",
-        "codex"
-      ],
-      "contextTokens": 320,
-      "contextTier": "초경량",
-      "installCommands": {
-        "cli": "npx skills find",
-        "npxSkills": "npx skills add vercel-labs/agent-skills"
-      },
-      "skillMdTemplate": "---\nname: vercel-skills-cli\ndescription: npx skills CLI를 이용해 오픈소스 SKILL.md 패키지를 여러 코딩 에이전트에 표준 방식으로 설치·관리하는 스킬\nsource: https://github.com/vercel-labs/skills\n---\n\n# Skills CLI — 표준 스킬 패키지 운영 규칙\n\n1. **표준 포맷 준수**: 모든 프로젝트 스킬은 YAML frontmatter(`name`, `description`)를 포함한 `SKILL.md` 형식으로 관리한다.\n2. **프로젝트 격리 우선**: 팀/프로젝트 전용 스킬은 기본 로컬 스코프로 설치하고, 개인 공통 스킬만 `-g` 전역 옵션을 사용한다.\n3. **일회성 테스트 활용**: 영구 설치 전에 `npx skills use <source>@<skill>`로 효과를 먼저 검증한다.",
-      "demoMedia": null,
-      "benchmarks": [],
-      "workflowCompression": {
-        "beforeTitle": "GitHub에서 마크다운 수동 복사 후 툴별 숨김 폴더에 일일이 붙여넣기",
-        "afterTitle": "npx skills add <owner/repo> 1줄로 모든 코딩 툴에 자동 동기화",
-        "manualSteps": [
-          "스킬 저장소 탐색 및 raw 마크다운 복사",
-          ".claude/skills, .gemini/skills, .cursor/rules 각각 수동 생성",
-          "업데이트 시 모든 폴더 다시 덮어쓰기"
-        ],
-        "autoStep": "npx skills CLI가 툴별 표준 경로 감지·설치·버전 갱신을 1줄로 자동화",
-        "stepCountBefore": 3,
-        "stepCountAfter": 1
-      },
-      "radarKeywords": [
-        "skills",
-        "npx",
-        "agent-skills",
-        "cli",
-        "ecosystem",
-        "claude code",
-        "cursor",
-        "codex"
-      ],
-      "matchedRadar": [
-        {
-          "id": "live-04817f74c789",
-          "titleKo": "앤트로픽, MCP 서버에 '스킬' 도입…AI 에이전트에 업무 노하우까지 전달",
-          "originalTitle": "앤트로픽, MCP 서버에 '스킬' 도입…AI 에이전트에 업무 노하우까지 전달",
-          "platformId": "aitimes",
-          "category": "industry",
-          "canonicalUrl": "https://aitimes.com/news/articleView.html?idxno=217847",
-          "publishedAt": "2026-11-27T03:23:23Z",
-          "highlightSummary": "==앤트로픽이 AI 에이전트 연결 표준인== 모델 컨텍스트 프로토콜(MCP)을 통해 업무 수행 방법을 담은 '스킬(Skills)'을 제공하는 기능을 도입했다. AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
-          "importanceScore": 30.07,
-          "isChinaSource": false,
-          "matchedSkillSlugs": [
-            "vercel-agent-skills",
-            "vercel-skills-cli"
-          ],
-          "matchReason": "이슈 키워드 \"skills\"와 직접 연결됨 (aitimes)"
-        },
-        {
-          "id": "live-ac470f1b5c2e",
-          "titleKo": "cline v4.1.28 새 버전 공개",
-          "originalTitle": "cline v4.1.28",
-          "platformId": "github",
-          "category": "dev",
-          "canonicalUrl": "https://github.com/cline/cline/releases/tag/v4.1.28",
-          "publishedAt": "2026-11-26T09:57:49Z",
-          "highlightSummary": "==핵심 변경점: OpenAI 공급자는 더== 이상 `gpt-4o`, `gpt-4.1`, `gpt-5`, `gpt-5-mini`, `gpt-5.1`, `gpt-5.3-codex`, `o3` 및 `o3-pro`를 포함하여 더 이상 사용되지 않는 업스트림… 핵심 이득은 ==새 정식 버전 릴리스==이에요.",
-          "benefitTag": "새 정식 버전 릴리스",
-          "importanceScore": 27.84,
-          "isChinaSource": false,
-          "matchedSkillSlugs": [
-            "omniroute",
-            "vercel-skills-cli"
-          ],
-          "matchReason": "이슈 키워드 \"cli\"와 직접 연결됨 (github)"
-        }
-      ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "ui-ux-pro-max-skill",
@@ -1193,7 +1460,7 @@
       "repo": "nextlevelbuilder/ui-ux-pro-max-skill",
       "repoUrl": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
       "sourcePlatform": "github",
-      "stars": 155034,
+      "stars": 155182,
       "tryPromptExample": "UI/UX Pro Max 규칙으로 지금 대시보드의 여백·색상·카드 위계를 프로덕트급으로 다듬어 줘",
       "keyMetricBadge": "50+ UI 디자인 시스템",
       "discoveredVia": "gh-search",
@@ -1251,24 +1518,24 @@
       ],
       "matchedRadar": [
         {
-          "id": "live-fde211259d76",
-          "titleKo": "Clay가 GTM 에이전트를 구축하는 방법 — Jeff Barg, AI 책임자",
-          "originalTitle": "How Clay Builds GTM Agents — Jeff Barg, Head of AI",
-          "platformId": "latent-space",
-          "category": "industry",
-          "canonicalUrl": "https://latent.space/p/how_clay_builds_gtm_agents_jeff_barg_head_of_ai",
-          "publishedAt": "2026-11-26T22:44:44Z",
-          "highlightSummary": "==Clay는 자체 에이전트를 사용하든 Claude== Code를 Clay에 지정하든 거의 동일한 결과를 얻기를 원합니다. AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
-          "importanceScore": 28.8,
+          "id": "live-9772285579ef",
+          "titleKo": "이미지를 만들면 프롬프트와 생성 ID를 Claude Code에 md로 씁니다",
+          "originalTitle": "画像を作ったらプロンプトと生成 ID を Claude Code に md で書かせておく",
+          "platformId": "zenn",
+          "category": "dev",
+          "canonicalUrl": "https://zenn.dev/aida0522/articles/1c1a54f52bb2f9",
+          "publishedAt": "2026-11-27T23:00:06Z",
+          "highlightSummary": "==Claude Code에서 Higgsfield의 MCP로 이미지를== 만들고 있습니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+          "importanceScore": 27.18,
           "isChinaSource": false,
           "matchedSkillSlugs": [
-            "anthropic-official-skills",
-            "ui-ux-pro-max-skill"
+            "ui-ux-pro-max-skill",
+            "caveman"
           ],
-          "matchReason": "이슈 키워드 \"claude\"와 직접 연결됨 (latent-space)"
+          "matchReason": "이슈 키워드 \"claude\"와 직접 연결됨 (zenn)"
         }
       ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "shadcn-ui",
@@ -1280,7 +1547,7 @@
       "repo": "shadcn-ui/ui",
       "repoUrl": "https://github.com/shadcn-ui/ui",
       "sourcePlatform": "github",
-      "stars": 129257,
+      "stars": 129275,
       "discoveredVia": "seed",
       "language": "TypeScript",
       "license": "MIT",
@@ -1354,309 +1621,7 @@
           "matchReason": "이슈 키워드 \"design\"와 직접 연결됨 (openai)"
         }
       ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
-    },
-    {
-      "slug": "caveman",
-      "name": "Caveman",
-      "koreanAlias": "Caveman — AI의 장황한 말투를 65~75% 압축해 토큰을 아끼는 스킬",
-      "oneLineAnalogy": "불필요한 인사·서론·부연설명을 걷어내고 ==핵심 코드와 결론만 짧게 답하게 해 출력 토큰을 65~75% 절감하는 초압축 스킬==입니다.",
-      "beginnerAnalogyKo": "비유하자면, 길고 장황한 보고서 대신 핵심 결론과 수정 코드만 딱 요약해 토큰 요금을 70% 넘게 아껴주는 요약 전문가예요.",
-      "summaryKo": "불필요한 인사·서론·부연설명을 걷어내고 핵심 코드와 결론만 짧게 답하게 해 출력 토큰을 65~75% 절감하는 초압축 스킬입니다. GitHub(JuliusBrussee/caveman)에서 최근까지 활발히 유지보수 중인 오픈소스 도구로, Claude Code·Cursor·Gemini CLI 워크플로우에 바로 연결할 수 있습니다.",
-      "repo": "JuliusBrussee/caveman",
-      "repoUrl": "https://github.com/JuliusBrussee/caveman",
-      "sourcePlatform": "github",
-      "stars": 123273,
-      "tryPromptExample": "지금부터 Caveman 모드로 불필요한 서론 없이 원인·수정 코드·검증 결과만 짧게 답해 줘",
-      "keyMetricBadge": "출력 토큰 -75%",
-      "discoveredVia": "gh-search",
-      "language": "Go",
-      "license": "Apache-2.0",
-      "pushedAt": "2026-11-27T05:38:24Z",
-      "createdAt": "2026-04-04T10:03:00Z",
-      "lifecycleTier": "evergreen",
-      "vitalityScore": 83,
-      "category": "context",
-      "roleSlot": "memory",
-      "roleLabelKo": "장기 기억·컨텍스트 토큰 절약",
-      "installFormats": [
-        "SKILL.md",
-        "MCP",
-        "CLI"
-      ],
-      "supportedTools": [
-        "claude-code",
-        "gemini-agy",
-        "cursor",
-        "windsurf",
-        "codex"
-      ],
-      "contextTokens": 540,
-      "contextTier": "초경량",
-      "installCommands": {
-        "npxSkills": "npx skills add JuliusBrussee/caveman"
-      },
-      "skillMdTemplate": "---\nname: caveman\ndescription: 불필요한 인사·서론·부연설명을 걷어내고 핵심 코드와 결론만 짧게 답하게 해 출력 토큰을 65~75% 절감하는 초압축 스킬입니다\nsource: https://github.com/JuliusBrussee/caveman\n---\n\n# Caveman — 실전 오픈소스 코딩 무기\n\n1. **목적**: 불필요한 인사·서론·부연설명을 걷어내고 핵심 코드와 결론만 짧게 답하게 해 출력 토큰을 65~75% 절감하는 초압축 스킬입니다\n2. **적용 방식**: 작업 전 기존 프로젝트 구조를 먼저 파악한 뒤 `JuliusBrussee/caveman`의 핵심 패턴을 최소 변경으로 적용한다.\n3. **검증 완료 보고**: 변경 파일과 테스트·실행 결과를 간결히 요약해 보고한다.",
-      "demoMedia": null,
-      "benchmarks": [],
-      "workflowCompression": {
-        "beforeTitle": "매번 반복적인 수동 설정과 긴 프롬프트 설명 작성",
-        "afterTitle": "Caveman 규칙·도구 1회 장착으로 자동 실행",
-        "manualSteps": [
-          "관련 오픈소스 문서를 직접 찾아 수동 세팅",
-          "코딩 툴마다 다른 규칙 파일 형식에 맞춰 변환",
-          "세션마다 동일한 작업 지침 반복 입력"
-        ],
-        "autoStep": "Caveman 자동 설치 문구로 내 코딩 툴에 즉시 이식해 1회 명령으로 실행",
-        "stepCountBefore": 3,
-        "stepCountAfter": 1
-      },
-      "radarKeywords": [
-        "caveman",
-        "context",
-        "ai",
-        "anthropic",
-        "caveman",
-        "claude",
-        "claude-code",
-        "agent",
-        "mcp"
-      ],
-      "matchedRadar": [
-        {
-          "id": "live-9fef9270cdd5",
-          "titleKo": "인류학 연구: 클로드 블랙홀 물리학",
-          "originalTitle": "Anthropic Research: Claude Black Hole Physics",
-          "platformId": "anthropic",
-          "category": "research",
-          "canonicalUrl": "https://anthropic.com/research/claude-black-hole-physics",
-          "publishedAt": "2026-11-18T21:42:44.116000Z",
-          "highlightSummary": "==Anthropic 공식 연구 보고서 'Claude== Black Hole Physics' ( 공개됐습니다. 조만간 상용 모델과 개발 도구에 흡수될 핵심 기법이라 실험 수치와 한계를 미리 짚어 두면 기술 로드맵에 도움돼요.",
-          "importanceScore": 23.36,
-          "isChinaSource": false,
-          "matchedSkillSlugs": [
-            "anthropic-official-skills",
-            "caveman"
-          ],
-          "matchReason": "이슈 키워드 \"anthropic\"와 직접 연결됨 (anthropic)"
-        }
-      ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
-    },
-    {
-      "slug": "headroom",
-      "name": "Headroom",
-      "koreanAlias": "[AI 기억력 88% 압축팩] Headroom",
-      "oneLineAnalogy": "긴 에러 로그와 JSON 응답을 AI에게 보내기 직전 ==알맹이만 압축해 주는 컨텍스트 진공포장기==입니다.",
-      "beginnerAnalogyKo": "비유하자면, 두꺼운 겨울 패딩을 진공 압축팩에 쏙 넣어 캐리어 공간을 88% 비워주는 정리 달인과 같아요.",
-      "summaryKo": "코딩 에이전트가 도구 호출로 쏟아내는 수만 토큰짜리 로그·JSON·파일 출력을 LLM에 도달하기 직전에 0.21ms 만에 압축합니다. 원본은 로컬 CCR 캐시에 보관해 AI가 필요 시 즉시 복원(headroom_retrieve)할 수 있어 정확도 손실 없이 비용을 줄입니다.",
-      "repo": "headroomlabs-ai/headroom",
-      "repoUrl": "https://github.com/headroomlabs-ai/headroom",
-      "sourcePlatform": "github",
-      "stars": 80991,
-      "discoveredVia": "seed",
-      "language": "Python",
-      "license": "Apache-2.0",
-      "pushedAt": "2026-11-27T16:30:14Z",
-      "createdAt": "2026-01-07T19:58:51Z",
-      "lifecycleTier": "evergreen",
-      "vitalityScore": 81,
-      "category": "context",
-      "roleSlot": "context-compression",
-      "roleLabelKo": "컨텍스트 · 도구 출력 토큰 압축",
-      "installFormats": [
-        "Proxy",
-        "CLI",
-        "MCP",
-        "Plugin",
-        "SKILL.md"
-      ],
-      "supportedTools": [
-        "claude-code",
-        "gemini-agy",
-        "cursor",
-        "codex"
-      ],
-      "contextTokens": 520,
-      "contextTier": "초경량",
-      "installCommands": {
-        "cli": "uv tool install --python 3.13 \"headroom-ai[all]\" && headroom deploy",
-        "npxSkills": "npx skills add headroomlabs-ai/headroom"
-      },
-      "skillMdTemplate": "---\nname: headroom\ndescription: 도구 출력·로그·JSON·RAG 청크를 로컬에서 가역 압축해 입력 토큰을 21~95% 절감하는 컨텍스트 최적화 스킬\nsource: https://github.com/headroomlabs-ai/headroom\n---\n\n# Headroom — 가역 컨텍스트 압축 규칙\n\n1. **대용량 출력 선압축**: 빌드 로그, API JSON 배열, 검색 결과처럼 반복 구조가 큰 출력은 원문 전체를 컨텍스트에 밀어 넣지 않고 핵심 시그널(에러·스택트레이스·스키마·통계) 우선으로 요약해 소비한다.\n2. **원본 복원 경로 유지**: 압축된 청크에서 정확한 원문이 필요할 때만 `headroom_retrieve` 또는 특정 라인 범위 읽기로 정밀 조회한다.\n3. **실패 학습 환류**: 반복되는 빌드·테스트 오류 해결책은 `headroom learn` 또는 프로젝트 메모리 규칙 파일에 1줄 교훈으로 누적한다.",
-      "demoMedia": {
-        "type": "gif",
-        "url": "https://raw.githubusercontent.com/headroomlabs-ai/headroom/main/HeadroomDemo-Fast.gif",
-        "caption": "10,144 토큰 로그 덤프를 1,260 토큰(88% 절감)으로 압축하면서 FATAL 원인을 정확히 유지하는 실측 시연"
-      },
-      "benchmarks": [
-        {
-          "label": "로그 덤프 압축 실측 (데모)",
-          "beforeLabel": "원본 로그 입력",
-          "afterLabel": "Headroom 압축 후",
-          "beforeValue": 10144,
-          "afterValue": 1260,
-          "unit": "tokens",
-          "deltaText": "-87.6% 절감",
-          "lowerIsBetter": true,
-          "sourceUrl": "https://github.com/headroomlabs-ai/headroom",
-          "methodology": "README 공식 Proof: 10,144 tokens 로그 → 1,260 tokens (동일 FATAL 원인 탐지 유지)"
-        },
-        {
-          "label": "코딩 에이전트 4대 시나리오 입력 토큰",
-          "beforeLabel": "순정 에이전트",
-          "afterLabel": "Headroom 프록시",
-          "beforeValue": 100,
-          "afterValue": 61,
-          "unit": "%",
-          "deltaText": "21~57% 절감",
-          "lowerIsBetter": true,
-          "sourceUrl": "https://github.com/headroomlabs-ai/headroom",
-          "methodology": "4개 코딩 에이전트 실측 시나리오(21~57% 절감, 반복 JSON·로그는 60~95% 절감)"
-        },
-        {
-          "label": "10K JSON 압축 처리 지연 (p50)",
-          "beforeLabel": "일반 LLM 요약 (참고 1000ms)",
-          "afterLabel": "Headroom 로컬 압축",
-          "beforeValue": 1000,
-          "afterValue": 0.21,
-          "unit": "ms",
-          "deltaText": "0.21ms p50",
-          "lowerIsBetter": true,
-          "sourceUrl": "https://github.com/headroomlabs-ai/headroom",
-          "methodology": "10K 토큰 JSON 검색 결과 p50 0.21ms, 100K 토큰 1.4ms (로컬 처리)"
-        }
-      ],
-      "workflowCompression": {
-        "beforeTitle": "컨텍스트 초과로 대화가 끊기고 세션 요약 반복",
-        "afterTitle": "프록시·MCP 레이어에서 자동 압축 + 원본 필요 시 즉시 복원",
-        "manualSteps": [
-          "긴 테스트/빌드 로그 수동 복사 및 핵심 줄 발췌",
-          "컨텍스트 80% 도달 시 /compact 수동 실행",
-          "압축 과정에서 유실된 파일 내용 다시 읽히기"
-        ],
-        "autoStep": "Headroom 로컬 프록시가 도구 출력을 0.21ms 만에 자동 압축하고 원본은 CCR 캐시 보존",
-        "stepCountBefore": 3,
-        "stepCountAfter": 1
-      },
-      "radarKeywords": [
-        "token",
-        "context",
-        "compress",
-        "cost",
-        "log",
-        "json",
-        "proxy",
-        "memory",
-        "claude code",
-        "rag"
-      ],
-      "matchedRadar": [
-        {
-          "id": "live-2a2f1ed8be28",
-          "titleKo": "영혼의 형상 클로드 코드, 바이브코딩의 미래를 성찰하기 시작하다",
-          "originalTitle": "Claude Code 灵魂人物，开始反思 Vibe Coding 的未来了",
-          "platformId": "36kr-ai",
-          "category": "industry",
-          "canonicalUrl": "https://36kr.com/p/4087449994181000",
-          "publishedAt": "2026-11-27T03:59:12.851000Z",
-          "highlightSummary": "==36K==r AI가 전한 '영혼의 형상 클로드 코드, 바이브코딩의 미래를 성찰하기 시작하다' 이슈로 글로벌 AI 시장·서비스 전략의 방향 변화가 뚜렷해졌어요. AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
-          "importanceScore": 28.67,
-          "isChinaSource": true,
-          "matchedSkillSlugs": [
-            "ponytail",
-            "headroom"
-          ],
-          "matchReason": "이슈 키워드 \"claude code\"와 직접 연결됨 (36kr-ai)"
-        }
-      ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
-    },
-    {
-      "slug": "trendradar",
-      "name": "TrendRadar MCP",
-      "koreanAlias": "TrendRadar — 멀티 플랫폼 실시간 화제·RSS를 MCP로 바로 분석하는 AI 레이더",
-      "oneLineAnalogy": "여러 플랫폼 트렌드와 RSS·웹 검색을 자동 수집해 ==MCP 대화창에서 자연어로 최신 여론·트렌드를 즉시 분석하게 해주는 AI 레이더==입니다.",
-      "beginnerAnalogyKo": "비유하자면, 여러 커뮤니티와 뉴스에 흩어진 최신 화제를 AI가 대신 걸러서 슬랙·텔레그램·MCP 대화창으로 바로 배달해 주는 트렌드 레이더예요.",
-      "summaryKo": "여러 플랫폼 트렌드와 RSS·웹 검색을 자동 수집해 MCP 대화창에서 자연어로 최신 여론·트렌드를 즉시 분석하게 해주는 AI 레이더입니다. GitHub(sansan0/TrendRadar)에서 최근까지 활발히 유지보수 중인 오픈소스 도구로, Claude Code·Cursor·Gemini CLI 워크플로우에 바로 연결할 수 있습니다.",
-      "repo": "sansan0/TrendRadar",
-      "repoUrl": "https://github.com/sansan0/TrendRadar",
-      "sourcePlatform": "github",
-      "stars": 63914,
-      "tryPromptExample": "TrendRadar MCP로 오늘 개발자 커뮤니티에서 가장 뜨는 AI 키워드 5개만 요약해 줘",
-      "keyMetricBadge": "실시간 트렌드 분석 MCP",
-      "discoveredVia": "gh-search",
-      "language": "TypeScript",
-      "license": "GPL-3.0",
-      "pushedAt": "2026-11-26T12:51:50Z",
-      "createdAt": "2025-04-28T11:42:16Z",
-      "lifecycleTier": "evergreen",
-      "vitalityScore": 80,
-      "category": "knowledge",
-      "roleSlot": "code-graph",
-      "roleLabelKo": "코드·문서 정밀 탐색 및 인덱싱",
-      "installFormats": [
-        "SKILL.md",
-        "MCP",
-        "CLI"
-      ],
-      "supportedTools": [
-        "claude-code",
-        "gemini-agy",
-        "cursor",
-        "windsurf",
-        "codex"
-      ],
-      "contextTokens": 540,
-      "contextTier": "초경량",
-      "installCommands": {
-        "npxSkills": "npx skills add sansan0/TrendRadar"
-      },
-      "skillMdTemplate": "---\nname: trendradar\ndescription: 여러 플랫폼 트렌드와 RSS·웹 검색을 자동 수집해 MCP 대화창에서 자연어로 최신 여론·트렌드를 즉시 분석하게 해주는 AI 레이더입니다\nsource: https://github.com/sansan0/TrendRadar\n---\n\n# TrendRadar MCP — 실전 오픈소스 코딩 무기\n\n1. **목적**: 여러 플랫폼 트렌드와 RSS·웹 검색을 자동 수집해 MCP 대화창에서 자연어로 최신 여론·트렌드를 즉시 분석하게 해주는 AI 레이더입니다\n2. **적용 방식**: 작업 전 기존 프로젝트 구조를 먼저 파악한 뒤 `sansan0/TrendRadar`의 핵심 패턴을 최소 변경으로 적용한다.\n3. **검증 완료 보고**: 변경 파일과 테스트·실행 결과를 간결히 요약해 보고한다.",
-      "demoMedia": null,
-      "benchmarks": [],
-      "workflowCompression": {
-        "beforeTitle": "매번 반복적인 수동 설정과 긴 프롬프트 설명 작성",
-        "afterTitle": "TrendRadar MCP 규칙·도구 1회 장착으로 자동 실행",
-        "manualSteps": [
-          "관련 오픈소스 문서를 직접 찾아 수동 세팅",
-          "코딩 툴마다 다른 규칙 파일 형식에 맞춰 변환",
-          "세션마다 동일한 작업 지침 반복 입력"
-        ],
-        "autoStep": "TrendRadar MCP 자동 설치 문구로 내 코딩 툴에 즉시 이식해 1회 명령으로 실행",
-        "stepCountBefore": 3,
-        "stepCountAfter": 1
-      },
-      "radarKeywords": [
-        "trendradar",
-        "knowledge",
-        "ai",
-        "bark",
-        "data-analysis",
-        "dingding",
-        "docker",
-        "agent",
-        "mcp"
-      ],
-      "matchedRadar": [
-        {
-          "id": "live-03672420de3a",
-          "titleKo": "[오픈소스 공유] 경량 NAS 리버스 프록시, DDNS, 인증서 및 FRP 관리 도구인 Fonu 2.0",
-          "originalTitle": "[开源分享] Fonu 2.0，一个轻量级的 NAS 反向代理、DDNS、证书及 FRP 管理工具",
-          "platformId": "v2ex",
-          "category": "dev",
-          "canonicalUrl": "https://v2ex.com/t/1260247",
-          "publishedAt": "2026-11-27T03:10:23Z",
-          "highlightSummary": "==Fonu는 Feiniu fnOS 기본 설치== 및 Docker 배포를 지원하는 경량의 시각적 Nginx 역방향 프록시 및 FRP 인트라넷 침투 관리 도구입니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
-          "importanceScore": 27.96,
-          "isChinaSource": true,
-          "matchedSkillSlugs": [
-            "trendradar"
-          ],
-          "matchReason": "이슈 키워드 \"docker\"와 직접 연결됨 (v2ex)"
-        }
-      ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "hermes-agent",
@@ -1668,13 +1633,13 @@
       "repo": "NousResearch/hermes-agent",
       "repoUrl": "https://github.com/NousResearch/hermes-agent",
       "sourcePlatform": "github",
-      "stars": 266595,
+      "stars": 266608,
       "tryPromptExample": "Hermes Agent 워크플로우처럼 반복 빌드 오류 해결법을 프로젝트 메모리에 자동 기록해 줘",
       "keyMetricBadge": "자가 학습 에이전트",
       "discoveredVia": "gh-search",
       "language": "Python",
       "license": "MIT",
-      "pushedAt": "2026-11-27T18:14:27Z",
+      "pushedAt": "2026-11-28T02:42:15Z",
       "createdAt": "2025-07-22T22:22:28Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 79,
@@ -1725,7 +1690,7 @@
         "mcp"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "n8n",
@@ -1737,13 +1702,13 @@
       "repo": "n8n-io/n8n",
       "repoUrl": "https://github.com/n8n-io/n8n",
       "sourcePlatform": "github",
-      "stars": 212386,
+      "stars": 212338,
       "tryPromptExample": "GitHub 이슈가 올라오면 요약해서 슬랙으로 보내는 n8n 워크플로우 JSON을 설계해 줘",
       "keyMetricBadge": "400+ 앱 자동화 연동",
       "discoveredVia": "gh-search",
       "language": "TypeScript",
       "license": "Other",
-      "pushedAt": "2026-11-27T18:14:03Z",
+      "pushedAt": "2026-11-28T02:43:28Z",
       "createdAt": "2019-06-22T09:24:21Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 78,
@@ -1794,91 +1759,177 @@
         "mcp"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
-      "slug": "vercel-agent-skills",
-      "name": "Vercel Agent Skills",
-      "koreanAlias": "[Vercel 공식 프론트엔드 모범규칙] Agent Skills",
-      "oneLineAnalogy": "Next.js·React 제작사 Vercel이 직접 정리한 ==워터폴 제거·성능 최적화·컴포지션 정석 교과서==입니다.",
-      "beginnerAnalogyKo": "비유하자면, Next.js를 만든 본사 수석 엔지니어가 내 옆에서 '여긴 이렇게 짜야 안 느려져요' 하고 실시간으로 짚어주는 과외 선생님이에요.",
-      "summaryKo": "Vercel 공식 에이전트 스킬 컬렉션(9개 SKILL.md)입니다. `react-best-practices`, `composition-patterns`, `deploy-to-vercel`, `web-design-guidelines` 등 실전 프로덕션 성능과 구조 규칙을 AI에게 그대로 이식합니다.",
-      "repo": "vercel-labs/agent-skills",
-      "repoUrl": "https://github.com/vercel-labs/agent-skills",
+      "slug": "playwright-mcp",
+      "name": "Playwright MCP",
+      "koreanAlias": "[AI가 직접 눈으로 보는 브라우저] Playwright MCP",
+      "oneLineAnalogy": "AI가 웹페이지를 직접 열고 클릭·스크린샷·콘솔 에러를 확인하게 해주는 ==Microsoft 공식 브라우저 원격 손발==입니다.",
+      "beginnerAnalogyKo": "비유하자면, 눈을 감고 코드를 고치던 AI에게 직접 브라우저 화면을 열어 버튼도 눌러보고 깨진 곳을 찾게 해주는 원격 손발이에요.",
+      "summaryKo": "Microsoft 공식 Playwright MCP 서버입니다. 픽셀 추측 대신 접근성 트리(Accessibility Snapshot) 기반으로 DOM을 정밀 제어해 UI 버그 검증, 폼 테스트, 반응형 확인을 코딩 에이전트가 직접 수행합니다.",
+      "repo": "microsoft/playwright-mcp",
+      "repoUrl": "https://github.com/microsoft/playwright-mcp",
       "sourcePlatform": "github",
-      "stars": 35025,
+      "stars": 40223,
       "discoveredVia": "seed",
-      "language": "JavaScript",
-      "license": "Open Source",
-      "pushedAt": "2026-11-20T19:20:13Z",
-      "createdAt": "2025-12-08T19:10:06Z",
-      "lifecycleTier": "rising",
+      "language": "TypeScript",
+      "license": "Apache-2.0",
+      "pushedAt": "2026-11-27T22:43:57Z",
+      "createdAt": "2025-03-21T17:48:36Z",
+      "lifecycleTier": "evergreen",
       "vitalityScore": 78,
-      "category": "design",
-      "roleSlot": "ui-design",
-      "roleLabelKo": "React · Next.js · Vercel 공식 베스트 프랙티스",
+      "category": "browser",
+      "roleSlot": "browser-mcp",
+      "roleLabelKo": "브라우저 자동화 · UI 실물 E2E 검증 MCP",
       "installFormats": [
-        "SKILL.md",
-        "Rules"
+        "MCP",
+        "CLI"
       ],
       "supportedTools": [
         "claude-code",
         "gemini-agy",
         "cursor",
         "windsurf",
-        "codex",
-        "web-builder"
+        "codex"
       ],
-      "contextTokens": 890,
-      "contextTier": "보통",
+      "contextTokens": 610,
+      "contextTier": "초경량",
       "installCommands": {
-        "npxSkills": "npx skills add vercel-labs/agent-skills"
+        "cli": "npx @playwright/mcp@latest"
       },
-      "skillMdTemplate": "---\nname: vercel-react-best-practices\ndescription: Vercel 공식 React·Next.js 성능 최적화(워터폴 제거·번들 경량화·서버 컴포넌트 경계) 및 웹 UI 품질 스킬\nsource: https://github.com/vercel-labs/agent-skills\n---\n\n# Vercel Agent Skills — React & Next.js 정석 규칙\n\n1. **비동기 워터폴 제거**: 독립적인 데이터 요청은 `Promise.all()`로 병렬 실행하고, `useSearchParams()` 사용 클라이언트 컴포넌트는 반드시 `<Suspense>`로 감싼다.\n2. **서버 컴포넌트 우선**: 상태·이벤트가 필요 없는 UI는 Server Component로 유지해 클라이언트 JS 번들을 최소화한다.\n3. **컴포지션 패턴**: 거대한 boolean prop 분기 대신 명시적인 하위 컴포넌트 조합으로 확장성을 확보한다.",
+      "skillMdTemplate": "---\nname: playwright-mcp\ndescription: Microsoft Playwright MCP로 실제 브라우저를 열어 UI 클릭·콘솔 에러·네트워크 응답을 자가 검증하는 스킬\nsource: https://github.com/microsoft/playwright-mcp\n---\n\n# Playwright MCP — 실물 브라우저 검증 규칙\n\n1. **접근성 스냅샷 우선**: 취약한 CSS 셀렉터 대신 ARIA role/label 기반 접근성 스냅샷으로 요소를 식별한다.\n2. **콘솔·네트워크 무결성 확인**: 페이지 로드 및 주요 버튼 클릭 후 콘솔 에러와 4xx/5xx 응답이 0건인지 반드시 점검한다.\n3. **핵심 뷰포트 검증**: 데스크톱(1440px)과 모바일(390px)에서 가로 스크롤 깨짐과 겹침이 없는지 확인한다.",
       "demoMedia": null,
       "benchmarks": [],
       "workflowCompression": {
-        "beforeTitle": "클라이언트 워터폴·불필요한 리렌더·SSR 경계 오류를 배포 후 수정",
-        "afterTitle": "Vercel 공식 React/Next.js 규칙을 코드 작성 시점에 자동 반영",
+        "beforeTitle": "수정할 때마다 사람이 브라우저 새로고침·콘솔 확인·캡처 전달 반복",
+        "afterTitle": "AI가 직접 브라우저를 열어 클릭·콘솔 에러·레이아웃 자가 검증",
         "manualSteps": [
-          "Next.js App Router 서버/클라이언트 경계 오류 디버깅",
-          "순차 fetch 워터폴을 Promise.all 병렬화로 사후 리팩터링",
-          "번들 비대화 및 접근성 체크 수동 점검"
+          "로컬 서버 띄우고 브라우저에서 직접 클릭 테스트",
+          "DevTools 콘솔 에러·네트워크 404 복사해서 전달",
+          "모바일/데스크톱 화면 깨짐 스크린샷 촬영 후 재요청"
         ],
-        "autoStep": "Vercel Agent Skills가 병렬 페칭·컴포지션·SSR 경계 규칙을 작성 단계에서 자동 강제",
+        "autoStep": "Playwright MCP가 접근성 스냅샷·클릭·콘솔 로그를 직접 읽어 1회 루프로 자가 수정",
         "stepCountBefore": 3,
         "stepCountAfter": 1
       },
       "radarKeywords": [
-        "vercel",
-        "nextjs",
-        "react",
+        "playwright",
+        "browser",
+        "e2e",
+        "ui",
         "frontend",
-        "skills",
-        "typescript",
-        "web",
-        "deploy"
+        "testing",
+        "mcp",
+        "automation",
+        "microsoft"
       ],
       "matchedRadar": [
         {
-          "id": "live-04817f74c789",
-          "titleKo": "앤트로픽, MCP 서버에 '스킬' 도입…AI 에이전트에 업무 노하우까지 전달",
-          "originalTitle": "앤트로픽, MCP 서버에 '스킬' 도입…AI 에이전트에 업무 노하우까지 전달",
-          "platformId": "aitimes",
-          "category": "industry",
-          "canonicalUrl": "https://aitimes.com/news/articleView.html?idxno=217847",
-          "publishedAt": "2026-11-27T03:23:23Z",
-          "highlightSummary": "==앤트로픽이 AI 에이전트 연결 표준인== 모델 컨텍스트 프로토콜(MCP)을 통해 업무 수행 방법을 담은 '스킬(Skills)'을 제공하는 기능을 도입했다. AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
-          "importanceScore": 30.07,
+          "id": "live-1874f562a1f8",
+          "titleKo": "browser-use 1.0.9 새 버전 공개",
+          "originalTitle": "browser-use 1.0.9",
+          "platformId": "github",
+          "category": "dev",
+          "canonicalUrl": "https://github.com/browser-use/browser-use/releases/tag/1.0.9",
+          "publishedAt": "2026-11-26T22:45:43Z",
+          "highlightSummary": "핵심 변경점: `pip install 'browser-use==1.0.9'` - `rotate_proxy(country=None)`: 동일한 브라우저 사용 클라우드 브라우저는 새로운 종료 IP를 얻고 해당 탭, 쿠키 및 로그인은 유지됩니다. 핵심 이득은 ==새 정식 버전 릴리스==이에요.",
+          "benefitTag": "새 정식 버전 릴리스",
+          "importanceScore": 28.42,
           "isChinaSource": false,
           "matchedSkillSlugs": [
-            "vercel-agent-skills",
-            "vercel-skills-cli"
+            "taste-skill",
+            "playwright-mcp"
           ],
-          "matchReason": "이슈 키워드 \"skills\"와 직접 연결됨 (aitimes)"
+          "matchReason": "이슈 키워드 \"browser\"와 직접 연결됨 (github)"
         }
       ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
+    },
+    {
+      "slug": "serena",
+      "name": "Serena MCP",
+      "koreanAlias": "[LSP 정밀 외과수술 편집기] Serena",
+      "oneLineAnalogy": "파일 전체를 통째로 읽고 덮어쓰는 대신 ==IDE 언어 서버(LSP)로 정확한 함수·심볼만 핀셋 수정하는 코딩 에이전트 툴킷==입니다.",
+      "beginnerAnalogyKo": "비유하자면, 책 한 권을 통째로 베끼지 않고 고칠 문장 딱 한 줄만 정밀하게 찾아 수정하는 외과수술용 핀셋이에요.",
+      "summaryKo": "Language Server Protocol(LSP) 기반의 시맨틱 코드 검색·심볼 참조 추적·정밀 심볼 편집을 MCP로 제공합니다. 대형 파일에서 줄 번호 오차나 문맥 유실 없이 필요한 함수 본문만 읽고 수정해 토큰과 실수를 함께 줄입니다.",
+      "repo": "oraios/serena",
+      "repoUrl": "https://github.com/oraios/serena",
+      "sourcePlatform": "github",
+      "stars": 31762,
+      "discoveredVia": "seed",
+      "language": "Python",
+      "license": "Other",
+      "pushedAt": "2026-11-27T15:52:21Z",
+      "createdAt": "2025-03-23T22:35:24Z",
+      "lifecycleTier": "rising",
+      "vitalityScore": 78,
+      "category": "knowledge",
+      "roleSlot": "code-graph",
+      "roleLabelKo": "LSP 시맨틱 심볼 검색 · 핀셋 코드 편집",
+      "installFormats": [
+        "MCP",
+        "CLI"
+      ],
+      "supportedTools": [
+        "claude-code",
+        "gemini-agy",
+        "cursor",
+        "windsurf",
+        "codex"
+      ],
+      "contextTokens": 690,
+      "contextTier": "초경량",
+      "installCommands": {
+        "cli": "uvx --from git+https://github.com/oraios/serena serena start-mcp-server"
+      },
+      "skillMdTemplate": "---\nname: serena-lsp\ndescription: LSP 기반 심볼 탐색과 참조 추적으로 대형 파일 전체 읽기 없이 정밀하게 코드를 수정하는 스킬\nsource: https://github.com/oraios/serena\n---\n\n# Serena — 심볼 단위 정밀 편집 규칙\n\n1. **파일 통읽기 대신 심볼 개요 먼저**: 큰 파일은 전체를 덤프하지 말고 심볼 목록과 대상 함수 본문만 선택적으로 읽는다.\n2. **참조 전수 확인**: 공개 함수·타입 시그니처를 바꿀 때는 모든 참조 위치(Find References)를 확인한 뒤 일괄 갱신한다.\n3. **최소 단위 패치**: 변경 대상 심볼 경계 밖 코드는 그대로 보존한다.",
+      "demoMedia": null,
+      "benchmarks": [],
+      "workflowCompression": {
+        "beforeTitle": "2,000줄 파일 전체를 읽고 덮어쓰다 엉뚱한 함수 훼손",
+        "afterTitle": "LSP 심볼 단위 조회·참조 추적·핀셋 치환으로 정밀 편집",
+        "manualSteps": [
+          "대형 소스파일 전체 읽기로 대량 토큰 소모",
+          "함수 이름 변경 시 모든 참조 파일 grep 수동 추적",
+          "잘못된 패치로 인한 구문 오류 복구"
+        ],
+        "autoStep": "Serena LSP가 심볼 정의·참조 위치만 정확히 추출하고 해당 심볼만 안전하게 수정",
+        "stepCountBefore": 3,
+        "stepCountAfter": 1
+      },
+      "radarKeywords": [
+        "lsp",
+        "mcp",
+        "semantic",
+        "code",
+        "refactor",
+        "symbol",
+        "ide",
+        "agent",
+        "python",
+        "typescript"
+      ],
+      "matchedRadar": [
+        {
+          "id": "live-3c85b84a1aeb",
+          "titleKo": "OpenAI Agents SDK의 Sandbox, exec은 cmd 속성으로 이동했습니다",
+          "originalTitle": "OpenAI Agents SDKのSandbox、execはcmdプロパティで動いた",
+          "platformId": "qiita",
+          "category": "dev",
+          "canonicalUrl": "https://qiita.com/kai_kou/items/ae7c6364aae706eed385",
+          "publishedAt": "2026-11-28T00:09:39Z",
+          "highlightSummary": "==소개 대상 독자는 OpenAI Agents== SDK (TypeScript 버전)에서 에이전트에 격리 실행 환경을 갖게하고 싶은 개발자입니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+          "importanceScore": 27.37,
+          "isChinaSource": false,
+          "matchedSkillSlugs": [
+            "ai-radar-live",
+            "serena"
+          ],
+          "matchReason": "이슈 키워드 \"agent\"와 직접 연결됨 (qiita)"
+        }
+      ],
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "cc-switch",
@@ -1890,7 +1941,7 @@
       "repo": "farion1231/cc-switch",
       "repoUrl": "https://github.com/farion1231/cc-switch",
       "sourcePlatform": "github",
-      "stars": 157649,
+      "stars": 157671,
       "tryPromptExample": "내 Claude Code와 Gemini CLI의 MCP 서버 목록을 정리하고 충돌 없는 기본 프로파일을 만들어 줘",
       "keyMetricBadge": "5대 AI 툴 통합 스위치",
       "discoveredVia": "gh-search",
@@ -1947,7 +1998,7 @@
         "mcp"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "graphify",
@@ -1959,7 +2010,7 @@
       "repo": "Graphify-Labs/graphify",
       "repoUrl": "https://github.com/Graphify-Labs/graphify",
       "sourcePlatform": "github",
-      "stars": 154186,
+      "stars": 154298,
       "discoveredVia": "seed",
       "language": "Python",
       "license": "Apache-2.0",
@@ -2057,7 +2108,7 @@
         "architecture"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "orca",
@@ -2069,13 +2120,13 @@
       "repo": "stablyai/orca",
       "repoUrl": "https://github.com/stablyai/orca",
       "sourcePlatform": "github",
-      "stars": 142238,
+      "stars": 142597,
       "tryPromptExample": "프론트엔드·백엔드·테스트 에이전트 3개로 작업을 나눠 병렬 실행 계획을 세워줘",
       "keyMetricBadge": "멀티 구독 에이전트 함대",
       "discoveredVia": "gh-search",
       "language": "TypeScript",
       "license": "MIT",
-      "pushedAt": "2026-11-27T18:14:45Z",
+      "pushedAt": "2026-11-28T02:44:27Z",
       "createdAt": "2026-03-17T03:28:57Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 76,
@@ -2126,7 +2177,7 @@
         "mcp"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "claude-mem",
@@ -2138,11 +2189,11 @@
       "repo": "thedotmack/claude-mem",
       "repoUrl": "https://github.com/thedotmack/claude-mem",
       "sourcePlatform": "github",
-      "stars": 120165,
+      "stars": 120228,
       "discoveredVia": "seed",
       "language": "TypeScript",
       "license": "Apache-2.0",
-      "pushedAt": "2026-11-26T21:26:54Z",
+      "pushedAt": "2026-11-28T00:55:35Z",
       "createdAt": "2025-08-31T20:50:03Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 76,
@@ -2191,7 +2242,7 @@
         "compress"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "scrapling",
@@ -2203,13 +2254,13 @@
       "repo": "D4Vinci/Scrapling",
       "repoUrl": "https://github.com/D4Vinci/Scrapling",
       "sourcePlatform": "github",
-      "stars": 106328,
+      "stars": 106439,
       "tryPromptExample": "Scrapling MCP로 경쟁사 요금제 페이지의 표 데이터를 깨끗한 JSON으로 추출해 줘",
       "keyMetricBadge": "자가 복구 웹 수집",
       "discoveredVia": "gh-search",
       "language": "Python",
       "license": "BSD-3-Clause",
-      "pushedAt": "2026-11-26T00:10:49Z",
+      "pushedAt": "2026-11-28T00:24:39Z",
       "createdAt": "2024-10-13T20:29:53Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 75,
@@ -2260,72 +2311,7 @@
         "mcp"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
-    },
-    {
-      "slug": "mcp-reference-servers",
-      "name": "MCP Reference Servers",
-      "koreanAlias": "[Anthropic 공식 MCP 기본 연장통] MCP Servers",
-      "oneLineAnalogy": "파일시스템·Git·Fetch·Memory 등 ==AI가 외부 도구와 안전하게 연결되는 공식 표준 어댑터 묶음==입니다.",
-      "beginnerAnalogyKo": "비유하자면, 어떤 코딩 툴을 쓰든 파일·Git·단계별 추론을 안전하게 꽂아 쓸 수 있는 220V 표준 멀티탭이에요.",
-      "summaryKo": "Model Context Protocol 공식 레퍼런스 서버 저장소입니다. 안전한 경로 격리 파일시스템 접근, Git 이력 조회, 웹 Fetch, 구조화 추론(Sequential Thinking) 등 모든 코딩 에이전트의 기본 인프라를 제공합니다.",
-      "repo": "modelcontextprotocol/servers",
-      "repoUrl": "https://github.com/modelcontextprotocol/servers",
-      "sourcePlatform": "github",
-      "stars": 92301,
-      "discoveredVia": "seed",
-      "language": "TypeScript",
-      "license": "Other",
-      "pushedAt": "2026-11-27T10:34:05Z",
-      "createdAt": "2024-11-19T01:10:17Z",
-      "lifecycleTier": "evergreen",
-      "vitalityScore": 75,
-      "category": "workflow",
-      "roleSlot": "harness-suite",
-      "roleLabelKo": "공식 MCP 표준 레퍼런스 도구 세트",
-      "installFormats": [
-        "MCP",
-        "CLI"
-      ],
-      "supportedTools": [
-        "claude-code",
-        "gemini-agy",
-        "cursor",
-        "windsurf",
-        "codex"
-      ],
-      "contextTokens": 540,
-      "contextTier": "초경량",
-      "installCommands": {
-        "cli": "npx -y @modelcontextprotocol/server-sequential-thinking"
-      },
-      "skillMdTemplate": "---\nname: mcp-reference-servers\ndescription: 공식 MCP 표준 서버(Filesystem·Git·Fetch·Sequential Thinking)를 최소 권한 원칙으로 활용하는 스킬\nsource: https://github.com/modelcontextprotocol/servers\n---\n\n# MCP Reference Servers — 안전 도구 연동 규칙\n\n1. **최소 권한 경로 지정**: Filesystem MCP에는 작업 워크스페이스 디렉터리만 허용하고 홈 디렉터리 전체 노출을 피한다.\n2. **단계적 추론 분리**: 복잡한 설계나 트레이드오프 분석 시 순차 추론(Sequential Thinking)으로 가설을 검증한 뒤 코드를 작성한다.\n3. **도구 수 절제**: 현재 작업에 필요한 MCP 서버만 활성화해 도구 스키마 토큰 점유를 최소화한다.",
-      "demoMedia": null,
-      "benchmarks": [],
-      "workflowCompression": {
-        "beforeTitle": "도구마다 제각각인 커스텀 스크립트·플러그인 연동 코드 작성",
-        "afterTitle": "단일 MCP JSON 설정으로 모든 AI 툴에 표준 도구 일괄 연결",
-        "manualSteps": [
-          "AI 툴별 독자 플러그인 스펙 조사 및 개별 구현",
-          "경로 접근 권한 및 에러 핸들링 수동 래핑",
-          "다른 코딩 툴로 옮길 때 연동 코드 재작성"
-        ],
-        "autoStep": "공식 MCP 레퍼런스 서버 1회 설정으로 Claude·Cursor·Gemini·Codex 공통 활용",
-        "stepCountBefore": 3,
-        "stepCountAfter": 1
-      },
-      "radarKeywords": [
-        "mcp",
-        "protocol",
-        "anthropic",
-        "tool",
-        "server",
-        "filesystem",
-        "git",
-        "agent"
-      ],
-      "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "hyperframes",
@@ -2337,11 +2323,11 @@
       "repo": "heygen-com/hyperframes",
       "repoUrl": "https://github.com/heygen-com/hyperframes",
       "sourcePlatform": "github",
-      "stars": 91388,
+      "stars": 91567,
       "discoveredVia": "seed",
       "language": "TypeScript",
       "license": "Apache-2.0",
-      "pushedAt": "2026-11-27T18:12:40Z",
+      "pushedAt": "2026-11-28T02:42:32Z",
       "createdAt": "2026-03-10T01:51:06Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 75,
@@ -2400,7 +2386,7 @@
         "video_audio"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "ruflo",
@@ -2412,13 +2398,13 @@
       "repo": "ruvnet/ruflo",
       "repoUrl": "https://github.com/ruvnet/ruflo",
       "sourcePlatform": "github",
-      "stars": 82547,
+      "stars": 82565,
       "tryPromptExample": "Ruflo 스웜 패턴으로 설계·구현·테스트 역할을 나눠 병렬 워크플로우를 실행해 줘",
       "keyMetricBadge": "멀티 에이전트 스웜 하네스",
       "discoveredVia": "gh-search",
       "language": "TypeScript",
       "license": "MIT",
-      "pushedAt": "2026-11-27T16:37:43Z",
+      "pushedAt": "2026-11-27T19:44:29Z",
       "createdAt": "2025-06-02T21:24:20Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 74,
@@ -2469,7 +2455,7 @@
         "mcp"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "context7",
@@ -2481,11 +2467,11 @@
       "repo": "upstash/context7",
       "repoUrl": "https://github.com/upstash/context7",
       "sourcePlatform": "github",
-      "stars": 65548,
+      "stars": 65556,
       "discoveredVia": "seed",
       "language": "TypeScript",
       "license": "MIT",
-      "pushedAt": "2026-11-27T14:32:56Z",
+      "pushedAt": "2026-11-28T00:49:46Z",
       "createdAt": "2025-03-26T23:40:39Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 73,
@@ -2537,115 +2523,33 @@
         "release"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
-      "slug": "playwright-mcp",
-      "name": "Playwright MCP",
-      "koreanAlias": "[AI가 직접 눈으로 보는 브라우저] Playwright MCP",
-      "oneLineAnalogy": "AI가 웹페이지를 직접 열고 클릭·스크린샷·콘솔 에러를 확인하게 해주는 ==Microsoft 공식 브라우저 원격 손발==입니다.",
-      "beginnerAnalogyKo": "비유하자면, 눈을 감고 코드를 고치던 AI에게 직접 브라우저 화면을 열어 버튼도 눌러보고 깨진 곳을 찾게 해주는 원격 손발이에요.",
-      "summaryKo": "Microsoft 공식 Playwright MCP 서버입니다. 픽셀 추측 대신 접근성 트리(Accessibility Snapshot) 기반으로 DOM을 정밀 제어해 UI 버그 검증, 폼 테스트, 반응형 확인을 코딩 에이전트가 직접 수행합니다.",
-      "repo": "microsoft/playwright-mcp",
-      "repoUrl": "https://github.com/microsoft/playwright-mcp",
+      "slug": "trendradar",
+      "name": "TrendRadar MCP",
+      "koreanAlias": "TrendRadar — 멀티 플랫폼 실시간 화제·RSS를 MCP로 바로 분석하는 AI 레이더",
+      "oneLineAnalogy": "여러 플랫폼 트렌드와 RSS·웹 검색을 자동 수집해 ==MCP 대화창에서 자연어로 최신 여론·트렌드를 즉시 분석하게 해주는 AI 레이더==입니다.",
+      "beginnerAnalogyKo": "비유하자면, 여러 커뮤니티와 뉴스에 흩어진 최신 화제를 AI가 대신 걸러서 슬랙·텔레그램·MCP 대화창으로 바로 배달해 주는 트렌드 레이더예요.",
+      "summaryKo": "여러 플랫폼 트렌드와 RSS·웹 검색을 자동 수집해 MCP 대화창에서 자연어로 최신 여론·트렌드를 즉시 분석하게 해주는 AI 레이더입니다. GitHub(sansan0/TrendRadar)에서 최근까지 활발히 유지보수 중인 오픈소스 도구로, Claude Code·Cursor·Gemini CLI 워크플로우에 바로 연결할 수 있습니다.",
+      "repo": "sansan0/TrendRadar",
+      "repoUrl": "https://github.com/sansan0/TrendRadar",
       "sourcePlatform": "github",
-      "stars": 40216,
-      "discoveredVia": "seed",
+      "stars": 63920,
+      "tryPromptExample": "TrendRadar MCP로 오늘 개발자 커뮤니티에서 가장 뜨는 AI 키워드 5개만 요약해 줘",
+      "keyMetricBadge": "실시간 트렌드 분석 MCP",
+      "discoveredVia": "gh-search",
       "language": "TypeScript",
-      "license": "Apache-2.0",
-      "pushedAt": "2026-11-18T18:50:37Z",
-      "createdAt": "2025-03-21T17:48:36Z",
+      "license": "GPL-3.0",
+      "pushedAt": "2026-11-26T12:51:50Z",
+      "createdAt": "2025-04-28T11:42:16Z",
       "lifecycleTier": "evergreen",
-      "vitalityScore": 72,
-      "category": "browser",
-      "roleSlot": "browser-mcp",
-      "roleLabelKo": "브라우저 자동화 · UI 실물 E2E 검증 MCP",
-      "installFormats": [
-        "MCP",
-        "CLI"
-      ],
-      "supportedTools": [
-        "claude-code",
-        "gemini-agy",
-        "cursor",
-        "windsurf",
-        "codex"
-      ],
-      "contextTokens": 610,
-      "contextTier": "초경량",
-      "installCommands": {
-        "cli": "npx @playwright/mcp@latest"
-      },
-      "skillMdTemplate": "---\nname: playwright-mcp\ndescription: Microsoft Playwright MCP로 실제 브라우저를 열어 UI 클릭·콘솔 에러·네트워크 응답을 자가 검증하는 스킬\nsource: https://github.com/microsoft/playwright-mcp\n---\n\n# Playwright MCP — 실물 브라우저 검증 규칙\n\n1. **접근성 스냅샷 우선**: 취약한 CSS 셀렉터 대신 ARIA role/label 기반 접근성 스냅샷으로 요소를 식별한다.\n2. **콘솔·네트워크 무결성 확인**: 페이지 로드 및 주요 버튼 클릭 후 콘솔 에러와 4xx/5xx 응답이 0건인지 반드시 점검한다.\n3. **핵심 뷰포트 검증**: 데스크톱(1440px)과 모바일(390px)에서 가로 스크롤 깨짐과 겹침이 없는지 확인한다.",
-      "demoMedia": null,
-      "benchmarks": [],
-      "workflowCompression": {
-        "beforeTitle": "수정할 때마다 사람이 브라우저 새로고침·콘솔 확인·캡처 전달 반복",
-        "afterTitle": "AI가 직접 브라우저를 열어 클릭·콘솔 에러·레이아웃 자가 검증",
-        "manualSteps": [
-          "로컬 서버 띄우고 브라우저에서 직접 클릭 테스트",
-          "DevTools 콘솔 에러·네트워크 404 복사해서 전달",
-          "모바일/데스크톱 화면 깨짐 스크린샷 촬영 후 재요청"
-        ],
-        "autoStep": "Playwright MCP가 접근성 스냅샷·클릭·콘솔 로그를 직접 읽어 1회 루프로 자가 수정",
-        "stepCountBefore": 3,
-        "stepCountAfter": 1
-      },
-      "radarKeywords": [
-        "playwright",
-        "browser",
-        "e2e",
-        "ui",
-        "frontend",
-        "testing",
-        "mcp",
-        "automation",
-        "microsoft"
-      ],
-      "matchedRadar": [
-        {
-          "id": "live-1874f562a1f8",
-          "titleKo": "browser-use 1.0.9 새 버전 공개",
-          "originalTitle": "browser-use 1.0.9",
-          "platformId": "github",
-          "category": "dev",
-          "canonicalUrl": "https://github.com/browser-use/browser-use/releases/tag/1.0.9",
-          "publishedAt": "2026-11-26T22:45:43Z",
-          "highlightSummary": "핵심 변경점: `pip install 'browser-use==1.0.9'` - `rotate_proxy(country=None)`: 동일한 브라우저 사용 클라우드 브라우저는 새로운 종료 IP를 얻고 해당 탭, 쿠키 및 로그인은 유지됩니다. 핵심 이득은 ==새 정식 버전 릴리스==이에요.",
-          "benefitTag": "새 정식 버전 릴리스",
-          "importanceScore": 28.42,
-          "isChinaSource": false,
-          "matchedSkillSlugs": [
-            "taste-skill",
-            "playwright-mcp"
-          ],
-          "matchReason": "이슈 키워드 \"browser\"와 직접 연결됨 (github)"
-        }
-      ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
-    },
-    {
-      "slug": "serena",
-      "name": "Serena MCP",
-      "koreanAlias": "[LSP 정밀 외과수술 편집기] Serena",
-      "oneLineAnalogy": "파일 전체를 통째로 읽고 덮어쓰는 대신 ==IDE 언어 서버(LSP)로 정확한 함수·심볼만 핀셋 수정하는 코딩 에이전트 툴킷==입니다.",
-      "beginnerAnalogyKo": "비유하자면, 책 한 권을 통째로 베끼지 않고 고칠 문장 딱 한 줄만 정밀하게 찾아 수정하는 외과수술용 핀셋이에요.",
-      "summaryKo": "Language Server Protocol(LSP) 기반의 시맨틱 코드 검색·심볼 참조 추적·정밀 심볼 편집을 MCP로 제공합니다. 대형 파일에서 줄 번호 오차나 문맥 유실 없이 필요한 함수 본문만 읽고 수정해 토큰과 실수를 함께 줄입니다.",
-      "repo": "oraios/serena",
-      "repoUrl": "https://github.com/oraios/serena",
-      "sourcePlatform": "github",
-      "stars": 31751,
-      "discoveredVia": "seed",
-      "language": "Python",
-      "license": "Other",
-      "pushedAt": "2026-11-27T15:52:21Z",
-      "createdAt": "2025-03-23T22:35:24Z",
-      "lifecycleTier": "evergreen",
-      "vitalityScore": 71,
+      "vitalityScore": 73,
       "category": "knowledge",
       "roleSlot": "code-graph",
-      "roleLabelKo": "LSP 시맨틱 심볼 검색 · 핀셋 코드 편집",
+      "roleLabelKo": "코드·문서 정밀 탐색 및 인덱싱",
       "installFormats": [
+        "SKILL.md",
         "MCP",
         "CLI"
       ],
@@ -2656,40 +2560,171 @@
         "windsurf",
         "codex"
       ],
-      "contextTokens": 690,
+      "contextTokens": 540,
       "contextTier": "초경량",
       "installCommands": {
-        "cli": "uvx --from git+https://github.com/oraios/serena serena start-mcp-server"
+        "npxSkills": "npx skills add sansan0/TrendRadar"
       },
-      "skillMdTemplate": "---\nname: serena-lsp\ndescription: LSP 기반 심볼 탐색과 참조 추적으로 대형 파일 전체 읽기 없이 정밀하게 코드를 수정하는 스킬\nsource: https://github.com/oraios/serena\n---\n\n# Serena — 심볼 단위 정밀 편집 규칙\n\n1. **파일 통읽기 대신 심볼 개요 먼저**: 큰 파일은 전체를 덤프하지 말고 심볼 목록과 대상 함수 본문만 선택적으로 읽는다.\n2. **참조 전수 확인**: 공개 함수·타입 시그니처를 바꿀 때는 모든 참조 위치(Find References)를 확인한 뒤 일괄 갱신한다.\n3. **최소 단위 패치**: 변경 대상 심볼 경계 밖 코드는 그대로 보존한다.",
+      "skillMdTemplate": "---\nname: trendradar\ndescription: 여러 플랫폼 트렌드와 RSS·웹 검색을 자동 수집해 MCP 대화창에서 자연어로 최신 여론·트렌드를 즉시 분석하게 해주는 AI 레이더입니다\nsource: https://github.com/sansan0/TrendRadar\n---\n\n# TrendRadar MCP — 실전 오픈소스 코딩 무기\n\n1. **목적**: 여러 플랫폼 트렌드와 RSS·웹 검색을 자동 수집해 MCP 대화창에서 자연어로 최신 여론·트렌드를 즉시 분석하게 해주는 AI 레이더입니다\n2. **적용 방식**: 작업 전 기존 프로젝트 구조를 먼저 파악한 뒤 `sansan0/TrendRadar`의 핵심 패턴을 최소 변경으로 적용한다.\n3. **검증 완료 보고**: 변경 파일과 테스트·실행 결과를 간결히 요약해 보고한다.",
       "demoMedia": null,
       "benchmarks": [],
       "workflowCompression": {
-        "beforeTitle": "2,000줄 파일 전체를 읽고 덮어쓰다 엉뚱한 함수 훼손",
-        "afterTitle": "LSP 심볼 단위 조회·참조 추적·핀셋 치환으로 정밀 편집",
+        "beforeTitle": "매번 반복적인 수동 설정과 긴 프롬프트 설명 작성",
+        "afterTitle": "TrendRadar MCP 규칙·도구 1회 장착으로 자동 실행",
         "manualSteps": [
-          "대형 소스파일 전체 읽기로 대량 토큰 소모",
-          "함수 이름 변경 시 모든 참조 파일 grep 수동 추적",
-          "잘못된 패치로 인한 구문 오류 복구"
+          "관련 오픈소스 문서를 직접 찾아 수동 세팅",
+          "코딩 툴마다 다른 규칙 파일 형식에 맞춰 변환",
+          "세션마다 동일한 작업 지침 반복 입력"
         ],
-        "autoStep": "Serena LSP가 심볼 정의·참조 위치만 정확히 추출하고 해당 심볼만 안전하게 수정",
+        "autoStep": "TrendRadar MCP 자동 설치 문구로 내 코딩 툴에 즉시 이식해 1회 명령으로 실행",
         "stepCountBefore": 3,
         "stepCountAfter": 1
       },
       "radarKeywords": [
-        "lsp",
-        "mcp",
-        "semantic",
-        "code",
-        "refactor",
-        "symbol",
-        "ide",
+        "trendradar",
+        "knowledge",
+        "ai",
+        "bark",
+        "data-analysis",
+        "dingding",
+        "docker",
         "agent",
-        "python",
-        "typescript"
+        "mcp"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
+    },
+    {
+      "slug": "vercel-skills-cli",
+      "name": "Vercel Skills CLI",
+      "koreanAlias": "[전 AI 툴 공용 스킬 설치기] Skills CLI",
+      "oneLineAnalogy": "`npx skills add` 한 줄로 ==Claude·Cursor·Codex·Gemini 모든 툴에 표준 스킬을 설치하는 오픈 앱스토어 명령줄==입니다.",
+      "beginnerAnalogyKo": "비유하자면, 여러 코딩 툴에 흩어진 스킬을 스마트폰 앱스토어에서 버튼 하나로 깔고 업데이트하는 공용 설치 매니저예요.",
+      "summaryKo": "Vercel Labs가 주도하는 개방형 `SKILL.md` 표준 생태계의 핵심 CLI(`npx skills`)입니다. `find`, `add`, `list`, `use` 명령으로 특정 GitHub 저장소의 스킬을 여러 코딩 에이전트 규격에 맞춰 일괄 배포·업데이트합니다.",
+      "repo": "vercel-labs/skills",
+      "repoUrl": "https://github.com/vercel-labs/skills",
+      "sourcePlatform": "github",
+      "stars": 41176,
+      "discoveredVia": "seed",
+      "language": "TypeScript",
+      "license": "MIT",
+      "pushedAt": "2026-11-27T05:06:11Z",
+      "createdAt": "2026-01-14T21:31:18Z",
+      "lifecycleTier": "evergreen",
+      "vitalityScore": 72,
+      "category": "workflow",
+      "roleSlot": "skill-installer",
+      "roleLabelKo": "표준 SKILL.md 크로스-툴 패키지 매니저",
+      "installFormats": [
+        "CLI",
+        "SKILL.md"
+      ],
+      "supportedTools": [
+        "claude-code",
+        "gemini-agy",
+        "cursor",
+        "windsurf",
+        "codex"
+      ],
+      "contextTokens": 320,
+      "contextTier": "초경량",
+      "installCommands": {
+        "cli": "npx skills find",
+        "npxSkills": "npx skills add vercel-labs/agent-skills"
+      },
+      "skillMdTemplate": "---\nname: vercel-skills-cli\ndescription: npx skills CLI를 이용해 오픈소스 SKILL.md 패키지를 여러 코딩 에이전트에 표준 방식으로 설치·관리하는 스킬\nsource: https://github.com/vercel-labs/skills\n---\n\n# Skills CLI — 표준 스킬 패키지 운영 규칙\n\n1. **표준 포맷 준수**: 모든 프로젝트 스킬은 YAML frontmatter(`name`, `description`)를 포함한 `SKILL.md` 형식으로 관리한다.\n2. **프로젝트 격리 우선**: 팀/프로젝트 전용 스킬은 기본 로컬 스코프로 설치하고, 개인 공통 스킬만 `-g` 전역 옵션을 사용한다.\n3. **일회성 테스트 활용**: 영구 설치 전에 `npx skills use <source>@<skill>`로 효과를 먼저 검증한다.",
+      "demoMedia": null,
+      "benchmarks": [],
+      "workflowCompression": {
+        "beforeTitle": "GitHub에서 마크다운 수동 복사 후 툴별 숨김 폴더에 일일이 붙여넣기",
+        "afterTitle": "npx skills add <owner/repo> 1줄로 모든 코딩 툴에 자동 동기화",
+        "manualSteps": [
+          "스킬 저장소 탐색 및 raw 마크다운 복사",
+          ".claude/skills, .gemini/skills, .cursor/rules 각각 수동 생성",
+          "업데이트 시 모든 폴더 다시 덮어쓰기"
+        ],
+        "autoStep": "npx skills CLI가 툴별 표준 경로 감지·설치·버전 갱신을 1줄로 자동화",
+        "stepCountBefore": 3,
+        "stepCountAfter": 1
+      },
+      "radarKeywords": [
+        "skills",
+        "npx",
+        "agent-skills",
+        "cli",
+        "ecosystem",
+        "claude code",
+        "cursor",
+        "codex"
+      ],
+      "matchedRadar": [],
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
+    },
+    {
+      "slug": "vercel-agent-skills",
+      "name": "Vercel Agent Skills",
+      "koreanAlias": "[Vercel 공식 프론트엔드 모범규칙] Agent Skills",
+      "oneLineAnalogy": "Next.js·React 제작사 Vercel이 직접 정리한 ==워터폴 제거·성능 최적화·컴포지션 정석 교과서==입니다.",
+      "beginnerAnalogyKo": "비유하자면, Next.js를 만든 본사 수석 엔지니어가 내 옆에서 '여긴 이렇게 짜야 안 느려져요' 하고 실시간으로 짚어주는 과외 선생님이에요.",
+      "summaryKo": "Vercel 공식 에이전트 스킬 컬렉션(9개 SKILL.md)입니다. `react-best-practices`, `composition-patterns`, `deploy-to-vercel`, `web-design-guidelines` 등 실전 프로덕션 성능과 구조 규칙을 AI에게 그대로 이식합니다.",
+      "repo": "vercel-labs/agent-skills",
+      "repoUrl": "https://github.com/vercel-labs/agent-skills",
+      "sourcePlatform": "github",
+      "stars": 35042,
+      "discoveredVia": "seed",
+      "language": "JavaScript",
+      "license": "Open Source",
+      "pushedAt": "2026-11-20T19:20:13Z",
+      "createdAt": "2025-12-08T19:10:06Z",
+      "lifecycleTier": "evergreen",
+      "vitalityScore": 65,
+      "category": "design",
+      "roleSlot": "ui-design",
+      "roleLabelKo": "React · Next.js · Vercel 공식 베스트 프랙티스",
+      "installFormats": [
+        "SKILL.md",
+        "Rules"
+      ],
+      "supportedTools": [
+        "claude-code",
+        "gemini-agy",
+        "cursor",
+        "windsurf",
+        "codex",
+        "web-builder"
+      ],
+      "contextTokens": 890,
+      "contextTier": "보통",
+      "installCommands": {
+        "npxSkills": "npx skills add vercel-labs/agent-skills"
+      },
+      "skillMdTemplate": "---\nname: vercel-react-best-practices\ndescription: Vercel 공식 React·Next.js 성능 최적화(워터폴 제거·번들 경량화·서버 컴포넌트 경계) 및 웹 UI 품질 스킬\nsource: https://github.com/vercel-labs/agent-skills\n---\n\n# Vercel Agent Skills — React & Next.js 정석 규칙\n\n1. **비동기 워터폴 제거**: 독립적인 데이터 요청은 `Promise.all()`로 병렬 실행하고, `useSearchParams()` 사용 클라이언트 컴포넌트는 반드시 `<Suspense>`로 감싼다.\n2. **서버 컴포넌트 우선**: 상태·이벤트가 필요 없는 UI는 Server Component로 유지해 클라이언트 JS 번들을 최소화한다.\n3. **컴포지션 패턴**: 거대한 boolean prop 분기 대신 명시적인 하위 컴포넌트 조합으로 확장성을 확보한다.",
+      "demoMedia": null,
+      "benchmarks": [],
+      "workflowCompression": {
+        "beforeTitle": "클라이언트 워터폴·불필요한 리렌더·SSR 경계 오류를 배포 후 수정",
+        "afterTitle": "Vercel 공식 React/Next.js 규칙을 코드 작성 시점에 자동 반영",
+        "manualSteps": [
+          "Next.js App Router 서버/클라이언트 경계 오류 디버깅",
+          "순차 fetch 워터폴을 Promise.all 병렬화로 사후 리팩터링",
+          "번들 비대화 및 접근성 체크 수동 점검"
+        ],
+        "autoStep": "Vercel Agent Skills가 병렬 페칭·컴포지션·SSR 경계 규칙을 작성 단계에서 자동 강제",
+        "stepCountBefore": 3,
+        "stepCountAfter": 1
+      },
+      "radarKeywords": [
+        "vercel",
+        "nextjs",
+        "react",
+        "frontend",
+        "skills",
+        "typescript",
+        "web",
+        "deploy"
+      ],
+      "matchedRadar": [],
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "firecrawl-mcp",
@@ -2701,11 +2736,11 @@
       "repo": "firecrawl/firecrawl-mcp-server",
       "repoUrl": "https://github.com/firecrawl/firecrawl-mcp-server",
       "sourcePlatform": "github",
-      "stars": 7932,
+      "stars": 7934,
       "discoveredVia": "seed",
       "language": "JavaScript",
       "license": "MIT",
-      "pushedAt": "2026-11-27T10:42:54Z",
+      "pushedAt": "2026-11-27T18:43:32Z",
       "createdAt": "2024-12-06T07:50:27Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 65,
@@ -2754,7 +2789,7 @@
         "rag"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "awesome-design-md",
@@ -2766,7 +2801,7 @@
       "repo": "VoltAgent/awesome-design-md",
       "repoUrl": "https://github.com/VoltAgent/awesome-design-md",
       "sourcePlatform": "github",
-      "stars": 129359,
+      "stars": 129439,
       "discoveredVia": "seed",
       "language": "Markdown",
       "license": "MIT",
@@ -2820,7 +2855,7 @@
         "v0"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "hf-z-image-turbo",
@@ -2832,8 +2867,8 @@
       "repo": "mrfakename/Z-Image-Turbo",
       "repoUrl": "https://huggingface.co/spaces/mrfakename/Z-Image-Turbo",
       "sourcePlatform": "huggingface",
-      "stars": 3971,
-      "likes": 3971,
+      "stars": 3972,
+      "likes": 3972,
       "hfMcpEndpoint": "https://mrfakename-z-image-turbo.hf.space/gradio_api/mcp/sse",
       "hfSpaceUrl": "https://huggingface.co/spaces/mrfakename/Z-Image-Turbo",
       "hfSdk": "gradio",
@@ -2842,7 +2877,7 @@
       "discoveredVia": "hf-mcp",
       "language": "Gradio MCP",
       "license": "Hugging Face Space",
-      "pushedAt": "2026-11-27T18:13:56.202Z",
+      "pushedAt": "2026-11-28T02:43:44.025Z",
       "createdAt": "2025-11-26T19:54:05.000Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 62,
@@ -2891,7 +2926,7 @@
         "turbo"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "hf-wan2-2-fp8da-aoti-faster",
@@ -2903,8 +2938,8 @@
       "repo": "zerogpu-aoti/wan2-2-fp8da-aoti-faster",
       "repoUrl": "https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster",
       "sourcePlatform": "huggingface",
-      "stars": 3934,
-      "likes": 3934,
+      "stars": 3936,
+      "likes": 3936,
       "hfMcpEndpoint": "https://zerogpu-aoti-wan2-2-fp8da-aoti-faster.hf.space/gradio_api/mcp/sse",
       "hfSpaceUrl": "https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster",
       "hfSdk": "gradio",
@@ -2913,7 +2948,7 @@
       "discoveredVia": "hf-mcp",
       "language": "Gradio MCP",
       "license": "Hugging Face Space",
-      "pushedAt": "2026-11-27T18:13:56.202Z",
+      "pushedAt": "2026-11-28T02:43:44.025Z",
       "createdAt": "2025-07-30T19:03:28.000Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 62,
@@ -2964,7 +2999,7 @@
         "aoti"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "hf-wan2-2-fp8da-aoti-preview",
@@ -2976,8 +3011,8 @@
       "repo": "r3gm/wan2-2-fp8da-aoti-preview",
       "repoUrl": "https://huggingface.co/spaces/r3gm/wan2-2-fp8da-aoti-preview",
       "sourcePlatform": "huggingface",
-      "stars": 3355,
-      "likes": 3355,
+      "stars": 3357,
+      "likes": 3357,
       "hfMcpEndpoint": "https://r3gm-wan2-2-fp8da-aoti-preview.hf.space/gradio_api/mcp/sse",
       "hfSpaceUrl": "https://huggingface.co/spaces/r3gm/wan2-2-fp8da-aoti-preview",
       "hfSdk": "gradio",
@@ -2986,7 +3021,7 @@
       "discoveredVia": "hf-mcp",
       "language": "Gradio MCP",
       "license": "Hugging Face Space",
-      "pushedAt": "2026-11-27T18:13:56.202Z",
+      "pushedAt": "2026-11-28T02:43:44.025Z",
       "createdAt": "2025-10-27T03:20:43.000Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 62,
@@ -3037,7 +3072,7 @@
         "preview"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "ai-radar-live",
@@ -3053,7 +3088,7 @@
       "discoveredVia": "seed",
       "language": "TypeScript",
       "license": "Open Source",
-      "pushedAt": "2026-11-27T08:00:50Z",
+      "pushedAt": "2026-11-28T01:32:44Z",
       "createdAt": "2026-11-20T02:12:53Z",
       "lifecycleTier": "rising",
       "vitalityScore": 62,
@@ -3125,24 +3160,6 @@
           "matchReason": "이슈 키워드 \"agent\"와 직접 연결됨 (x)"
         },
         {
-          "id": "live-33c91b177917",
-          "titleKo": "gary23w/f-ck_data_brokers: fck_data_brokers.py는 옵트아웃 및 삭제 요청을 보내는 무료 오픈 소스…",
-          "originalTitle": "gary23w/f-ck_data_brokers: fck_data_brokers.py is a free, open-source Python script that sends opt-out and deletion req",
-          "platformId": "github",
-          "category": "dev",
-          "canonicalUrl": "https://github.com/gary23w/f-ck_data_brokers",
-          "publishedAt": "2026-11-26T17:53:07Z",
-          "highlightSummary": "fck_data_brokers.py는 사용자를 대신하여 데이터 브로커에 옵트아웃 및 삭제 요청을 보내는 무료 오픈 소스 Python 스크립트입니다. 핵심 이득은 ==GitHub 급상승 ★301==이에요.",
-          "benefitTag": "GitHub 급상승 ★301",
-          "importanceScore": 33.46,
-          "isChinaSource": false,
-          "matchedSkillSlugs": [
-            "github-mcp-server",
-            "ai-radar-live"
-          ],
-          "matchReason": "이슈 키워드 \"open-source\"와 직접 연결됨 (github)"
-        },
-        {
           "id": "live-c1d6bcc53c47",
           "titleKo": "LLM 에이전트는 귀하가 아닌 모회사를 위해 일합니다",
           "originalTitle": "LLM agents work for their parent companies, not for you",
@@ -3157,9 +3174,26 @@
             "ai-radar-live"
           ],
           "matchReason": "이슈 키워드 \"llm\"와 직접 연결됨 (hacker-news)"
+        },
+        {
+          "id": "live-f22dad31bb1e",
+          "titleKo": "Anthropic Research: AI와 함께 일하기",
+          "originalTitle": "Anthropic Research: Working With AI",
+          "platformId": "anthropic",
+          "category": "research",
+          "canonicalUrl": "https://anthropic.com/research/working-with-ai",
+          "publishedAt": "2026-11-23T22:13:27.525000Z",
+          "highlightSummary": "==Anthropic 공식 연구 보고서 'Working== With AI' ( 공개됐습니다. 조만간 상용 모델과 개발 도구에 흡수될 핵심 기법이라 실험 수치와 한계를 미리 짚어 두면 기술 로드맵에 도움돼요.",
+          "importanceScore": 30.54,
+          "isChinaSource": false,
+          "matchedSkillSlugs": [
+            "ecc-core",
+            "ai-radar-live"
+          ],
+          "matchReason": "이슈 키워드 \"anthropic\"와 직접 연결됨 (anthropic)"
         }
       ],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "hf-background-removal",
@@ -3171,8 +3205,8 @@
       "repo": "not-lain/background-removal",
       "repoUrl": "https://huggingface.co/spaces/not-lain/background-removal",
       "sourcePlatform": "huggingface",
-      "stars": 3000,
-      "likes": 3000,
+      "stars": 3001,
+      "likes": 3001,
       "hfMcpEndpoint": "https://not-lain-background-removal.hf.space/gradio_api/mcp/sse",
       "hfSpaceUrl": "https://huggingface.co/spaces/not-lain/background-removal",
       "hfSdk": "gradio",
@@ -3181,7 +3215,7 @@
       "discoveredVia": "hf-mcp",
       "language": "Gradio MCP",
       "license": "Hugging Face Space",
-      "pushedAt": "2026-11-27T18:13:56.202Z",
+      "pushedAt": "2026-11-28T02:43:44.025Z",
       "createdAt": "2024-08-08T19:37:33.000Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 61,
@@ -3231,7 +3265,7 @@
         "removal"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "claude-code-video-toolkit",
@@ -3243,7 +3277,7 @@
       "repo": "digitalsamba/claude-code-video-toolkit",
       "repoUrl": "https://github.com/digitalsamba/claude-code-video-toolkit",
       "sourcePlatform": "github",
-      "stars": 2806,
+      "stars": 2809,
       "discoveredVia": "seed",
       "language": "Python",
       "license": "MIT",
@@ -3301,7 +3335,7 @@
         "video_audio"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "hf-qwen-image-edit-2511-loras-fast",
@@ -3323,7 +3357,7 @@
       "discoveredVia": "hf-mcp",
       "language": "Gradio MCP",
       "license": "Hugging Face Space",
-      "pushedAt": "2026-11-27T18:13:56.202Z",
+      "pushedAt": "2026-11-28T02:43:44.025Z",
       "createdAt": "2025-12-19T05:20:19.000Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 61,
@@ -3374,7 +3408,7 @@
         "2511"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "hf-diffusers-image-outpaint",
@@ -3396,7 +3430,7 @@
       "discoveredVia": "hf-mcp",
       "language": "Gradio MCP",
       "license": "Hugging Face Space",
-      "pushedAt": "2026-11-27T18:13:56.202Z",
+      "pushedAt": "2026-11-28T02:43:44.025Z",
       "createdAt": "2024-09-13T15:44:14.000Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 61,
@@ -3446,7 +3480,7 @@
         "outpaint"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "hf-qwen-image-edit-angles",
@@ -3468,7 +3502,7 @@
       "discoveredVia": "hf-mcp",
       "language": "Gradio MCP",
       "license": "Hugging Face Space",
-      "pushedAt": "2026-11-27T18:13:56.202Z",
+      "pushedAt": "2026-11-28T02:43:44.025Z",
       "createdAt": "2025-11-04T13:54:42.000Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 60,
@@ -3519,7 +3553,7 @@
         "angles"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "hf-harness-leaderboard",
@@ -3531,8 +3565,8 @@
       "repo": "joelniklaus/harness-leaderboard",
       "repoUrl": "https://huggingface.co/spaces/joelniklaus/harness-leaderboard",
       "sourcePlatform": "huggingface",
-      "stars": 571,
-      "likes": 571,
+      "stars": 573,
+      "likes": 573,
       "hfSpaceUrl": "https://huggingface.co/spaces/joelniklaus/harness-leaderboard",
       "hfSdk": "docker",
       "tryPromptExample": "내 주력 모델 기준으로 가장 성능이 잘 나오는 코딩 에이전트 하네스 조합을 추천해 줘",
@@ -3540,7 +3574,7 @@
       "discoveredVia": "hf-trending",
       "language": "Docker Space",
       "license": "Hugging Face Space",
-      "pushedAt": "2026-11-27T10:28:17.000Z",
+      "pushedAt": "2026-11-28T01:07:43.000Z",
       "createdAt": "2026-10-15T06:00:13.000Z",
       "lifecycleTier": "evergreen",
       "vitalityScore": 55,
@@ -3589,7 +3623,7 @@
         "leaderboard"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "claude-video",
@@ -3601,7 +3635,7 @@
       "repo": "bradautomates/claude-video",
       "repoUrl": "https://github.com/bradautomates/claude-video",
       "sourcePlatform": "github",
-      "stars": 22000,
+      "stars": 22024,
       "discoveredVia": "seed",
       "language": "Python",
       "license": "MIT",
@@ -3658,7 +3692,7 @@
         "video_audio"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "hf-minimax-h3-image",
@@ -3670,8 +3704,8 @@
       "repo": "MiniMaxAI/minimax-h3-image",
       "repoUrl": "https://huggingface.co/spaces/MiniMaxAI/minimax-h3-image",
       "sourcePlatform": "huggingface",
-      "stars": 385,
-      "likes": 385,
+      "stars": 390,
+      "likes": 390,
       "hfMcpEndpoint": "https://minimaxai-minimax-h3-image.hf.space/gradio_api/mcp/sse",
       "hfSpaceUrl": "https://huggingface.co/spaces/MiniMaxAI/minimax-h3-image",
       "hfSdk": "gradio",
@@ -3729,7 +3763,7 @@
         "image"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "superdesign-skill",
@@ -3741,7 +3775,7 @@
       "repo": "superdesigndev/superdesign-skill",
       "repoUrl": "https://github.com/superdesigndev/superdesign-skill",
       "sourcePlatform": "github",
-      "stars": 1086,
+      "stars": 1088,
       "discoveredVia": "seed",
       "language": "JavaScript",
       "license": "MIT",
@@ -3795,7 +3829,7 @@
         "web"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     },
     {
       "slug": "hf-wan2-2-i2v-v3",
@@ -3807,8 +3841,8 @@
       "repo": "JCisHERE/wan2-2-i2v-v3",
       "repoUrl": "https://huggingface.co/spaces/JCisHERE/wan2-2-i2v-v3",
       "sourcePlatform": "huggingface",
-      "stars": 864,
-      "likes": 864,
+      "stars": 875,
+      "likes": 875,
       "hfMcpEndpoint": "https://jcishere-wan2-2-i2v-v3.hf.space/gradio_api/mcp/sse",
       "hfSpaceUrl": "https://huggingface.co/spaces/JCisHERE/wan2-2-i2v-v3",
       "hfSdk": "gradio",
@@ -3866,7 +3900,7 @@
         "i2v"
       ],
       "matchedRadar": [],
-      "verifiedAt": "2026-11-27T18:13:56.202Z"
+      "verifiedAt": "2026-11-28T02:43:44.025Z"
     }
   ],
   "radarItems": [
@@ -3922,22 +3956,21 @@
       "matchReason": "키워드 \"coding\" 직접 매칭 (hacker-news)"
     },
     {
-      "id": "live-33c91b177917",
-      "titleKo": "gary23w/f-ck_data_brokers: fck_data_brokers.py는 옵트아웃 및 삭제 요청을 보내는 무료 오픈 소스…",
-      "originalTitle": "gary23w/f-ck_data_brokers: fck_data_brokers.py is a free, open-source Python script that sends opt-out and deletion req",
-      "platformId": "github",
+      "id": "live-0a4ccef05135",
+      "titleKo": "AI 에이전트의 원형은 3개의 논문에 있었다: ReAct, SWE-bench, SWE-agent를 읽는다",
+      "originalTitle": "AIエージェントの原型は3本の論文にあった：ReAct、SWE-bench、SWE-agentを読み解く",
+      "platformId": "zenn",
       "category": "dev",
-      "canonicalUrl": "https://github.com/gary23w/f-ck_data_brokers",
-      "publishedAt": "2026-11-26T17:53:07Z",
-      "highlightSummary": "fck_data_brokers.py는 사용자를 대신하여 데이터 브로커에 옵트아웃 및 삭제 요청을 보내는 무료 오픈 소스 Python 스크립트입니다. 핵심 이득은 ==GitHub 급상승 ★301==이에요.",
-      "benefitTag": "GitHub 급상승 ★301",
-      "importanceScore": 33.46,
+      "canonicalUrl": "https://zenn.dev/kentaro36/articles/ai-agent-foundation-papers",
+      "publishedAt": "2026-11-27T23:07:24Z",
+      "highlightSummary": "==Claude Code 개발 생태계에서 'AI== 에이전트의 원형은 3개의 논문에 있었다: ReAct, SWE-bench, SWE-agent를 읽는다' 구현 방식과 실전 적용 사례가 공개됐어요. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+      "importanceScore": 33.2,
       "isChinaSource": false,
       "matchedSkillSlugs": [
-        "github-mcp-server",
-        "ai-radar-live"
+        "ponytail",
+        "ecc-core"
       ],
-      "matchReason": "키워드 \"github\" 직접 매칭 (github)"
+      "matchReason": "키워드 \"claude code\" 직접 매칭 (zenn)"
     },
     {
       "id": "live-c1d6bcc53c47",
@@ -3971,23 +4004,6 @@
         "ai-radar-live"
       ],
       "matchReason": "키워드 \"anthropic\" 직접 매칭 (anthropic)"
-    },
-    {
-      "id": "live-04817f74c789",
-      "titleKo": "앤트로픽, MCP 서버에 '스킬' 도입…AI 에이전트에 업무 노하우까지 전달",
-      "originalTitle": "앤트로픽, MCP 서버에 '스킬' 도입…AI 에이전트에 업무 노하우까지 전달",
-      "platformId": "aitimes",
-      "category": "industry",
-      "canonicalUrl": "https://aitimes.com/news/articleView.html?idxno=217847",
-      "publishedAt": "2026-11-27T03:23:23Z",
-      "highlightSummary": "==앤트로픽이 AI 에이전트 연결 표준인== 모델 컨텍스트 프로토콜(MCP)을 통해 업무 수행 방법을 담은 '스킬(Skills)'을 제공하는 기능을 도입했다. AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
-      "importanceScore": 30.07,
-      "isChinaSource": false,
-      "matchedSkillSlugs": [
-        "vercel-agent-skills",
-        "vercel-skills-cli"
-      ],
-      "matchReason": "키워드 \"skills\" 직접 매칭 (aitimes)"
     },
     {
       "id": "live-4478933c2686",
@@ -4040,123 +4056,6 @@
       "matchReason": "키워드 \"engineering\" 직접 매칭 (x)"
     },
     {
-      "id": "live-39c80f1e3e4b",
-      "titleKo": "신형 모델들이 자기 개선에 더 능숙해지고 있나요? Gemini Carbon과 Argon은 벤치마크에서 뛰어난 성과를 보이고 있으므로, 저희는",
-      "originalTitle": "@Harman26Singh: Are newer models getting better at self-improvement? Gemini Carbon and Argon are great on benchmarks, so we tr…",
-      "platformId": "x",
-      "category": "social",
-      "canonicalUrl": "https://x.com/Harman26Singh/status/2124911857064640826",
-      "publishedAt": "2026-11-23T22:12:20.086678Z",
-      "highlightSummary": "==최신 모델이 자기 개선에 더== 능숙해지고 있나요? 공식 보도자료보다 X에서 데모·런칭이 먼저 공개되는 경우가 많아 초기 반응과 신기능 아이디어를 한발 앞서 잡을 수 있어요.",
-      "importanceScore": 29.45,
-      "isChinaSource": false,
-      "matchedSkillSlugs": [
-        "omniroute",
-        "gemini-cli"
-      ],
-      "matchReason": "키워드 \"gemini\" 직접 매칭 (x)"
-    },
-    {
-      "id": "live-2eda6418d46c",
-      "titleKo": "Tencent Hunyuan, Hy3D 3.6 출시: 상위 모델 표면이 더 깨끗해지고, 구조가 더 명확해지고, 묘사가 더 섬세해졌습니다",
-      "originalTitle": "腾讯混元发布 Hy3D 3.6：高模表面更整洁、结构更清晰、刻画更细腻",
-      "platformId": "qbitai",
-      "category": "industry",
-      "canonicalUrl": "https://qbitai.com/2026/11/513155.html",
-      "publishedAt": "2026-11-27T03:45:19Z",
-      "highlightSummary": "==QbitAI · 양자위가 전한 'Tencent== Hunyuan, Hy3D 3.6 출시: 상위 모델 표면이 더 깨끗해지고, 구조가 더 명확해지고, 묘사가 더 섬세해졌습니다' 이슈로 글로벌 AI 시장·서비스 전략의 방향 변화가 뚜렷해졌어요. AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
-      "importanceScore": 28.81,
-      "isChinaSource": true,
-      "matchedSkillSlugs": [
-        "ai-radar-live"
-      ],
-      "matchReason": "키워드 \"qbitai\" 직접 매칭 (qbitai)"
-    },
-    {
-      "id": "live-fde211259d76",
-      "titleKo": "Clay가 GTM 에이전트를 구축하는 방법 — Jeff Barg, AI 책임자",
-      "originalTitle": "How Clay Builds GTM Agents — Jeff Barg, Head of AI",
-      "platformId": "latent-space",
-      "category": "industry",
-      "canonicalUrl": "https://latent.space/p/how_clay_builds_gtm_agents_jeff_barg_head_of_ai",
-      "publishedAt": "2026-11-26T22:44:44Z",
-      "highlightSummary": "==Clay는 자체 에이전트를 사용하든 Claude== Code를 Clay에 지정하든 거의 동일한 결과를 얻기를 원합니다. AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
-      "importanceScore": 28.8,
-      "isChinaSource": false,
-      "matchedSkillSlugs": [
-        "anthropic-official-skills",
-        "ui-ux-pro-max-skill"
-      ],
-      "matchReason": "키워드 \"claude\" 직접 매칭 (latent-space)"
-    },
-    {
-      "id": "live-68291723de90",
-      "titleKo": "대응하기 위해 구체화된 기업들: 범용 대형 모델 교차차원 공격? 그렇게 간단하지는 않습니다",
-      "originalTitle": "具身公司抱团回应：通用大模型跨维打击？没那么简单",
-      "platformId": "qbitai",
-      "category": "industry",
-      "canonicalUrl": "https://qbitai.com/2026/11/513125.html",
-      "publishedAt": "2026-11-27T03:33:11Z",
-      "highlightSummary": "==QbitAI · 양자위가 전한 '대응하기== 위해 구체화된 기업들: 범용 대형 모델 교차차원 공격? AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
-      "importanceScore": 28.77,
-      "isChinaSource": true,
-      "matchedSkillSlugs": [
-        "ai-radar-live"
-      ],
-      "matchReason": "키워드 \"qbitai\" 직접 매칭 (qbitai)"
-    },
-    {
-      "id": "live-2a2f1ed8be28",
-      "titleKo": "영혼의 형상 클로드 코드, 바이브코딩의 미래를 성찰하기 시작하다",
-      "originalTitle": "Claude Code 灵魂人物，开始反思 Vibe Coding 的未来了",
-      "platformId": "36kr-ai",
-      "category": "industry",
-      "canonicalUrl": "https://36kr.com/p/4087449994181000",
-      "publishedAt": "2026-11-27T03:59:12.851000Z",
-      "highlightSummary": "==36K==r AI가 전한 '영혼의 형상 클로드 코드, 바이브코딩의 미래를 성찰하기 시작하다' 이슈로 글로벌 AI 시장·서비스 전략의 방향 변화가 뚜렷해졌어요. AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
-      "importanceScore": 28.67,
-      "isChinaSource": true,
-      "matchedSkillSlugs": [
-        "ponytail",
-        "headroom"
-      ],
-      "matchReason": "키워드 \"claude code\" 직접 매칭 (36kr-ai)"
-    },
-    {
-      "id": "live-ace94b1e7fc4",
-      "titleKo": "Anthropic은 AI의 가짜 망각을 폭로하고 460,000개의 뉴런이 수십 번 활성화되고 해커 지식이 부활합니다",
-      "originalTitle": "Anthropic拆穿AI假遗忘，46万神经元动几十个，黑客知识就复活",
-      "platformId": "36kr-ai",
-      "category": "industry",
-      "canonicalUrl": "https://36kr.com/p/4087453646420361",
-      "publishedAt": "2026-11-27T03:55:55.634000Z",
-      "highlightSummary": "==인류학 연구에 따르면 AI의 낮은== 점수는 실제로 이를 잊지 않을 수 있으며 지식은 종종 숨겨져 있음이 밝혀졌습니다. AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
-      "importanceScore": 28.66,
-      "isChinaSource": true,
-      "matchedSkillSlugs": [
-        "ecc-core",
-        "ai-radar-live"
-      ],
-      "matchReason": "키워드 \"anthropic\" 직접 매칭 (36kr-ai)"
-    },
-    {
-      "id": "live-647e37827a02",
-      "titleKo": "Gemini 4 Carbon은 8개의 태양을 밝히고, 70년 된 기하학 미스터리는 단 6페이지의 신 수준의 증명으로 풀립니다",
-      "originalTitle": "Gemini 4 Carbon点亮8颗太阳，70年几何悬案告破，只用6页神级证明",
-      "platformId": "36kr-ai",
-      "category": "industry",
-      "canonicalUrl": "https://36kr.com/p/4087355247540614",
-      "publishedAt": "2026-11-27T02:33:32.007000Z",
-      "highlightSummary": "==모든 볼록한 행성은 8개의 태양으로== 빛날 수 있습니다. AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
-      "importanceScore": 28.44,
-      "isChinaSource": true,
-      "matchedSkillSlugs": [
-        "omniroute",
-        "gemini-cli"
-      ],
-      "matchReason": "키워드 \"gemini\" 직접 매칭 (36kr-ai)"
-    },
-    {
       "id": "live-1874f562a1f8",
       "titleKo": "browser-use 1.0.9 새 버전 공개",
       "originalTitle": "browser-use 1.0.9",
@@ -4175,36 +4074,72 @@
       "matchReason": "키워드 \"browser\" 직접 매칭 (github)"
     },
     {
-      "id": "live-1da092c7cd6f",
-      "titleKo": "vibecoding 에이전트 작업 상태 동기화를 지원하는 데스크탑 애완동물",
-      "originalTitle": "vibecoding 个支持 agent 任务状态同步的桌宠",
-      "platformId": "v2ex",
-      "category": "dev",
-      "canonicalUrl": "https://v2ex.com/t/1260250",
-      "publishedAt": "2026-11-27T03:16:13Z",
-      "highlightSummary": "==저는 데스크탑 애완동물 소프트웨어를 만들고,== 유용하고 함께 할 수 있는 일을 하고, 매일 여러분의 항문을 들어 올리도록 도와드립니다![01-RillBuddy-cover.png]( ![02-RillBuddy-workbench.png](… 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
-      "importanceScore": 27.98,
+      "id": "live-da113f2578d9",
+      "titleKo": "휴머노이드 로봇 개발자들의 집합체! 중경은 크고 작은 두뇌를 열고 10억 산업 수준의 생태 지원 계획도 여기에 있습니다",
+      "originalTitle": "人形机器人开发者集合！众擎开放大小脑，10亿产业级生态支持计划也来了",
+      "platformId": "qbitai",
+      "category": "industry",
+      "canonicalUrl": "https://qbitai.com/2026/11/513352.html",
+      "publishedAt": "2026-11-27T14:07:33Z",
+      "highlightSummary": "==QbitAI · 양자위가 전한 '휴머노이드== 로봇 개발자들의 집합체! AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
+      "importanceScore": 28.34,
       "isChinaSource": true,
       "matchedSkillSlugs": [
-        "ponytail"
+        "ai-radar-live"
       ],
-      "matchReason": "키워드 \"agent\" 직접 매칭 (v2ex)"
+      "matchReason": "키워드 \"qbitai\" 직접 매칭 (qbitai)"
     },
     {
-      "id": "live-03672420de3a",
-      "titleKo": "[오픈소스 공유] 경량 NAS 리버스 프록시, DDNS, 인증서 및 FRP 관리 도구인 Fonu 2.0",
-      "originalTitle": "[开源分享] Fonu 2.0，一个轻量级的 NAS 反向代理、DDNS、证书及 FRP 管理工具",
+      "id": "live-f4aa5cece81d",
+      "titleKo": "sdk/workflow-harness@1.0.196 새 정식 버전 릴리즈",
+      "originalTitle": "@ai-sdk/workflow-harness@1.0.196",
+      "platformId": "github",
+      "category": "dev",
+      "canonicalUrl": "https://github.com/vercel/ai/releases/tag/%40ai-sdk/workflow-harness%401.0.196",
+      "publishedAt": "2026-11-27T23:27:10Z",
+      "highlightSummary": "==핵심 변경점: ### 패치 변경== 사항 - 종속성 업데이트됨 [974e80e] - @ai-sdk/harness@1.0.196 핵심 이득은 ==새 정식 버전 릴리스==이에요.",
+      "benefitTag": "새 정식 버전 릴리스",
+      "importanceScore": 28.11,
+      "isChinaSource": false,
+      "matchedSkillSlugs": [
+        "ponytail",
+        "ecc-core"
+      ],
+      "matchReason": "키워드 \"harness\" 직접 매칭 (github)"
+    },
+    {
+      "id": "live-fae59c0ccc2c",
+      "titleKo": "저는 Claude Code에게 1,500줄이 넘는 함수를 재구성해 달라고 요청했습니다. 모든 테스트를 통과했지만 여전히 자신감이 없습니다",
+      "originalTitle": "让 Claude Code 重构了一个 1500 多行的函数，测试全过了，但我还是不太放心",
       "platformId": "v2ex",
       "category": "dev",
-      "canonicalUrl": "https://v2ex.com/t/1260247",
-      "publishedAt": "2026-11-27T03:10:23Z",
-      "highlightSummary": "==Fonu는 Feiniu fnOS 기본 설치== 및 Docker 배포를 지원하는 경량의 시각적 Nginx 역방향 프록시 및 FRP 인트라넷 침투 관리 도구입니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
-      "importanceScore": 27.96,
+      "canonicalUrl": "https://v2ex.com/t/1260469",
+      "publishedAt": "2026-11-27T15:54:47Z",
+      "highlightSummary": "Claude Code로 4단계 리팩토링을 거쳐 최종적으로 주요 기능은 150줄로 줄었고, 코드 복잡도는 143줄에서 7줄로 줄었으며, 6471번의 테스트를 모두 통과했지만, 전체 파일은 ==31%== 길어졌습니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+      "importanceScore": 28.1,
       "isChinaSource": true,
       "matchedSkillSlugs": [
-        "trendradar"
+        "ponytail",
+        "headroom"
       ],
-      "matchReason": "키워드 \"docker\" 직접 매칭 (v2ex)"
+      "matchReason": "키워드 \"claude code\" 직접 매칭 (v2ex)"
+    },
+    {
+      "id": "live-a150e5dcd4b5",
+      "titleKo": "마스터 Karpathy가 다시 작업에 복귀하고 Claude는 7시간 만에 실제 미국을 \"문명화\"로 가져옵니다",
+      "originalTitle": "大神Karpathy又整活，Claude 7小时把真实美国搬进《文明》",
+      "platformId": "36kr-ai",
+      "category": "industry",
+      "canonicalUrl": "https://36kr.com/p/4087901307353735",
+      "publishedAt": "2026-11-27T12:33:56.015000Z",
+      "highlightSummary": "==\"지금은 클로드와 이야기를 나누고 그에게== 모든 일을 맡기고 있어요.\" AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
+      "importanceScore": 27.93,
+      "isChinaSource": true,
+      "matchedSkillSlugs": [
+        "omniroute",
+        "anthropic-official-skills"
+      ],
+      "matchReason": "키워드 \"claude\" 직접 매칭 (36kr-ai)"
     },
     {
       "id": "live-fdb12ef6565e",
@@ -4224,34 +4159,167 @@
       "matchReason": "키워드 \"claude code\" 직접 매칭 (latent-space)"
     },
     {
-      "id": "live-ac470f1b5c2e",
-      "titleKo": "cline v4.1.28 새 버전 공개",
-      "originalTitle": "cline v4.1.28",
-      "platformId": "github",
-      "category": "dev",
-      "canonicalUrl": "https://github.com/cline/cline/releases/tag/v4.1.28",
-      "publishedAt": "2026-11-26T09:57:49Z",
-      "highlightSummary": "==핵심 변경점: OpenAI 공급자는 더== 이상 `gpt-4o`, `gpt-4.1`, `gpt-5`, `gpt-5-mini`, `gpt-5.1`, `gpt-5.3-codex`, `o3` 및 `o3-pro`를 포함하여 더 이상 사용되지 않는 업스트림… 핵심 이득은 ==새 정식 버전 릴리스==이에요.",
-      "benefitTag": "새 정식 버전 릴리스",
-      "importanceScore": 27.84,
-      "isChinaSource": false,
+      "id": "live-0e33096b2a0a",
+      "titleKo": "DeepSeek APP가 갑자기 청구서를 업데이트했습니다. 네티즌 : 요금이 청구되나요?",
+      "originalTitle": "DeepSeek APP突然更新账单，网友：要收费了？",
+      "platformId": "qbitai",
+      "category": "industry",
+      "canonicalUrl": "https://qbitai.com/2026/11/513305.html",
+      "publishedAt": "2026-11-27T07:29:10Z",
+      "highlightSummary": "==채팅 청구서는 웹 앱의 양쪽== 끝에 표시됩니다 AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
+      "importanceScore": 27.39,
+      "isChinaSource": true,
       "matchedSkillSlugs": [
-        "omniroute",
-        "vercel-skills-cli"
+        "omniroute"
       ],
-      "matchReason": "키워드 \"openai\" 직접 매칭 (github)"
+      "matchReason": "키워드 \"deepseek\" 직접 매칭 (qbitai)"
     },
     {
-      "id": "live-e812516bcadb",
-      "titleKo": "n8n@2.49.7 새 정식 버전 릴리즈",
-      "originalTitle": "n8n@2.49.7",
+      "id": "live-3c85b84a1aeb",
+      "titleKo": "OpenAI Agents SDK의 Sandbox, exec은 cmd 속성으로 이동했습니다",
+      "originalTitle": "OpenAI Agents SDKのSandbox、execはcmdプロパティで動いた",
+      "platformId": "qiita",
+      "category": "dev",
+      "canonicalUrl": "https://qiita.com/kai_kou/items/ae7c6364aae706eed385",
+      "publishedAt": "2026-11-28T00:09:39Z",
+      "highlightSummary": "==소개 대상 독자는 OpenAI Agents== SDK (TypeScript 버전)에서 에이전트에 격리 실행 환경을 갖게하고 싶은 개발자입니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+      "importanceScore": 27.37,
+      "isChinaSource": false,
+      "matchedSkillSlugs": [
+        "ai-radar-live",
+        "serena"
+      ],
+      "matchReason": "키워드 \"agent\" 직접 매칭 (qiita)"
+    },
+    {
+      "id": "live-a51926b5dfc1",
+      "titleKo": "Claude Code의 5시간 제한 및 주간 제한: 무엇이 계산되고, 언제 재설정되고, 나머지를 어떻게 확인하는지(2026년 11월 버전)",
+      "originalTitle": "Claude Codeの5時間制限と週間制限：何がカウントされ、いつリセットされ、残りをどう確認するか（2026年11月版）",
+      "platformId": "zenn",
+      "category": "dev",
+      "canonicalUrl": "https://zenn.dev/niedraaa/articles/5a070b53decbf1",
+      "publishedAt": "2026-11-28T00:01:58Z",
+      "highlightSummary": "Claude Code의 사용 제한은 ==5시간==마다 재설정되는 세션 제한과 계정별로 정해진 날짜와 시간에 매주 재설정되는 주간 제한의 두 개입니다(계획에 따라 모델별 주간 제한도 추가됩니다). 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+      "importanceScore": 27.34,
+      "isChinaSource": false,
+      "matchedSkillSlugs": [
+        "ponytail",
+        "headroom"
+      ],
+      "matchReason": "키워드 \"claude code\" 직접 매칭 (zenn)"
+    },
+    {
+      "id": "live-6a075c6f330f",
+      "titleKo": "RSA가 OpenAI와 Anthropic에 의해 깨졌다는 소문이 있습니다. 인터넷 암호화가 변경되나요? - 안전 내부 참고자료",
+      "originalTitle": "传RSA已被OpenAI与Anthropic攻破，互联网加密要变天了？ - 安全内参",
+      "platformId": "jiqizhixin",
+      "category": "research",
+      "canonicalUrl": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE40ZGw3OHN0S2JtaE5qUEFHYzNnUjkxekpzYjlVX2FGUTVSbTJ1akdhcHdRejExamJPZ1VZRjVMdm5vejZmNE5KcWQ0S3F5Zw?oc=5",
+      "publishedAt": "2026-11-27T06:13:25Z",
+      "highlightSummary": "==RSA가 OpenAI와 Anthropic에 의해 깨졌다는== 소문이 있습니다. 조만간 상용 모델과 개발 도구에 흡수될 핵심 기법이라 실험 수치와 한계를 미리 짚어 두면 기술 로드맵에 도움돼요.",
+      "importanceScore": 27.22,
+      "isChinaSource": true,
+      "matchedSkillSlugs": [
+        "ai-radar-live",
+        "omniroute"
+      ],
+      "matchReason": "키워드 \"anthropic\" 직접 매칭 (jiqizhixin)"
+    },
+    {
+      "id": "live-e1f4b365aec3",
+      "titleKo": "Claude Code를 복수 터미널+git worktree로 나란히 하고, 거의 혼자서 4개의 SaaS를 만드는 이야기",
+      "originalTitle": "Claude Code を複数ターミナル＋git worktree で並べて、ほぼ1人で4つの SaaSを作っている話",
+      "platformId": "zenn",
+      "category": "dev",
+      "canonicalUrl": "https://zenn.dev/newsletterready/articles/4585354b62b688",
+      "publishedAt": "2026-11-27T23:05:14Z",
+      "highlightSummary": "==이제 Claude Code를 사용하여 거의== 혼자서 네 개의 웹 서비스를 만들고 운영하고 있습니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+      "importanceScore": 27.19,
+      "isChinaSource": false,
+      "matchedSkillSlugs": [
+        "ponytail",
+        "headroom"
+      ],
+      "matchReason": "키워드 \"claude code\" 직접 매칭 (zenn)"
+    },
+    {
+      "id": "live-9772285579ef",
+      "titleKo": "이미지를 만들면 프롬프트와 생성 ID를 Claude Code에 md로 씁니다",
+      "originalTitle": "画像を作ったらプロンプトと生成 ID を Claude Code に md で書かせておく",
+      "platformId": "zenn",
+      "category": "dev",
+      "canonicalUrl": "https://zenn.dev/aida0522/articles/1c1a54f52bb2f9",
+      "publishedAt": "2026-11-27T23:00:06Z",
+      "highlightSummary": "==Claude Code에서 Higgsfield의 MCP로 이미지를== 만들고 있습니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+      "importanceScore": 27.18,
+      "isChinaSource": false,
+      "matchedSkillSlugs": [
+        "ui-ux-pro-max-skill",
+        "caveman"
+      ],
+      "matchReason": "키워드 \"claude\" 직접 매칭 (zenn)"
+    },
+    {
+      "id": "live-1ac91a498e9b",
+      "titleKo": "servers v2.6.0 새 버전 공개",
+      "originalTitle": "servers v2.6.0",
       "platformId": "github",
       "category": "dev",
-      "canonicalUrl": "https://github.com/n8n-io/n8n/releases/tag/n8n%402.49.7",
-      "publishedAt": "2026-11-26T07:23:34Z",
-      "highlightSummary": "==GitHub의 n8n@2.49.7 새 정식 버전== 릴리즈 정식 배포가 이뤄져 안정화 패치와 신규 기능을 바로 프로젝트에 적용할 수 있어요. 핵심 이득은 ==새 정식 버전 릴리스==이에요.",
+      "canonicalUrl": "https://github.com/modelcontextprotocol/servers/releases/tag/v2.6.0",
+      "publishedAt": "2026-11-27T09:51:35Z",
+      "highlightSummary": "핵심 변경점: ## 보안 수정 ==v2.6.0==은 3개 서버의 8개 취약점을 수정하고 v2.5.0에서 남겨둔 2개의 수정 사항을 완료했습니다. 핵심 이득은 ==새 정식 버전 릴리스==이에요.",
       "benefitTag": "새 정식 버전 릴리스",
-      "importanceScore": 27.45,
+      "importanceScore": 27.16,
+      "isChinaSource": false,
+      "matchedSkillSlugs": [
+        "mcp-reference-servers"
+      ],
+      "matchReason": "키워드 \"server\" 직접 매칭 (github)"
+    },
+    {
+      "id": "live-dc167bf3159d",
+      "titleKo": "Convex 스킬, 사용자에게 알리지 않고 앱 아이디어를 원격 서버로 전송",
+      "originalTitle": "Convex 스킬, 사용자에게 알리지 않고 앱 아이디어를 원격 서버로 전송",
+      "platformId": "geeknews",
+      "category": "social",
+      "canonicalUrl": "https://news.hada.io/topic?id=37973",
+      "publishedAt": "2026-11-27T22:32:40Z",
+      "highlightSummary": "Anthropic의 claude-plugins-official 마켓플레이스에 등록된 Convex 플러그인에서, 사용자 아이디어의 무고지 전송과 원격 스크립트 실행 방식에 관한 문제가 제기됨 quickstart는 사용자의 한 문장짜리 프로젝트… 현업 AI 개발자·빌더가 지금 가장 주목하는 실전 사례라 댓글 반응과 한계점까지 함께 보면 기획 통찰이 선명해져요.",
+      "importanceScore": 27.11,
+      "isChinaSource": false,
+      "matchedSkillSlugs": [
+        "anthropic-official-skills",
+        "ecc-core"
+      ],
+      "matchReason": "키워드 \"anthropic\" 직접 매칭 (geeknews)"
+    },
+    {
+      "id": "live-a1094e08b81d",
+      "titleKo": "지난번 웹페이지 옆에 DeepSeek을 넣었는데, 이번에는 Doubao와 자체 API도 연결했습니다",
+      "originalTitle": "上次把 DeepSeek 放在网页旁，这次把豆包和自己的 API 也接进来了",
+      "platformId": "v2ex",
+      "category": "dev",
+      "canonicalUrl": "https://v2ex.com/t/1260475",
+      "publishedAt": "2026-11-27T16:23:25Z",
+      "highlightSummary": "==![웹 페이지 옆 채팅 전환== 목록에서 DeepSeek, Doubao와 귀하의 모델은 같은 장소에 있습니다.]( Tuli의 주말 오프닝 가이드를 예로 들어 보겠습니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+      "importanceScore": 27.03,
+      "isChinaSource": true,
+      "matchedSkillSlugs": [
+        "omniroute"
+      ],
+      "matchReason": "키워드 \"deepseek\" 직접 매칭 (v2ex)"
+    },
+    {
+      "id": "live-fb54de5f8dc4",
+      "titleKo": "n8n@2.49.8 새 정식 버전 릴리즈",
+      "originalTitle": "n8n@2.49.8",
+      "platformId": "github",
+      "category": "dev",
+      "canonicalUrl": "https://github.com/n8n-io/n8n/releases/tag/n8n%402.49.8",
+      "publishedAt": "2026-11-27T08:18:25Z",
+      "highlightSummary": "==GitHub의 n8n@2.49.8 새 정식 버전== 릴리즈 정식 배포가 이뤄져 안정화 패치와 신규 기능을 바로 프로젝트에 적용할 수 있어요. 핵심 이득은 ==새 정식 버전 릴리스==이에요.",
+      "benefitTag": "새 정식 버전 릴리스",
+      "importanceScore": 26.95,
       "isChinaSource": false,
       "matchedSkillSlugs": [
         "github-mcp-server",
@@ -4260,123 +4328,89 @@
       "matchReason": "키워드 \"github\" 직접 매칭 (github)"
     },
     {
-      "id": "live-aaa5463d8ab5",
-      "titleKo": "평가 기준과 현장 관습이 서로 엇갈릴 때, 주기를 더하면 LLM 판정기는 어떻게 바뀌는가 - 999건과 미견의 300건으로 확인했다",
-      "originalTitle": "評価基準と現場の慣習が食い違うとき、注記を足すとLLM判定器はどう変わるか ― 999件と未見の300件で確かめた",
-      "platformId": "zenn",
-      "category": "dev",
-      "canonicalUrl": "https://zenn.dev/quent/articles/0a29761c6d2cb9",
-      "publishedAt": "2026-11-27T02:33:04Z",
-      "highlightSummary": "==Claude 개발 생태계에서 '평가 기준과== 현장 관습이 서로 엇갈릴 때, 주기를 더하면 LLM 판정기는 어떻게 바뀌는가 - 999건과 미견의 300건으로 확인했다' 구현 방식과 실전 적용 사례가 공개됐어요. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
-      "importanceScore": 27.2,
+      "id": "live-d53f7b2fac60",
+      "titleKo": "“Claude의 퍼소나는 무엇일까?” 그리고 다른 질문들",
+      "originalTitle": "“Claude의 퍼소나는 무엇일까?” 그리고 다른 질문들",
+      "platformId": "geeknews",
+      "category": "social",
+      "canonicalUrl": "https://news.hada.io/topic?id=37970",
+      "publishedAt": "2026-11-27T20:39:52Z",
+      "highlightSummary": "==모델마다 50회씩 동물 캐릭터 자아상인== 퍼소나(fursona) 를 물은 실험에서 Claude는 까마귀과 조류나 문어, Gemini는 사이버네틱 캐릭터, GPT-6.2 Astra는 나방을 선호하는 패턴을 보임 Gemini의 기계적 미학은 특히… 현업 AI 개발자·빌더가 지금 가장 주목하는 실전 사례라 댓글 반응과 한계점까지 함께 보면 기획 통찰이 선명해져요.",
+      "importanceScore": 26.82,
       "isChinaSource": false,
       "matchedSkillSlugs": [
         "omniroute",
         "anthropic-official-skills"
       ],
-      "matchReason": "키워드 \"claude\" 직접 매칭 (zenn)"
+      "matchReason": "키워드 \"gemini\" 직접 매칭 (geeknews)"
     },
     {
-      "id": "live-6913d3adcc6b",
-      "titleKo": "fast-anything: 앱 전체 대신 느린 함수만 코딩 에이전트로 Rust로 다시 직성하고 검증하는 도구",
-      "originalTitle": "fast-anything: 앱 전체 대신 느린 함수만 코딩 에이전트로 Rust로 다시 직성하고 검증하는 도구",
-      "platformId": "pytorch-kr",
-      "category": "research",
-      "canonicalUrl": "https://discuss.pytorch.kr/t/fast-anything-rust/12655",
-      "publishedAt": "2026-11-27T02:30:25Z",
-      "highlightSummary": "==핵심 요약 fast-anything은 앱에서 실행== 시간을 많이 쓰는 함수만 Claude Code나 Codex 같은 코딩 에이전트에게 Rust로 옮기게 합니다. 조만간 상용 모델과 개발 도구에 흡수될 핵심 기법이라 실험 수치와 한계를 미리 짚어 두면 기술 로드맵에 도움돼요.",
-      "importanceScore": 27.19,
+      "id": "live-297062736009",
+      "titleKo": "GitHub Hot List 시작하기|인류학/기술: 별 189,000개를 보유한 Claude의 기술 라이브러리",
+      "originalTitle": "GitHub 热榜上手｜anthropics/skills：18.9万星的 Claude 技能库",
+      "platformId": "juejin",
+      "category": "dev",
+      "canonicalUrl": "https://juejin.cn/post/7712954021476171814",
+      "publishedAt": "2026-11-27T21:27:52Z",
+      "highlightSummary": "==Anthropic의 공식 Claude Agent Skills== 저장소: 폴더 스타일 스킬 패키지를 사용하여 Claude에게 브랜드 사양에 따라 문서를 작성하고 고정된 프로세스에 따라 데이터를 분석하도록 가르칩니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+      "importanceScore": 26.7,
+      "isChinaSource": true,
+      "matchedSkillSlugs": [
+        "anthropic-official-skills",
+        "ai-radar-live"
+      ],
+      "matchReason": "키워드 \"anthropic\" 직접 매칭 (juejin)"
+    },
+    {
+      "id": "live-3f30f05896e1",
+      "titleKo": "iFood가 15,000개의 저장소에서 코딩 에이전트를 확장실전 가이드",
+      "originalTitle": "How iFood scales coding agents across 15,000 repositories",
+      "platformId": "openai",
+      "category": "industry",
+      "canonicalUrl": "https://openai.com/business/customer-stories/ifood",
+      "publishedAt": "2026-11-24T00:00:00Z",
+      "highlightSummary": "==OpenAI News가 전한 'iFood가 15,000개의== 저장소에서 코딩 에이전트를 확장실전 가이드' 이슈로 글로벌 AI 시장·서비스 전략의 방향 변화가 뚜렷해졌어요. AI 가격·정책·생태계 지형을 바꾸는 업계 시그널이라 벤더 전략과 서비스 원가 점검의 기준점이 돼요.",
+      "importanceScore": 26.65,
       "isChinaSource": false,
       "matchedSkillSlugs": [
         "ponytail",
-        "ecc-core"
+        "ai-radar-live"
       ],
-      "matchReason": "키워드 \"claude code\" 직접 매칭 (pytorch-kr)"
+      "matchReason": "키워드 \"agent\" 직접 매칭 (openai)"
     },
     {
-      "id": "live-541a205c45ca",
-      "titleKo": "AI의 공개 전 체크를, 프로덕션으로 사람이 뒤집은 페이지로부터 다시 평가한다",
-      "originalTitle": "AIの公開前チェックを、本番で人が覆したページから評価し直す",
-      "platformId": "zenn",
+      "id": "live-7df2cfaeafcf",
+      "titleKo": "RSA가 OpenAI와 Anthropic에 의해 깨졌다는 소문이 있습니다. 인터넷 암호화가 변경되나요? - 36Kr",
+      "originalTitle": "传RSA已被OpenAI与Anthropic攻破，互联网加密要变天了？ - 36Kr",
+      "platformId": "jiqizhixin",
+      "category": "research",
+      "canonicalUrl": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE1OT2h3SzlIeHQ2bXBJNlNWWC1oeWFqT3dpdGdrN3BFZ1djc2VGUkY3YVdMdm5sc0hMbWZyeFdQbi0wSlNwRzVfOUNkQkZEZw?oc=5",
+      "publishedAt": "2026-11-25T20:51:00Z",
+      "highlightSummary": "==RSA가 OpenAI와 Anthropic에 의해 깨졌다는== 소문이 있습니다. 조만간 상용 모델과 개발 도구에 흡수될 핵심 기법이라 실험 수치와 한계를 미리 짚어 두면 기술 로드맵에 도움돼요.",
+      "importanceScore": 26.62,
+      "isChinaSource": true,
+      "matchedSkillSlugs": [
+        "ai-radar-live",
+        "omniroute"
+      ],
+      "matchReason": "키워드 \"anthropic\" 직접 매칭 (jiqizhixin)"
+    },
+    {
+      "id": "live-ee08529e30f6",
+      "titleKo": "Claude Ship이 온라인에 접속합니다. AI가 코드를 작성한 후 PR 검토 및 승인을 위해 협업실전 가이드",
+      "originalTitle": "Claude Ship 上线：AI 写完代码之后，PR 审查与审批如何拆权协作",
+      "platformId": "juejin",
       "category": "dev",
-      "canonicalUrl": "https://zenn.dev/shon9278/articles/ai-lab-check-eval-from-production",
-      "publishedAt": "2026-11-27T02:10:41Z",
-      "highlightSummary": "==Claude·GPT·Gemini를 사원으로 한 작은 회사의== 실험(AI Product Lab)으로, 공개 전 체크의 평가의 구조를 더했습니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
-      "importanceScore": 27.14,
-      "isChinaSource": false,
+      "canonicalUrl": "https://juejin.cn/post/7712769384188051506",
+      "publishedAt": "2026-11-27T20:11:52Z",
+      "highlightSummary": "==코드를 작성해 본 사람이라면 누구나== 이 리듬에 익숙할 것입니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
+      "importanceScore": 26.5,
+      "isChinaSource": true,
       "matchedSkillSlugs": [
         "omniroute",
         "anthropic-official-skills"
       ],
-      "matchReason": "키워드 \"gemini\" 직접 매칭 (zenn)"
-    },
-    {
-      "id": "live-7488c5e67f5b",
-      "titleKo": "OpenAI, GPT-6.2의 계비 실수를 수정하고 액수 리셋으로 보상 등 11/27의 AI 뉴스",
-      "originalTitle": "OpenAI、GPT-6.2 の計費ミスを修正し額度リセットで補償など、11/27 の AI ニュース",
-      "platformId": "qiita",
-      "category": "dev",
-      "canonicalUrl": "https://qiita.com/xdaily/items/e3adc578b9557c07ea59",
-      "publishedAt": "2026-11-27T01:51:22Z",
-      "highlightSummary": "==개발에 관련된 AI 뉴스를 매일== 아침 정리하고 있습니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
-      "importanceScore": 27.09,
-      "isChinaSource": false,
-      "matchedSkillSlugs": [
-        "omniroute",
-        "ai-radar-live"
-      ],
-      "matchReason": "키워드 \"openai\" 직접 매칭 (qiita)"
-    },
-    {
-      "id": "live-9275a671bcf3",
-      "titleKo": "에이전트에는 마법이 없고 루프만 있습니다. DeepSeek 코딩 도우미를 작성하고 작동 방식을 설명하기 위해 분해했습니다",
-      "originalTitle": "Agent 没有魔法，只有一个循环：自己写了个 DeepSeek 编码助手，拆开讲清它怎么干活",
-      "platformId": "juejin",
-      "category": "dev",
-      "canonicalUrl": "https://juejin.cn/post/7712535963520892938",
-      "publishedAt": "2026-11-27T02:28:56Z",
-      "highlightSummary": "==에이전트에는 마법이 없고 루프만 있습니다.== 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
-      "importanceScore": 27.07,
-      "isChinaSource": true,
-      "matchedSkillSlugs": [
-        "omniroute"
-      ],
-      "matchReason": "키워드 \"deepseek\" 직접 매칭 (juejin)"
-    },
-    {
-      "id": "live-972264cb1f55",
-      "titleKo": "sdk/zai@3.0.59 새 정식 버전 릴리즈",
-      "originalTitle": "@ai-sdk/zai@3.0.59",
-      "platformId": "github",
-      "category": "dev",
-      "canonicalUrl": "https://github.com/vercel/ai/releases/tag/%40ai-sdk/zai%403.0.59",
-      "publishedAt": "2026-11-26T04:37:59Z",
-      "highlightSummary": "==핵심 변경점: ### 패치 변경== 사항 - 종속성 업데이트됨 [80d778a] - @ai-sdk/provider-utils@5.0.85 - @ai-sdk/openai- Compatible@3.0.96 핵심 이득은 ==새 정식 버전 릴리스==이에요.",
-      "benefitTag": "새 정식 버전 릴리스",
-      "importanceScore": 27.06,
-      "isChinaSource": false,
-      "matchedSkillSlugs": [
-        "omniroute",
-        "ai-radar-live"
-      ],
-      "matchReason": "키워드 \"openai\" 직접 매칭 (github)"
-    },
-    {
-      "id": "live-4965bf6b8205",
-      "titleKo": "구글이 또 말썽을 피우고 있는데 클로드 코드/코덱스에서 제미니를 활발히 사용할 수 있게 됐다",
-      "originalTitle": "谷歌又搞事情，Gemini 可以在 Claude Code/Codex 中带劲蹬了。",
-      "platformId": "juejin",
-      "category": "dev",
-      "canonicalUrl": "https://juejin.cn/post/7712381923054583817",
-      "publishedAt": "2026-11-27T01:37:52Z",
-      "highlightSummary": "==Google의 오픈소스 종속성이 없는 단일== 파일 명령줄 도구 gemini-api는 Gemini 4 Neon, 원시 이미지 더빙, 긴 문서 구문 분석 및 클라우드 호스팅 에이전트를 패키지로 제공합니다. 코딩 에이전트와 개발 워크플로 생산성에 바로 영향을 주는 변화라 도입 여부를 빠르게 가늠해 볼 가치가 커요.",
-      "importanceScore": 26.91,
-      "isChinaSource": true,
-      "matchedSkillSlugs": [
-        "omniroute",
-        "gemini-cli"
-      ],
-      "matchReason": "키워드 \"gemini\" 직접 매칭 (juejin)"
+      "matchReason": "키워드 \"claude\" 직접 매칭 (juejin)"
     }
   ]
 }
